@@ -77,8 +77,13 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
     setSaving(false);
   }
 
-  const cur = data || lead;
-  const currentStatus = STATUS_OPTIONS.find(s => s.id === status);
+  const handleDownloadPhoto = (url) => {
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.download = 'photo.jpg';
+    a.click();
+  };
 
   const renderMessage = (msg) => {
     const isPhoto = msg.text && msg.text.startsWith('📷 [Фото]');
@@ -93,13 +98,19 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
         {msg.sender_name && <div style={styles.msgAuthor}>{msg.sender_name}</div>}
         {isPhoto ? (
           <div>
-            <div style={{ color: '#9090a8', fontSize: 12, marginBottom: 6 }}>📷 Фото от клиента</div>
+            <div style={{ color: '#9090a8', fontSize: 12, marginBottom: 8 }}>📷 Фото от клиента</div>
             <img
               src={photoUrl}
               alt="фото"
-              style={{ maxWidth: '100%', borderRadius: 8, cursor: 'pointer', display: 'block' }}
-              onClick={() => window.open(photoUrl, '_blank')}
+              style={{ maxWidth: '100%', borderRadius: 8, display: 'block', marginBottom: 8 }}
+              onError={(e) => { e.target.style.display = 'none'; }}
             />
+            <button
+              style={styles.downloadBtn}
+              onClick={() => handleDownloadPhoto(photoUrl)}
+            >
+              ⬇️ Скачать фото
+            </button>
           </div>
         ) : (
           <div style={styles.msgText}>{msg.text}</div>
@@ -110,6 +121,8 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
       </div>
     );
   };
+
+  const cur = data || lead;
 
   return (
     <div style={styles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -276,6 +289,7 @@ const styles = {
   msgAuthor: { color: '#f0b429', fontSize: 11, fontWeight: 600, marginBottom: 4 },
   msgText: { color: '#f0f0f5', fontSize: 13, lineHeight: 1.5 },
   msgTime: { color: '#9090a8', fontSize: 10, marginTop: 4, textAlign: 'right' },
+  downloadBtn: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 8, color: '#f0b429', fontSize: 12, padding: '6px 12px', cursor: 'pointer', width: '100%', fontFamily: 'Inter, sans-serif' },
   emptyChat: { color: '#9090a8', fontSize: 13, textAlign: 'center', padding: '40px 0' },
   inputRow: { display: 'flex', gap: 8, padding: '12px 16px', borderTop: '1px solid #2e2e3e', flexShrink: 0 },
   msgInput: { flex: 1, background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 10, color: '#f0f0f5', fontSize: 13, padding: '10px 12px', outline: 'none', resize: 'none', fontFamily: 'Inter, sans-serif' },
