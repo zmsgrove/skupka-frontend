@@ -7,8 +7,26 @@ const API = process.env.REACT_APP_BACKEND_URL;
 const STATUS_OPTIONS = [
   { id: 'new', label: '🆕 Новый', color: '#3b82f6' },
   { id: 'in_progress', label: '⚡ В работе', color: '#8b5cf6' },
+  { id: 'waiting', label: '🏪 Ждём на филиал', color: '#f59e0b' },
   { id: 'success', label: '✅ Успешно', color: '#10b981' },
   { id: 'fail', label: '❌ Провал', color: '#ef4444' },
+];
+
+const FAIL_REASONS = [
+  'Цена не устроила',
+  'Передумал продавать',
+  'Не отвечает',
+  'Ушёл к конкурентам',
+  'Техника не подходит',
+  'Другое',
+];
+
+const MSG_TEMPLATES = [
+  '👋 Здравствуйте! Уточните пожалуйста модель устройства',
+  '📋 В каком состоянии устройство? Есть ли повреждения?',
+  '📅 Когда вам удобно подъехать в наш пункт приёма?',
+  '✅ Ждём вас! Наш специалист будет готов принять технику',
+  '🙏 Спасибо за обращение в SKUPKA!',
 ];
 
 export default function LeadModal({ lead, user, onClose, onUpdate }) {
@@ -22,12 +40,19 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
   const [contractNumber, setContractNumber] = useState(lead.contract_number || '');
   const [successComment, setSuccessComment] = useState(lead.success_comment || '');
   const [failComment, setFailComment] = useState(lead.fail_comment || '');
+  const [failReason, setFailReason] = useState('');
+  const [visitDate, setVisitDate] = useState(lead.visit_date ? lead.visit_date.split('T')[0] : '');
   const [status, setStatus] = useState(lead.status);
   const [saving, setSaving] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
   const chatEndRef = useRef(null);
+
+  // История прошлых заявок клиента
+  const [prevLeads, setPrevLeads] = useState([]);
 
   useEffect(() => {
     fetchDetail();
+    fetchPrevLeads();
     const channel = supabase
       .channel(`lead-${lead.id}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `lead_id=eq.${lead.id}` }, () => fetchDetail())
@@ -47,13 +72,19 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
     setData({ ...lead_data, messages: messages || [], comments: comments || [] });
   }
 
+  async function fetchPrevLeads() {
+    const { data } = await supabase.from('leads').select('*')
+      .eq('phone', lead.phone).neq('id', lead.id).order('created_at', { ascending: false });
+    setPrevLeads(data || []);
+  }
+
   async function handleSendMessage() {
     if (!msgText.trim()) return;
     setSending(true);
     try {
       await axios.post(`${API}/api/leads/${lead.id}/send`, { text: msgText.trim(), author: user.name });
       setMsgText('');
-    } catch (e) { alert('Ошибка отправки сообщения'); }
+    } catch (e) { alert('Ошибка отправки'); }
     setSending(false);
   }
 
@@ -65,28 +96,35 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
 
   async function handleSaveChanges() {
     setSaving(true);
-    const updates = { status, estimate_amount: estimateAmount || null, send_estimate: sendEstimate };
-    if (status === 'success') { updates.contract_number = contractNumber; updates.success_comment = successComment; }
-    if (status === 'fail') { updates.fail_comment = failComment; }
+    const updates = {
+      status,
+      estimate_amount: estimateAmount || null,
+      send_estimate: sendEstimate,
+    };
+    if (status === 'waiting' && visitDate) updates.visit_date = visitDate;
+    if (status === 'success') {
+      updates.contract_number = contractNumber;
+      updates.success_comment = successComment;
+    }
+    if (status === 'fail') {
+      updates.fail_comment = failReason === 'Другое' ? failComment : failReason;
+    }
     try {
       const { data: updated } = await axios.patch(`${API}/api/leads/${lead.id}`, updates);
       onUpdate(updated);
       setSendEstimate(false);
-      alert('Изменения сохранены' + (sendEstimate ? ' и оценка отправлена клиенту!' : '!'));
+      alert('Сохранено!' + (sendEstimate ? ' Оценка отправлена клиенту.' : ''));
     } catch (e) { alert('Ошибка сохранения'); }
     setSaving(false);
   }
 
   const handleDownloadPhoto = (url) => {
     const a = document.createElement('a');
-    a.href = url;
-    a.target = '_blank';
-    a.download = 'photo.jpg';
-    a.click();
+    a.href = url; a.target = '_blank'; a.download = 'photo.jpg'; a.click();
   };
 
   const renderMessage = (msg) => {
-    const isPhoto = msg.text && msg.text.startsWith('📷 [Фото]');
+    const isPhoto = msg.text?.startsWith('📷 [Фото]');
     const photoUrl = isPhoto ? msg.text.replace('📷 [Фото] ', '') : null;
     return (
       <div key={msg.id} style={{
@@ -99,22 +137,10 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
         {isPhoto ? (
           <div>
             <div style={{ color: '#9090a8', fontSize: 12, marginBottom: 8 }}>📷 Фото от клиента</div>
-            <img
-              src={photoUrl}
-              alt="фото"
-              style={{ maxWidth: '100%', borderRadius: 8, display: 'block', marginBottom: 8 }}
-              onError={(e) => { e.target.style.display = 'none'; }}
-            />
-            <button
-              style={styles.downloadBtn}
-              onClick={() => handleDownloadPhoto(photoUrl)}
-            >
-              ⬇️ Скачать фото
-            </button>
+            <img src={photoUrl} alt="фото" style={{ maxWidth: '100%', borderRadius: 8, display: 'block', marginBottom: 8 }} onError={e => e.target.style.display = 'none'} />
+            <button style={styles.downloadBtn} onClick={() => handleDownloadPhoto(photoUrl)}>⬇️ Скачать фото</button>
           </div>
-        ) : (
-          <div style={styles.msgText}>{msg.text}</div>
-        )}
+        ) : <div style={styles.msgText}>{msg.text}</div>}
         <div style={styles.msgTime}>
           {new Date(msg.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
         </div>
@@ -125,17 +151,24 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
   const cur = data || lead;
 
   return (
-    <div style={styles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div style={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={styles.modal}>
         <div style={styles.header}>
-          <div>
-            <div style={styles.clientName}>{cur.client_name}</div>
-            <div style={styles.clientPhone}>{cur.phone}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div>
+              <div style={styles.clientName}>{cur.client_name}</div>
+              <div style={styles.clientPhone}>{cur.phone}
+                {prevLeads.length > 0 && (
+                  <span style={styles.repeatBadge}>🔄 Повторный — {prevLeads.length} заявок</span>
+                )}
+              </div>
+            </div>
           </div>
           <button style={styles.closeBtn} onClick={onClose}>✕</button>
         </div>
 
         <div style={styles.body}>
+          {/* Левая колонка */}
           <div style={styles.left}>
             <div style={styles.infoBlock}>
               <Row label="Город" value={cur.city} />
@@ -143,8 +176,29 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
               <Row label="Дата" value={new Date(cur.created_at).toLocaleString('ru-RU')} />
               <Row label="Оценка" value={cur.estimate_amount ? `${new Intl.NumberFormat('ru-KZ').format(cur.estimate_amount)} ₸` : '—'} highlight={!!cur.estimate_amount} />
               {cur.contract_number && <Row label="№ договора" value={cur.contract_number} />}
+              {cur.visit_date && <Row label="Визит" value={new Date(cur.visit_date).toLocaleDateString('ru-RU')} />}
             </div>
 
+            {/* История прошлых заявок */}
+            {prevLeads.length > 0 && (
+              <div style={styles.section}>
+                <div style={styles.sectionLabel}>История клиента</div>
+                {prevLeads.slice(0, 3).map(pl => (
+                  <div key={pl.id} style={styles.historyItem}>
+                    <span style={styles.historyDevice}>{pl.device}</span>
+                    <span style={{
+                      ...styles.historyStatus,
+                      color: pl.status === 'success' ? '#10b981' : pl.status === 'fail' ? '#ef4444' : '#9090a8'
+                    }}>
+                      {pl.status === 'success' ? '✅' : pl.status === 'fail' ? '❌' : '⏳'}
+                      {pl.estimate_amount ? ` ${new Intl.NumberFormat('ru-KZ').format(pl.estimate_amount)} ₸` : ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Статус */}
             <div style={styles.section}>
               <div style={styles.sectionLabel}>Статус</div>
               <div style={styles.statusList}>
@@ -159,6 +213,17 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
               </div>
             </div>
 
+            {/* Дата визита для "Ждём на филиал" */}
+            {status === 'waiting' && (
+              <div style={styles.section}>
+                <div style={styles.sectionLabel}>Дата визита клиента</div>
+                <input type="date" style={styles.input}
+                  value={visitDate} onChange={e => setVisitDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]} />
+              </div>
+            )}
+
+            {/* Оценка */}
             <div style={styles.section}>
               <div style={styles.sectionLabel}>Сумма оценки (₸)</div>
               <input style={styles.input} type="number" placeholder="Например: 150000"
@@ -169,22 +234,36 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
               </label>
             </div>
 
+            {/* Успешно */}
             {status === 'success' && (
               <div style={styles.section}>
-                <div style={styles.sectionLabel}>№ договора купли-продажи</div>
+                <div style={styles.sectionLabel}>№ договора</div>
                 <input style={styles.input} placeholder="Номер договора"
                   value={contractNumber} onChange={e => setContractNumber(e.target.value)} />
-                <div style={{ ...styles.sectionLabel, marginTop: 10 }}>Комментарий</div>
-                <textarea style={styles.textarea} placeholder="Комментарий по сделке..."
+                <div style={{ ...styles.sectionLabel, marginTop: 8 }}>Комментарий</div>
+                <textarea style={styles.textarea} placeholder="Комментарий..."
                   value={successComment} onChange={e => setSuccessComment(e.target.value)} rows={2} />
               </div>
             )}
 
+            {/* Провал */}
             {status === 'fail' && (
               <div style={styles.section}>
                 <div style={styles.sectionLabel}>Причина провала</div>
-                <textarea style={styles.textarea} placeholder="Почему не получилось?"
-                  value={failComment} onChange={e => setFailComment(e.target.value)} rows={3} />
+                <div style={styles.reasonList}>
+                  {FAIL_REASONS.map(r => (
+                    <button key={r} style={{
+                      ...styles.reasonBtn,
+                      borderColor: failReason === r ? '#ef4444' : '#2e2e3e',
+                      background: failReason === r ? '#ef444422' : 'transparent',
+                      color: failReason === r ? '#ef4444' : '#9090a8',
+                    }} onClick={() => setFailReason(r)}>{r}</button>
+                  ))}
+                </div>
+                {failReason === 'Другое' && (
+                  <textarea style={{ ...styles.textarea, marginTop: 8 }} placeholder="Опишите причину..."
+                    value={failComment} onChange={e => setFailComment(e.target.value)} rows={2} />
+                )}
               </div>
             )}
 
@@ -194,6 +273,7 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
             </button>
           </div>
 
+          {/* Правая колонка */}
           <div style={styles.right}>
             <div style={styles.tabs}>
               <button style={{ ...styles.tab, ...(activeTab === 'chat' ? styles.tabActive : {}) }}
@@ -211,7 +291,25 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
                   )}
                   <div ref={chatEndRef} />
                 </div>
+
+                {/* Шаблоны */}
+                {showTemplates && (
+                  <div style={styles.templates}>
+                    {MSG_TEMPLATES.map((t, i) => (
+                      <button key={i} style={styles.templateBtn}
+                        onClick={() => { setMsgText(t); setShowTemplates(false); }}>
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <div style={styles.inputRow}>
+                  <button style={styles.templateToggle}
+                    onClick={() => setShowTemplates(!showTemplates)}
+                    title="Шаблоны сообщений">
+                    ⚡
+                  </button>
                   <textarea style={styles.msgInput} placeholder="Написать клиенту..."
                     value={msgText} onChange={e => setMsgText(e.target.value)} rows={2}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }} />
@@ -255,7 +353,7 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
 
 function Row({ label, value, highlight }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #2e2e3e' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #2e2e3e' }}>
       <span style={{ color: '#9090a8', fontSize: 12 }}>{label}</span>
       <span style={{ color: highlight ? '#f0b429' : '#f0f0f5', fontSize: 13, fontWeight: highlight ? 600 : 400 }}>{value}</span>
     </div>
@@ -263,37 +361,46 @@ function Row({ label, value, highlight }) {
 }
 
 const styles = {
-  overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)', padding: 16 },
-  modal: { background: '#1a1a22', border: '1px solid #2e2e3e', borderRadius: 20, width: '100%', maxWidth: 900, maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid #2e2e3e', flexShrink: 0 },
-  clientName: { fontFamily: 'Unbounded, sans-serif', fontSize: 18, fontWeight: 700, color: '#f0f0f5' },
-  clientPhone: { color: '#9090a8', fontSize: 13, marginTop: 4 },
+  overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)', padding: 16 },
+  modal: { background: '#1a1a22', border: '1px solid #2e2e3e', borderRadius: 20, width: '100%', maxWidth: 960, maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 24px', borderBottom: '1px solid #2e2e3e', flexShrink: 0 },
+  clientName: { fontFamily: 'Unbounded, sans-serif', fontSize: 17, fontWeight: 700, color: '#f0f0f5' },
+  clientPhone: { color: '#9090a8', fontSize: 13, marginTop: 3, display: 'flex', alignItems: 'center', gap: 8 },
+  repeatBadge: { background: '#06b6d418', border: '1px solid #06b6d433', color: '#06b6d4', fontSize: 11, padding: '2px 8px', borderRadius: 20 },
   closeBtn: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 8, color: '#9090a8', fontSize: 16, padding: '6px 12px', cursor: 'pointer' },
-  body: { display: 'grid', gridTemplateColumns: '300px 1fr', overflow: 'hidden', flex: 1 },
-  left: { borderRight: '1px solid #2e2e3e', padding: 20, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 },
+  body: { display: 'grid', gridTemplateColumns: '310px 1fr', overflow: 'hidden', flex: 1 },
+  left: { borderRight: '1px solid #2e2e3e', padding: 18, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14 },
   right: { display: 'flex', flexDirection: 'column', overflow: 'hidden' },
   infoBlock: { display: 'flex', flexDirection: 'column' },
-  section: { display: 'flex', flexDirection: 'column', gap: 8 },
-  sectionLabel: { color: '#9090a8', fontSize: 11, fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase' },
-  statusList: { display: 'flex', flexDirection: 'column', gap: 6 },
-  statusBtn: { border: '1px solid', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontFamily: 'Inter, sans-serif', textAlign: 'left', transition: 'all 0.15s', cursor: 'pointer' },
-  input: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 8, color: '#f0f0f5', fontSize: 14, padding: '10px 12px', outline: 'none' },
-  textarea: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 8, color: '#f0f0f5', fontSize: 14, padding: '10px 12px', outline: 'none', resize: 'vertical', fontFamily: 'Inter, sans-serif' },
+  section: { display: 'flex', flexDirection: 'column', gap: 7 },
+  sectionLabel: { color: '#9090a8', fontSize: 10, fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase' },
+  statusList: { display: 'flex', flexDirection: 'column', gap: 5 },
+  statusBtn: { border: '1px solid', borderRadius: 8, padding: '7px 12px', fontSize: 13, fontFamily: 'Inter, sans-serif', textAlign: 'left', cursor: 'pointer', transition: 'all 0.15s' },
+  reasonList: { display: 'flex', flexDirection: 'column', gap: 5 },
+  reasonBtn: { border: '1px solid', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontFamily: 'Inter, sans-serif', textAlign: 'left', cursor: 'pointer', transition: 'all 0.15s' },
+  input: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 8, color: '#f0f0f5', fontSize: 14, padding: '9px 12px', outline: 'none' },
+  textarea: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 8, color: '#f0f0f5', fontSize: 14, padding: '9px 12px', outline: 'none', resize: 'vertical', fontFamily: 'Inter, sans-serif' },
   checkLabel: { display: 'flex', alignItems: 'center', gap: 8, color: '#c0c0d8', fontSize: 13, cursor: 'pointer' },
-  saveBtn: { background: '#f0b429', border: 'none', borderRadius: 10, color: '#0f0f13', fontFamily: 'Unbounded, sans-serif', fontSize: 12, fontWeight: 700, padding: '12px', cursor: 'pointer', letterSpacing: 0.5, marginTop: 'auto' },
+  saveBtn: { background: '#f0b429', border: 'none', borderRadius: 10, color: '#0f0f13', fontFamily: 'Unbounded, sans-serif', fontSize: 12, fontWeight: 700, padding: '11px', cursor: 'pointer', marginTop: 'auto' },
+  historyItem: { display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px solid #2e2e3e' },
+  historyDevice: { color: '#c0c0d8', fontSize: 12 },
+  historyStatus: { fontSize: 12, fontWeight: 600 },
   tabs: { display: 'flex', borderBottom: '1px solid #2e2e3e', flexShrink: 0 },
-  tab: { flex: 1, padding: '14px', background: 'transparent', border: 'none', color: '#9090a8', fontSize: 13, cursor: 'pointer', borderBottom: '2px solid transparent', transition: 'all 0.15s' },
+  tab: { flex: 1, padding: '13px', background: 'transparent', border: 'none', color: '#9090a8', fontSize: 13, cursor: 'pointer', borderBottom: '2px solid transparent', transition: 'all 0.15s' },
   tabActive: { color: '#f0b429', borderBottomColor: '#f0b429' },
-  messageList: { flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 10 },
-  message: { maxWidth: '75%', border: '1px solid', borderRadius: 12, padding: '8px 12px' },
+  messageList: { flex: 1, overflowY: 'auto', padding: '14px', display: 'flex', flexDirection: 'column', gap: 10 },
+  message: { maxWidth: '78%', border: '1px solid', borderRadius: 12, padding: '8px 12px' },
   msgAuthor: { color: '#f0b429', fontSize: 11, fontWeight: 600, marginBottom: 4 },
   msgText: { color: '#f0f0f5', fontSize: 13, lineHeight: 1.5 },
   msgTime: { color: '#9090a8', fontSize: 10, marginTop: 4, textAlign: 'right' },
-  downloadBtn: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 8, color: '#f0b429', fontSize: 12, padding: '6px 12px', cursor: 'pointer', width: '100%', fontFamily: 'Inter, sans-serif' },
+  downloadBtn: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 8, color: '#f0b429', fontSize: 12, padding: '6px 12px', cursor: 'pointer', width: '100%' },
   emptyChat: { color: '#9090a8', fontSize: 13, textAlign: 'center', padding: '40px 0' },
-  inputRow: { display: 'flex', gap: 8, padding: '12px 16px', borderTop: '1px solid #2e2e3e', flexShrink: 0 },
-  msgInput: { flex: 1, background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 10, color: '#f0f0f5', fontSize: 13, padding: '10px 12px', outline: 'none', resize: 'none', fontFamily: 'Inter, sans-serif' },
-  sendBtn: { background: '#f0b429', border: 'none', borderRadius: 10, color: '#0f0f13', fontSize: 18, padding: '0 16px', cursor: 'pointer', fontWeight: 700 },
+  templates: { padding: '8px 14px', borderTop: '1px solid #2e2e3e', display: 'flex', flexDirection: 'column', gap: 5, background: '#15151e', maxHeight: 180, overflowY: 'auto' },
+  templateBtn: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 8, color: '#c0c0d8', fontSize: 12, padding: '7px 12px', cursor: 'pointer', textAlign: 'left', fontFamily: 'Inter, sans-serif' },
+  templateToggle: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 10, color: '#f0b429', fontSize: 16, padding: '0 12px', cursor: 'pointer' },
+  inputRow: { display: 'flex', gap: 8, padding: '10px 14px', borderTop: '1px solid #2e2e3e', flexShrink: 0 },
+  msgInput: { flex: 1, background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 10, color: '#f0f0f5', fontSize: 13, padding: '9px 12px', outline: 'none', resize: 'none', fontFamily: 'Inter, sans-serif' },
+  sendBtn: { background: '#f0b429', border: 'none', borderRadius: 10, color: '#0f0f13', fontSize: 18, padding: '0 14px', cursor: 'pointer', fontWeight: 700 },
   comment: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 12, padding: '10px 14px' },
   commentHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: 6 },
   commentAuthor: { color: '#f0b429', fontSize: 12, fontWeight: 600 },
