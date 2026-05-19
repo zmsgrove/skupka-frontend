@@ -7,11 +7,27 @@ import LeadModal from './LeadModal';
 const API = process.env.REACT_APP_BACKEND_URL;
 
 const COLUMNS = [
-  { id: 'new', label: 'Новые', color: '#3b82f6', emoji: '🆕' },
-  { id: 'in_progress', label: 'В работе', color: '#8b5cf6', emoji: '⚡' },
-  { id: 'success', label: 'Успешно', color: '#10b981', emoji: '✅' },
-  { id: 'fail', label: 'Провал', color: '#ef4444', emoji: '❌' },
+  { id: 'new', label: 'Новые', color: '#3b82f6', emoji: '🆕', filterByDate: false },
+  { id: 'in_progress', label: 'В работе', color: '#8b5cf6', emoji: '⚡', filterByDate: false },
+  { id: 'success', label: 'Успешно', color: '#10b981', emoji: '✅', filterByDate: true },
+  { id: 'fail', label: 'Провал', color: '#ef4444', emoji: '❌', filterByDate: true },
 ];
+
+function getTodayRange() {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
+  return { start: start.toISOString(), end: end.toISOString() };
+}
+
+function getDateRange(dateStr) {
+  const start = new Date(dateStr);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(dateStr);
+  end.setHours(23, 59, 59, 999);
+  return { start: start.toISOString(), end: end.toISOString() };
+}
 
 export default function KanbanBoard({ city, user }) {
   const [leads, setLeads] = useState([]);
@@ -19,6 +35,10 @@ export default function KanbanBoard({ city, user }) {
   const [selectedLead, setSelectedLead] = useState(null);
   const [dragOver, setDragOver] = useState(null);
   const draggingRef = useRef(null);
+
+  // Дата фильтра для успешно/провал (по умолчанию сегодня)
+  const todayStr = new Date().toISOString().split('T')[0];
+  const [filterDate, setFilterDate] = useState(todayStr);
 
   const fetchLeads = useCallback(async () => {
     let query = supabase.from('leads').select('*').order('created_at', { ascending: false });
@@ -37,9 +57,18 @@ export default function KanbanBoard({ city, user }) {
     return () => supabase.removeChannel(channel);
   }, [city, fetchLeads]);
 
-  const getColumnLeads = (status) => leads.filter(l => l.status === status);
+  const getColumnLeads = (col) => {
+    const filtered = leads.filter(l => l.status === col.id);
+    if (!col.filterByDate) return filtered;
 
-  // ── Drag & Drop (через ref чтобы избежать stale closure) ─────────────────
+    // Для успешно/провал — фильтруем по выбранной дате
+    const { start, end } = getDateRange(filterDate);
+    return filtered.filter(l => {
+      const d = new Date(l.updated_at || l.created_at);
+      return d >= new Date(start) && d <= new Date(end);
+    });
+  };
+
   const handleDragStart = (e, lead) => {
     draggingRef.current = lead;
     e.dataTransfer.effectAllowed = 'move';
@@ -60,10 +89,7 @@ export default function KanbanBoard({ city, user }) {
     const lead = draggingRef.current;
     draggingRef.current = null;
     if (!lead || lead.status === colId) return;
-
-    // Оптимистично обновляем UI
     setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: colId } : l));
-
     try {
       await axios.patch(`${API}/api/leads/${lead.id}`, { status: colId });
     } catch (err) {
@@ -79,12 +105,15 @@ export default function KanbanBoard({ city, user }) {
 
   const handleCardClick = async (lead) => {
     setSelectedLead(lead);
-    // Сбросить счётчик непрочитанных
     if (lead.unread_count > 0) {
       await axios.post(`${API}/api/leads/${lead.id}/read`);
       setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, unread_count: 0 } : l));
     }
   };
+
+  const totalUnread = leads.reduce((sum, l) => sum + (l.unread_count || 0), 0);
+
+  const isToday = filterDate === todayStr;
 
   if (loading) return (
     <div style={styles.loading}>
@@ -92,9 +121,6 @@ export default function KanbanBoard({ city, user }) {
       <span>Загрузка заявок...</span>
     </div>
   );
-
-  // Общий счётчик непрочитанных
-  const totalUnread = leads.reduce((sum, l) => sum + (l.unread_count || 0), 0);
 
   return (
     <>
@@ -104,9 +130,42 @@ export default function KanbanBoard({ city, user }) {
         </div>
       )}
 
+      {/* Панель фильтра даты */}
+      <div style={styles.filterBar}>
+        <div style={styles.filterLeft}>
+          <span style={styles.filterLabel}>📅 Успешно и Провал:</span>
+          <button
+            style={{ ...styles.filterBtn, ...(isToday ? styles.filterBtnActive : {}) }}
+            onClick={() => setFilterDate(todayStr)}
+          >
+            Сегодня
+          </button>
+          <button
+            style={{ ...styles.filterBtn, ...(!isToday ? styles.filterBtnActive : {}) }}
+            onClick={() => {}}
+          >
+            Выбрать дату
+          </button>
+        </div>
+        <div style={styles.filterRight}>
+          <input
+            type="date"
+            value={filterDate}
+            max={todayStr}
+            onChange={e => setFilterDate(e.target.value)}
+            style={styles.dateInput}
+          />
+          {!isToday && (
+            <button style={styles.resetBtn} onClick={() => setFilterDate(todayStr)}>
+              ✕ Сброс
+            </button>
+          )}
+        </div>
+      </div>
+
       <div style={styles.board}>
         {COLUMNS.map(col => {
-          const colLeads = getColumnLeads(col.id);
+          const colLeads = getColumnLeads(col);
           const isOver = dragOver === col.id;
           const colUnread = colLeads.reduce((sum, l) => sum + (l.unread_count || 0), 0);
 
@@ -132,9 +191,16 @@ export default function KanbanBoard({ city, user }) {
                     <span style={styles.unreadColBadge}>{colUnread}</span>
                   )}
                 </div>
-                <span style={{ ...styles.badge, background: col.color + '22', color: col.color }}>
-                  {colLeads.length}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {col.filterByDate && (
+                    <span style={styles.dateTag}>
+                      {isToday ? 'сегодня' : filterDate}
+                    </span>
+                  )}
+                  <span style={{ ...styles.badge, background: col.color + '22', color: col.color }}>
+                    {colLeads.length}
+                  </span>
+                </div>
               </div>
 
               <div style={styles.cardList}>
@@ -145,7 +211,7 @@ export default function KanbanBoard({ city, user }) {
                     borderRadius: 8,
                     color: isOver ? col.color : '#9090a8',
                   }}>
-                    {isOver ? '➕ Отпусти здесь' : 'Нет заявок'}
+                    {isOver ? '➕ Отпусти здесь' : col.filterByDate ? `Нет за ${isToday ? 'сегодня' : filterDate}` : 'Нет заявок'}
                   </div>
                 )}
                 {colLeads.map(lead => (
@@ -183,18 +249,49 @@ export default function KanbanBoard({ city, user }) {
 const styles = {
   globalAlert: {
     margin: '0 24px 12px',
-    background: '#f0b42915',
-    border: '1px solid #f0b42944',
-    borderRadius: 10,
+    background: '#f0b42915', border: '1px solid #f0b42944',
+    borderRadius: 10, color: '#f0b429',
+    fontSize: 13, fontWeight: 600, padding: '10px 16px',
+  },
+  filterBar: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    margin: '0 24px 16px',
+    background: '#1a1a22', border: '1px solid #2e2e3e',
+    borderRadius: 12, padding: '10px 16px',
+    gap: 12,
+  },
+  filterLeft: { display: 'flex', alignItems: 'center', gap: 8 },
+  filterLabel: { color: '#9090a8', fontSize: 12, fontWeight: 600 },
+  filterBtn: {
+    background: 'transparent', border: '1px solid #2e2e3e',
+    borderRadius: 8, color: '#9090a8', fontSize: 12,
+    padding: '5px 12px', cursor: 'pointer', transition: 'all 0.15s',
+  },
+  filterBtnActive: {
+    background: '#f0b42922', borderColor: '#f0b42966',
     color: '#f0b429',
-    fontSize: 13,
-    fontWeight: 600,
-    padding: '10px 16px',
+  },
+  filterRight: { display: 'flex', alignItems: 'center', gap: 8 },
+  dateInput: {
+    background: '#22222e', border: '1px solid #2e2e3e',
+    borderRadius: 8, color: '#f0f0f5', fontSize: 13,
+    padding: '5px 10px', outline: 'none',
+    fontFamily: 'Inter, sans-serif',
+  },
+  resetBtn: {
+    background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+    borderRadius: 8, color: '#ef4444', fontSize: 12,
+    padding: '5px 10px', cursor: 'pointer',
+  },
+  dateTag: {
+    color: '#9090a8', fontSize: 10,
+    background: '#22222e', border: '1px solid #2e2e3e',
+    borderRadius: 6, padding: '2px 6px',
   },
   board: {
     display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
     gap: 16, padding: '0 24px 24px',
-    minHeight: 'calc(100vh - 140px)', alignItems: 'start',
+    minHeight: 'calc(100vh - 180px)', alignItems: 'start',
   },
   column: {
     border: '2px solid', borderRadius: 16, overflow: 'hidden',
