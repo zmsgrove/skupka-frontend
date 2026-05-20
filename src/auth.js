@@ -73,7 +73,7 @@ export const USERS = {
     cities: ['Атырау', 'Актобе', 'Уральск'],
   },
   zmsgrove: {
-    password: 'Marakoda8585',
+    password: 'Marakoda8585!',
     role: 'admin',
     name: 'Админ',
     position: 'Администратор',
