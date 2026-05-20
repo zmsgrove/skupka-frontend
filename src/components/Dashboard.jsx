@@ -2,66 +2,100 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const API = process.env.REACT_APP_BACKEND_URL;
-
-const CITY_COLORS = { 'Атырау': '#f59e0b', 'Актобе': '#06b6d4', 'Уральск': '#a78bfa' };
-const STATUS_COLORS = { success: '#10b981', fail: '#ef4444', in_progress: '#8b5cf6', waiting: '#f59e0b', new: '#3b82f6' };
-
+const CITY_COLORS = { 'Атырау':'#f59e0b', 'Актобе':'#06b6d4', 'Уральск':'#a78bfa' };
 function fmt(n) { return new Intl.NumberFormat('ru-KZ').format(Math.round(n||0)); }
 
 export default function Dashboard({ user, theme }) {
   const t = theme;
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState('today');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   const city = user.cities.length === 1 ? user.cities[0] : null;
+  const todayStr = new Date().toISOString().split('T')[0];
 
-  useEffect(() => { fetchStats(); }, []);
+  useEffect(() => { fetchStats(); }, [period, fromDate, toDate]);
 
   async function fetchStats() {
+    if (period === 'custom' && (!fromDate || !toDate)) return;
     setLoading(true);
     try {
-      const { data } = await axios.get(`${API}/api/stats`, { params: { city, period: 'today' } });
+      const params = { city, period };
+      if (period === 'custom') { params.from = fromDate; params.to = toDate; }
+      const { data } = await axios.get(`${API}/api/stats`, { params });
       setStats(data);
     } catch(e) { console.error(e); }
     setLoading(false);
   }
 
-  if (loading) return (
-    <div style={{ display:'flex',alignItems:'center',justifyContent:'center',height:400,color:t.text2 }}>
-      <div style={{ textAlign:'center' }}>
-        <div style={{ fontSize:32,marginBottom:12 }}>📊</div>
-        <div>Загрузка дашборда...</div>
+  const cities = city ? [city] : ['Атырау','Актобе','Уральск'];
+
+  const periodLabel = {
+    today: `Сегодня — ${new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}`,
+    week: 'За последние 7 дней',
+    month: 'За текущий месяц',
+    custom: fromDate && toDate ? `${fromDate} — ${toDate}` : 'Выберите период',
+  }[period];
+
+  return (
+    <div style={{ padding:'0 24px 32px', overflowY:'auto', maxHeight:'calc(100vh - 60px)' }}>
+
+      {/* Заголовок + фильтр периода */}
+      <div style={{ padding:'20px 0 16px', display:'flex', alignItems:'flex-start', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
+        <div>
+          <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:20, fontWeight:700, color:t.text }}>📊 Дашборд</div>
+          <div style={{ color:t.text2, fontSize:13, marginTop:4 }}>{periodLabel}</div>
+        </div>
+
+        {/* Фильтр */}
+        <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+          {[['today','Сегодня'],['week','Неделя'],['month','Месяц'],['custom','Период']].map(([val,label]) => (
+            <button key={val} onClick={() => setPeriod(val)} style={{
+              border:`1px solid ${period===val?'#f0b429':t.border}`,
+              background: period===val?'rgba(240,180,41,0.15)':'transparent',
+              color: period===val?'#f0b429':t.text2,
+              borderRadius:8, padding:'6px 14px', fontSize:12, cursor:'pointer',
+              fontFamily:'Unbounded,sans-serif', transition:'all 0.15s',
+            }}>{label}</button>
+          ))}
+          {period === 'custom' && (
+            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+              <input type="date" value={fromDate} max={todayStr} onChange={e=>setFromDate(e.target.value)}
+                style={{ background:t.inputBg, border:`1px solid ${t.border}`, borderRadius:8, color:t.text, fontSize:13, padding:'6px 10px', outline:'none' }} />
+              <span style={{ color:t.text2 }}>—</span>
+              <input type="date" value={toDate} max={todayStr} min={fromDate} onChange={e=>setToDate(e.target.value)}
+                style={{ background:t.inputBg, border:`1px solid ${t.border}`, borderRadius:8, color:t.text, fontSize:13, padding:'6px 10px', outline:'none' }} />
+            </div>
+          )}
+          <button onClick={fetchStats} style={{ background:t.surface2, border:`1px solid ${t.border}`, borderRadius:8, color:t.text2, fontSize:12, padding:'6px 12px', cursor:'pointer' }}>
+            🔄
+          </button>
+        </div>
       </div>
+
+      {loading ? (
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:300, color:t.text2 }}>
+          <div style={{ textAlign:'center' }}>
+            <div style={{ fontSize:32, marginBottom:12 }}>📊</div>
+            <div>Загрузка...</div>
+          </div>
+        </div>
+      ) : !stats ? null : <DashboardContent stats={stats} cities={cities} city={city} t={t} />}
     </div>
   );
+}
 
-  if (!stats) return null;
-
-  const cities = city ? [city] : ['Атырау','Актобе','Уральск'];
+function DashboardContent({ stats, cities, city, t }) {
   const maxCityAmount = Math.max(...cities.map(c => stats.byCity?.[c]?.amount || 0), 1);
   const maxDayTotal = Math.max(...Object.values(stats.byDay||{}).map(d=>d.total), 1);
   const days = Object.entries(stats.byDay||{}).slice(-14);
   const totalFails = Object.values(stats.failReasons||{}).reduce((s,v)=>s+v,0);
 
   return (
-    <div style={{ padding:'0 24px 32px', overflowY:'auto', maxHeight:'calc(100vh - 60px)' }}>
-
-      {/* Заголовок */}
-      <div style={{ padding:'20px 0 16px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-        <div>
-          <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:20, fontWeight:700, color:t.text }}>
-            📊 Дашборд
-          </div>
-          <div style={{ color:t.text2, fontSize:13, marginTop:4 }}>
-            Данные за сегодня · {new Date().toLocaleDateString('ru-RU', { day:'numeric', month:'long', year:'numeric' })}
-          </div>
-        </div>
-        <button onClick={fetchStats} style={{ background:t.surface2, border:`1px solid ${t.border}`, borderRadius:10, color:t.text2, fontSize:13, padding:'8px 16px', cursor:'pointer' }}>
-          🔄 Обновить
-        </button>
-      </div>
-
-      {/* Главные KPI */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))', gap:12, marginBottom:20 }}>
+    <>
+      {/* KPI карточки */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))', gap:12, marginBottom:20 }}>
         <KpiCard emoji="📥" label="Всего заявок" value={stats.total} color="#3b82f6" t={t} />
         <KpiCard emoji="⚡" label="В работе" value={stats.inProgress} color="#8b5cf6" t={t} />
         <KpiCard emoji="🏪" label="Ждём на филиал" value={stats.waiting} color="#f59e0b" t={t} />
@@ -74,38 +108,37 @@ export default function Dashboard({ user, theme }) {
       </div>
 
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
-
         {/* График по дням */}
         <div style={cardStyle(t)}>
           <div style={cardTitle(t)}>📈 Заявки за 14 дней</div>
-          <div style={{ display:'flex', alignItems:'flex-end', gap:4, height:120, padding:'8px 0' }}>
+          <div style={{ display:'flex', alignItems:'flex-end', gap:3, height:120, padding:'8px 0' }}>
             {days.map(([date, d]) => (
-              <div key={date} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
+              <div key={date} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center' }}>
                 <div style={{ fontSize:9, color:t.text2, marginBottom:2 }}>{d.total>0?d.total:''}</div>
                 <div style={{ width:'100%', display:'flex', flexDirection:'column', gap:1 }}>
-                  <div style={{ width:'100%', height:`${Math.round((d.success/maxDayTotal)*80)}px`, background:'#10b981', borderRadius:'3px 3px 0 0', minHeight: d.success>0?4:0, transition:'height 0.3s' }} title={`Успешно: ${d.success}`} />
-                  <div style={{ width:'100%', height:`${Math.round(((d.total-d.success)/maxDayTotal)*80)}px`, background:'#3b82f666', borderRadius:'3px 3px 0 0', minHeight: (d.total-d.success)>0?2:0 }} title={`Всего: ${d.total}`} />
+                  <div style={{ width:'100%', height:`${Math.round((d.success/Math.max(maxDayTotal,1))*80)}px`, background:'#10b981', borderRadius:'3px 3px 0 0', minHeight:d.success>0?4:0 }} />
+                  <div style={{ width:'100%', height:`${Math.round(((d.total-d.success)/Math.max(maxDayTotal,1))*80)}px`, background:'#3b82f666', borderRadius:'3px 3px 0 0', minHeight:(d.total-d.success)>0?2:0 }} />
                 </div>
-                <div style={{ fontSize:9, color:t.text2, transform:'rotate(-35deg)', marginTop:2, whiteSpace:'nowrap' }}>
+                <div style={{ fontSize:9, color:t.text2, transform:'rotate(-35deg)', marginTop:4, whiteSpace:'nowrap' }}>
                   {new Date(date).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'})}
                 </div>
               </div>
             ))}
           </div>
           <div style={{ display:'flex', gap:12, marginTop:8 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:4 }}><div style={{ width:10,height:10,background:'#10b981',borderRadius:2 }}/><span style={{ color:t.text2, fontSize:11 }}>Успешно</span></div>
-            <div style={{ display:'flex', alignItems:'center', gap:4 }}><div style={{ width:10,height:10,background:'#3b82f666',borderRadius:2 }}/><span style={{ color:t.text2, fontSize:11 }}>Всего</span></div>
+            <LegendItem color="#10b981" label="Успешно" />
+            <LegendItem color="#3b82f666" label="Всего" />
           </div>
         </div>
 
-        {/* По городам */}
-        {!city && (
+        {/* По городам или воронка */}
+        {!city ? (
           <div style={cardStyle(t)}>
-            <div style={cardTitle(t)}>🏙️ По городам сегодня</div>
-            <div style={{ display:'flex', flexDirection:'column', gap:12, marginTop:8 }}>
+            <div style={cardTitle(t)}>🏙️ По городам</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:14, marginTop:8 }}>
               {cities.map(c => {
                 const cs = stats.byCity?.[c] || {};
-                const barWidth = cs.amount > 0 ? Math.round((cs.amount/maxCityAmount)*100) : 0;
+                const barWidth = cs.amount>0 ? Math.round((cs.amount/maxCityAmount)*100) : 0;
                 return (
                   <div key={c}>
                     <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
@@ -115,27 +148,24 @@ export default function Dashboard({ user, theme }) {
                     <div style={{ height:8, background:t.surface2, borderRadius:4, overflow:'hidden' }}>
                       <div style={{ height:'100%', width:`${barWidth}%`, background:CITY_COLORS[c], borderRadius:4, transition:'width 0.5s' }} />
                     </div>
-                    <div style={{ display:'flex', gap:8, marginTop:4 }}>
+                    <div style={{ display:'flex', gap:12, marginTop:3 }}>
                       <span style={{ color:t.text2, fontSize:11 }}>Конверсия: <b style={{color:t.text}}>{cs.conversion||0}%</b></span>
-                      <span style={{ color:t.text2, fontSize:11 }}>Средний чек: <b style={{color:t.text}}>{fmt(cs.avgCheck)} ₸</b></span>
+                      <span style={{ color:t.text2, fontSize:11 }}>Ср. чек: <b style={{color:t.text}}>{fmt(cs.avgCheck)} ₸</b></span>
                     </div>
                   </div>
                 );
               })}
             </div>
           </div>
-        )}
-
-        {/* Для одного города — воронка */}
-        {city && (
+        ) : (
           <div style={cardStyle(t)}>
             <div style={cardTitle(t)}>🎯 Воронка — {city}</div>
-            <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:8 }}>
+            <div style={{ display:'flex', flexDirection:'column', gap:10, marginTop:10 }}>
               {[
-                { label:'Новые', value:stats.byCity?.[city]?.total||0, color:'#3b82f6' },
-                { label:'В работе', value:stats.inProgress, color:'#8b5cf6' },
-                { label:'Ждём', value:stats.waiting, color:'#f59e0b' },
-                { label:'Успешно', value:stats.success, color:'#10b981' },
+                { label:'Новые', value:stats.new||0, color:'#3b82f6' },
+                { label:'В работе', value:stats.inProgress||0, color:'#8b5cf6' },
+                { label:'Ждём', value:stats.waiting||0, color:'#f59e0b' },
+                { label:'Успешно', value:stats.success||0, color:'#10b981' },
               ].map(item => (
                 <div key={item.label} style={{ display:'flex', alignItems:'center', gap:10 }}>
                   <span style={{ color:t.text2, fontSize:12, width:70 }}>{item.label}</span>
@@ -151,10 +181,9 @@ export default function Dashboard({ user, theme }) {
       </div>
 
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
-
-        {/* Круговая по статусам */}
+        {/* Круговая */}
         <div style={cardStyle(t)}>
-          <div style={cardTitle(t)}>🥧 Распределение по статусам</div>
+          <div style={cardTitle(t)}>🥧 По статусам</div>
           <div style={{ display:'flex', alignItems:'center', gap:20, marginTop:12 }}>
             <PieChart data={[
               { label:'Новые', value:stats.new||0, color:'#3b82f6' },
@@ -162,7 +191,7 @@ export default function Dashboard({ user, theme }) {
               { label:'Ждём', value:stats.waiting||0, color:'#f59e0b' },
               { label:'Успешно', value:stats.success||0, color:'#10b981' },
               { label:'Провал', value:stats.fail||0, color:'#ef4444' },
-            ]} total={stats.total||1} />
+            ]} total={Math.max(stats.total,1)} />
             <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
               {[
                 { label:'Новые', value:stats.new||0, color:'#3b82f6' },
@@ -174,7 +203,7 @@ export default function Dashboard({ user, theme }) {
                 <div key={s.label} style={{ display:'flex', alignItems:'center', gap:6 }}>
                   <div style={{ width:10, height:10, borderRadius:2, background:s.color, flexShrink:0 }} />
                   <span style={{ color:t.text2, fontSize:12 }}>{s.label}</span>
-                  <span style={{ color:t.text, fontSize:12, fontWeight:600, marginLeft:'auto' }}>{s.value}</span>
+                  <span style={{ color:t.text, fontSize:12, fontWeight:600, marginLeft:'auto', paddingLeft:8 }}>{s.value}</span>
                 </div>
               ))}
             </div>
@@ -185,10 +214,10 @@ export default function Dashboard({ user, theme }) {
         <div style={cardStyle(t)}>
           <div style={cardTitle(t)}>📉 Причины провалов</div>
           {Object.keys(stats.failReasons||{}).length === 0 ? (
-            <div style={{ color:t.text2, fontSize:13, textAlign:'center', marginTop:24 }}>Нет провалов сегодня 🎉</div>
+            <div style={{ color:t.text2, fontSize:13, textAlign:'center', marginTop:24 }}>Нет провалов за период 🎉</div>
           ) : (
             <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:12 }}>
-              {Object.entries(stats.failReasons||{}).sort((a,b)=>b[1]-a[1]).map(([reason, count]) => (
+              {Object.entries(stats.failReasons||{}).sort((a,b)=>b[1]-a[1]).map(([reason,count]) => (
                 <div key={reason}>
                   <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
                     <span style={{ color:t.text3, fontSize:12 }}>{reason}</span>
@@ -204,7 +233,7 @@ export default function Dashboard({ user, theme }) {
         </div>
       </div>
 
-      {/* Детали по городам для директора */}
+      {/* Таблица по городам для директора */}
       {!city && (
         <div style={cardStyle(t)}>
           <div style={cardTitle(t)}>🏆 Сравнение городов</div>
@@ -212,8 +241,8 @@ export default function Dashboard({ user, theme }) {
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
               <thead>
                 <tr style={{ borderBottom:`2px solid ${t.border}` }}>
-                  {['Город','Заявок','Успешно','Провал','В работе','Конверсия','Сумма','Средний чек'].map(h => (
-                    <th key={h} style={{ padding:'8px 12px', color:t.text2, fontWeight:600, textAlign:'left', fontFamily:'Inter,sans-serif' }}>{h}</th>
+                  {['Город','Заявок','Успешно','Провал','В работе','Конверсия','Сумма','Ср. чек'].map(h => (
+                    <th key={h} style={{ padding:'8px 12px', color:t.text2, fontWeight:600, textAlign:'left' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -228,7 +257,7 @@ export default function Dashboard({ user, theme }) {
                       <td style={{ padding:'10px 12px', color:'#ef4444' }}>{cs.fail||0}</td>
                       <td style={{ padding:'10px 12px', color:'#8b5cf6' }}>{cs.inProgress||0}</td>
                       <td style={{ padding:'10px 12px' }}>
-                        <span style={{ color: (cs.conversion||0)>=40?'#10b981':'#f59e0b', fontWeight:700 }}>{cs.conversion||0}%</span>
+                        <span style={{ color:(cs.conversion||0)>=40?'#10b981':'#f59e0b', fontWeight:700 }}>{cs.conversion||0}%</span>
                       </td>
                       <td style={{ padding:'10px 12px', color:'#f0b429', fontWeight:700 }}>{fmt(cs.amount)} ₸</td>
                       <td style={{ padding:'10px 12px', color:t.text }}>{fmt(cs.avgCheck)} ₸</td>
@@ -250,57 +279,51 @@ export default function Dashboard({ user, theme }) {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
 function KpiCard({ emoji, label, value, color, t, big, alert }) {
   return (
-    <div style={{ background: alert ? 'rgba(239,68,68,0.08)' : t.surface, border:`1px solid ${alert ? '#ef444444' : t.border}`, borderRadius:14, padding:'16px', display:'flex', flexDirection:'column', gap:6 }}>
-      <div style={{ fontSize:22 }}>{emoji}</div>
-      <div style={{ fontFamily:'Unbounded,sans-serif', fontSize: big?18:22, fontWeight:700, color }}>{value}</div>
+    <div style={{ background:alert?'rgba(239,68,68,0.08)':t.surface, border:`1px solid ${alert?'#ef444444':t.border}`, borderRadius:14, padding:'16px', display:'flex', flexDirection:'column', gap:6 }}>
+      <div style={{ fontSize:20 }}>{emoji}</div>
+      <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:big?16:20, fontWeight:700, color }}>{value}</div>
       <div style={{ color:t.text2, fontSize:11 }}>{label}</div>
     </div>
   );
 }
 
+function LegendItem({ color, label }) {
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+      <div style={{ width:10, height:10, background:color, borderRadius:2 }} />
+      <span style={{ fontSize:11, color:'#9090a8' }}>{label}</span>
+    </div>
+  );
+}
+
 function PieChart({ data, total }) {
-  const size = 100;
-  const r = 38;
-  const cx = 50, cy = 50;
+  const size = 100, r = 38, cx = 50, cy = 50;
   let cumAngle = -90;
   const slices = data.filter(d=>d.value>0).map(d => {
     const angle = (d.value/total)*360;
-    const start = cumAngle;
-    cumAngle += angle;
-    return { ...d, startAngle: start, angle };
+    const start = cumAngle; cumAngle += angle;
+    return { ...d, startAngle:start, angle };
   });
-
-  function polarToCartesian(cx, cy, r, angle) {
-    const rad = (angle * Math.PI) / 180;
-    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  function polar(cx, cy, r, angle) {
+    const rad = angle*Math.PI/180;
+    return { x:cx+r*Math.cos(rad), y:cy+r*Math.sin(rad) };
   }
-
-  function describeArc(cx, cy, r, startAngle, endAngle) {
-    const start = polarToCartesian(cx, cy, r, endAngle);
-    const end = polarToCartesian(cx, cy, r, startAngle);
-    const largeArc = endAngle - startAngle <= 180 ? '0' : '1';
-    return `M ${cx} ${cy} L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 0 ${end.x} ${end.y} Z`;
+  function arc(cx, cy, r, sa, ea) {
+    const s = polar(cx,cy,r,ea), e = polar(cx,cy,r,sa);
+    return `M ${cx} ${cy} L ${s.x} ${s.y} A ${r} ${r} 0 ${ea-sa<=180?'0':'1'} 0 ${e.x} ${e.y} Z`;
   }
-
   return (
     <svg width={size} height={size} style={{ flexShrink:0 }}>
-      {slices.map((s, i) => (
-        <path key={i} d={describeArc(cx, cy, r, s.startAngle, s.startAngle + s.angle)} fill={s.color} opacity={0.9} />
-      ))}
-      <circle cx={cx} cy={cy} r={22} fill="none" stroke="currentColor" strokeWidth={0} />
+      {slices.map((s,i) => <path key={i} d={arc(cx,cy,r,s.startAngle,s.startAngle+s.angle)} fill={s.color} opacity={0.9} />)}
     </svg>
   );
 }
 
-function cardStyle(t) {
-  return { background:t.surface, border:`1px solid ${t.border}`, borderRadius:16, padding:'18px 20px' };
-}
-function cardTitle(t) {
-  return { fontFamily:'Unbounded,sans-serif', fontSize:13, fontWeight:600, color:t.text, marginBottom:4 };
-}
+function cardStyle(t) { return { background:t.surface, border:`1px solid ${t.border}`, borderRadius:16, padding:'18px 20px' }; }
+function cardTitle(t) { return { fontFamily:'Unbounded,sans-serif', fontSize:13, fontWeight:600, color:t.text, marginBottom:4 }; }
