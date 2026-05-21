@@ -17,7 +17,7 @@ export default function Dashboard({ user, theme }) {
   const city = hasAllCities ? selectedCity : user.cities[0];
   const todayStr = new Date().toISOString().split('T')[0];
 
-  useEffect(() => { fetchStats(); }, [period, fromDate, toDate]);
+  useEffect(() => { fetchStats(); }, [period, fromDate, toDate, selectedCity]);
 
   async function fetchStats() {
     if (period === 'custom' && (!fromDate || !toDate)) return;
