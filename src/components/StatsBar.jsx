@@ -1,55 +1,197 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabase';
 
-export default function StatsBar({ city, user, theme }) {
+export default function StatsBar({ city, user, theme, onFilter }) {
   const t = theme;
   const [stats, setStats] = useState(null);
+  const [yesterday, setYesterday] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [activeFilter, setActiveFilter] = useState(null);
 
-  useEffect(() => {
-    fetchStats();
-    const channel = supabase.channel('statsbar')
-      .on('postgres_changes', { event:'*', schema:'public', table:'leads' }, fetchStats)
-      .subscribe();
-    return () => supabase.removeChannel(channel);
-  }, [city]);
+  const fetchStats = useCallback(async () => {
+    const now = new Date();
+    const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
+    const todayEnd = new Date(now); todayEnd.setHours(23,59,59,999);
+    const ydStart = new Date(now); ydStart.setDate(ydStart.getDate()-1); ydStart.setHours(0,0,0,0);
+    const ydEnd = new Date(now); ydEnd.setDate(ydEnd.getDate()-1); ydEnd.setHours(23,59,59,999);
 
-  async function fetchStats() {
-    const todayStart = new Date(); todayStart.setHours(0,0,0,0);
-    const todayEnd = new Date(); todayEnd.setHours(23,59,59,999);
     let q = supabase.from('leads').select('*').eq('is_deleted',false).eq('is_archived',false);
     if (city !== 'all') q = q.eq('city', city);
     const { data: all } = await q;
     if (!all) return;
+
     const today = all.filter(l => { const d=new Date(l.updated_at||l.created_at); return d>=todayStart&&d<=todayEnd; });
+    const yd = all.filter(l => { const d=new Date(l.updated_at||l.created_at); return d>=ydStart&&d<=ydEnd; });
+
     const successToday = today.filter(l=>l.status==='success');
+    const successYd = yd.filter(l=>l.status==='success');
+    const inProgressAll = all.filter(l=>l.status==='in_progress');
+    const waitingAll = all.filter(l=>l.status==='waiting');
+    const overdueAll = all.filter(l=>l.status==='in_progress'&&(Date.now()-new Date(l.updated_at||l.created_at).getTime())>10*3600*1000);
+
     setStats({
       newToday: today.filter(l=>l.status==='new').length,
-      inProgress: all.filter(l=>l.status==='in_progress').length,
-      waiting: all.filter(l=>l.status==='waiting').length,
+      newYd: yd.filter(l=>l.status==='new').length,
+      inProgress: inProgressAll.length,
+      inProgressYd: yd.filter(l=>l.status==='in_progress').length,
+      inProgressAmount: inProgressAll.reduce((s,l)=>s+(Number(l.estimate_amount)||0),0),
+      waiting: waitingAll.length,
+      waitingYd: yd.filter(l=>l.status==='waiting').length,
+      waitingAmount: waitingAll.reduce((s,l)=>s+(Number(l.estimate_amount)||0),0),
       successAmount: successToday.reduce((s,l)=>s+(Number(l.estimate_amount)||0),0),
       successCount: successToday.length,
+      successYd: successYd.length,
+      successAmountYd: successYd.reduce((s,l)=>s+(Number(l.estimate_amount)||0),0),
       conversion: today.length>0?Math.round(successToday.length/today.length*100):0,
+      conversionYd: yd.length>0?Math.round(successYd.length/yd.length*100):0,
+      overdue: overdueAll.length,
+    });
+    setLastUpdated(new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}));
+  }, [city]);
+
+  useEffect(() => {
+    fetchStats();
+    const channel = supabase.channel('statsbar')
+      .on('postgres_changes',{event:'*',schema:'public',table:'leads'},fetchStats)
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [fetchStats]);
+
+  if (!stats) return null;
+
+  const fmt = n => new Intl.NumberFormat('ru-KZ').format(Math.round(n||0));
+
+  const trend = (cur, prev) => {
+    if (prev === 0 && cur === 0) return null;
+    if (cur > prev) return { arrow:'↑', color:'#10b981' };
+    if (cur < prev) return { arrow:'↓', color:'#ef4444' };
+    return { arrow:'→', color:'#9090a8' };
+  };
+
+  const handleClick = (filter) => {
+    const next = activeFilter === filter ? null : filter;
+    setActiveFilter(next);
+    if (onFilter) onFilter(next);
+  };
+
+  const cards = [
+    {
+      id: 'new',
+      emoji: '🆕',
+      value: stats.newToday,
+      label: 'Новых сегодня',
+      color: '#3b82f6',
+      trend: trend(stats.newToday, stats.newYd),
+      alert: stats.newToday > 5,
+      alertColor: '#f59e0b',
+    },
+    {
+      id: 'in_progress',
+      emoji: '⚡',
+      value: stats.inProgress,
+      label: 'В работе',
+      sub: stats.inProgressAmount > 0 ? `${fmt(stats.inProgressAmount)} ₸` : null,
+      color: '#8b5cf6',
+      trend: trend(stats.inProgress, stats.inProgressYd),
+    },
+    {
+      id: 'waiting',
+      emoji: '🏪',
+      value: stats.waiting,
+      label: 'Ждём на филиал',
+      sub: stats.waitingAmount > 0 ? `${fmt(stats.waitingAmount)} ₸` : null,
+      color: '#f59e0b',
+      trend: trend(stats.waiting, stats.waitingYd),
+    },
+    {
+      id: 'success',
+      emoji: '✅',
+      value: `${fmt(stats.successAmount)} ₸`,
+      label: `Успешно сегодня (${stats.successCount})`,
+      color: '#10b981',
+      trend: trend(stats.successCount, stats.successYd),
+      big: true,
+    },
+    {
+      id: 'conversion',
+      emoji: '📊',
+      value: `${stats.conversion}%`,
+      label: 'Конверсия',
+      color: stats.conversion >= 50 ? '#10b981' : stats.conversion < 30 ? '#ef4444' : '#f59e0b',
+      trend: trend(stats.conversion, stats.conversionYd),
+    },
+  ];
+
+  if (stats.overdue > 0) {
+    cards.push({
+      id: 'overdue',
+      emoji: '🔴',
+      value: stats.overdue,
+      label: 'Просрочено 10ч+',
+      color: '#ef4444',
+      alert: true,
+      alertColor: '#ef4444',
     });
   }
 
-  if (!stats) return null;
-  const fmt = n => new Intl.NumberFormat('ru-KZ').format(Math.round(n||0));
-
   return (
-    <div style={{ display:'flex',alignItems:'center',gap:10,padding:'0 24px 14px',flexWrap:'wrap' }}>
-      {[
-        { emoji:'🆕', val:stats.newToday, label:'Новых сегодня', color:'#3b82f6' },
-        { emoji:'⚡', val:stats.inProgress, label:'В работе', color:'#8b5cf6' },
-        { emoji:'🏪', val:stats.waiting, label:'Ждём на филиал', color:'#f59e0b' },
-        { emoji:'✅', val:`${fmt(stats.successAmount)} ₸`, label:`Успешно сегодня (${stats.successCount})`, color:'#10b981' },
-        { emoji:'📊', val:`${stats.conversion}%`, label:'Конверсия', color:stats.conversion>=40?'#10b981':'#f59e0b' },
-      ].map(s => (
-        <div key={s.label} style={{ background:t.surface,border:`1px solid ${t.border}`,borderRadius:12,padding:'10px 14px',display:'flex',flexDirection:'column',gap:2,minWidth:110 }}>
-          <div style={{ fontSize:16 }}>{s.emoji}</div>
-          <div style={{ fontFamily:'Unbounded,sans-serif',fontSize:16,fontWeight:700,color:s.color }}>{s.val}</div>
-          <div style={{ color:t.text2,fontSize:11 }}>{s.label}</div>
+    <div style={{ padding:'0 24px 14px' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
+        {cards.map(card => {
+          const isActive = activeFilter === card.id;
+          const bgColor = card.alert ? card.alertColor+'15' : t.surface;
+          const borderColor = isActive ? card.color : card.alert ? card.alertColor+'44' : t.border;
+
+          return (
+            <div key={card.id} onClick={() => handleClick(card.id)}
+              style={{
+                background: isActive ? card.color+'20' : bgColor,
+                border: `1px solid ${borderColor}`,
+                borderRadius: 12, padding:'12px 16px',
+                display:'flex', flexDirection:'column', gap:3,
+                minWidth: card.big ? 160 : 110,
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+                transform: isActive ? 'translateY(-2px)' : 'none',
+                boxShadow: isActive ? `0 4px 12px ${card.color}33` : 'none',
+              }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <span style={{ fontSize: 18 }}>{card.emoji}</span>
+                {card.trend && (
+                  <span style={{ fontSize:11, fontWeight:700, color:card.trend.color }}>
+                    {card.trend.arrow}
+                  </span>
+                )}
+              </div>
+              <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:card.big?18:20, fontWeight:700, color:card.color }}>
+                {card.value}
+              </div>
+              {card.sub && (
+                <div style={{ fontSize:11, color:card.color, fontWeight:600 }}>{card.sub}</div>
+              )}
+              <div style={{ color:t.text2, fontSize:11 }}>{card.label}</div>
+            </div>
+          );
+        })}
+
+        {/* Время обновления */}
+        {lastUpdated && (
+          <div style={{ marginLeft:'auto', color:t.text2, fontSize:11, display:'flex', alignItems:'center', gap:4 }}>
+            🕐 {lastUpdated}
+            <button onClick={fetchStats} style={{ background:'transparent', border:'none', color:t.text2, cursor:'pointer', fontSize:13, padding:'2px 4px' }}>↻</button>
+          </div>
+        )}
+      </div>
+
+      {activeFilter && (
+        <div style={{ marginTop:8, fontSize:12, color:t.text2 }}>
+          Фильтр активен — показаны карточки: <span style={{ color:'#f0b429' }}>{activeFilter}</span>
+          <button onClick={() => { setActiveFilter(null); if(onFilter) onFilter(null); }}
+            style={{ background:'transparent', border:'none', color:'#ef4444', cursor:'pointer', fontSize:12, marginLeft:8 }}>
+            ✕ сбросить
+          </button>
         </div>
-      ))}
+      )}
     </div>
   );
 }

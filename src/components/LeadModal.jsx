@@ -29,7 +29,20 @@ const MSG_TEMPLATES = [
   '🙏 Спасибо за обращение в SKUPKA!',
 ];
 
-export default function LeadModal({ lead, user, onClose, onUpdate }) {
+// Простой Markdown рендерер
+function renderMarkdown(text) {
+  if (!text) return text;
+  const parts = text.split(/(\*[^*]+\*|_[^_]+_)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return <strong key={i} style={{ fontWeight:700 }}>{part.slice(1,-1)}</strong>;
+    }
+    if (part.startsWith('_') && part.endsWith('_')) {
+      return <em key={i} style={{ fontStyle:'italic', opacity:0.85 }}>{part.slice(1,-1)}</em>;
+    }
+    return part;
+  });
+}
   const [data, setData] = useState(null);
   const [activeTab, setActiveTab] = useState('chat');
   const [msgText, setMsgText] = useState('');
@@ -142,7 +155,7 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
             <img src={photoUrl} alt="фото" style={{ maxWidth: '100%', borderRadius: 8, display: 'block', marginBottom: 8 }} onError={e => e.target.style.display = 'none'} />
             <button style={styles.downloadBtn} onClick={() => handleDownloadPhoto(photoUrl)}>⬇️ Скачать фото</button>
           </div>
-        ) : <div style={styles.msgText}>{msg.text}</div>}
+        ) : <div style={styles.msgText}>{renderMarkdown(msg.text)}</div>}
         <div style={styles.msgTime}>
           {new Date(msg.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
         </div>

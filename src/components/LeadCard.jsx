@@ -12,19 +12,26 @@ function getTimerLabel(lead) {
   return remMins > 0 ? `${hours}ч ${remMins}м` : `${hours}ч`;
 }
 
+// Простой Markdown → текст (убираем символы)
+function stripMarkdown(text) {
+  if (!text) return '';
+  return text.replace(/\*([^*]+)\*/g, '$1').replace(/_([^_]+)_/g, '$1');
+}
+
 export default function LeadCard({ lead, colColor, onClick, onDragStart, onDragEnd, onContextMenu, isDragging, isOverdue, isRepeat, showTimer, theme }) {
   const t = theme;
   const date = new Date(lead.created_at).toLocaleDateString('ru-RU', { day:'2-digit', month:'2-digit', year:'2-digit' });
   const cityColor = CITY_COLORS[lead.city] || '#9090a8';
   const hasUnread = lead.unread_count > 0;
-
   const borderColor = isOverdue ? '#ef4444' : hasUnread ? '#f0b429' : t.border;
 
   return (
     <div draggable="true" onDragStart={onDragStart} onDragEnd={onDragEnd}
       onClick={onClick} onContextMenu={onContextMenu}
-      style={{ background:t.cardBg, border:`1px solid ${borderColor}`, borderRadius:12, overflow:'hidden',
-        cursor:'grab', userSelect:'none', transition:'transform 0.15s,opacity 0.15s,border-color 0.2s',
+      style={{
+        background:t.cardBg, border:`1px solid ${borderColor}`, borderRadius:12,
+        overflow:'hidden', cursor:'grab', userSelect:'none',
+        transition:'transform 0.15s,opacity 0.15s,border-color 0.2s',
         opacity:isDragging?0.4:1,
         boxShadow: isOverdue?'0 0 0 1px rgba(239,68,68,0.3)':hasUnread?'0 0 0 1px rgba(240,180,41,0.3)':'none',
       }}>
@@ -66,16 +73,18 @@ export default function LeadCard({ lead, colColor, onClick, onDragStart, onDragE
         <span style={{ fontSize:11,fontWeight:600,padding:'2px 8px',borderRadius:20,color:cityColor,background:cityColor+'18',fontFamily:'Unbounded,sans-serif' }}>{lead.city}</span>
         <div style={{ display:'flex',alignItems:'center',gap:6 }}>
           {showTimer && (
-            <span style={{ fontSize:10,color:isOverdue?'#ef4444':'#9090a8',fontWeight:isOverdue?700:400 }}>⏱ {getTimerLabel(lead)}</span>
+            <span style={{ fontSize:10,color:isOverdue?'#ef4444':'#9090a8',fontWeight:isOverdue?700:400 }}>
+              ⏱ {getTimerLabel(lead)}
+            </span>
           )}
           <span style={{ color:t.text2,fontSize:11 }}>{date}</span>
         </div>
       </div>
 
-      <div style={{ padding:'10px 12px 8px',display:'flex',flexDirection:'column',gap:4 }}>
+      <div style={{ padding:'10px 12px 10px',display:'flex',flexDirection:'column',gap:4 }}>
         <div style={{ color:t.text,fontWeight:600,fontSize:14 }}>{lead.client_name}</div>
         <div style={{ color:t.text2,fontSize:12 }}>{lead.phone}</div>
-        <div style={{ color:t.text3,fontSize:13,marginTop:4 }}>📱 {lead.device}</div>
+        <div style={{ color:t.text3,fontSize:13,marginTop:4 }}>📱 {stripMarkdown(lead.device)}</div>
         {lead.estimate_amount && (
           <div style={{ color:'#f0b429',fontSize:13,fontWeight:600,marginTop:4 }}>
             💰 {new Intl.NumberFormat('ru-KZ').format(lead.estimate_amount)} ₸
@@ -87,7 +96,6 @@ export default function LeadCard({ lead, colColor, onClick, onDragStart, onDragE
           </div>
         )}
       </div>
-      <div style={{ color:t.text2+'66',fontSize:10,textAlign:'center',padding:'3px 0 6px' }}>⠿ перетащи · ПКМ для меню</div>
     </div>
   );
 }

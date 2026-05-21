@@ -36,7 +36,9 @@ export default function KanbanBoard({ city, user, theme }) {
   const [dragOver, setDragOver] = useState(null);
   const [search, setSearch] = useState('');
   const [contextMenu, setContextMenu] = useState(null);
-  const [dragPopup, setDragPopup] = useState(null); // { lead, toStatus }
+  const [dragPopup, setDragPopup] = useState(null);
+  const [collapsed, setCollapsed] = useState({});
+  const [statsFilter, setStatsFilter] = useState(null);
   const draggingRef = useRef(null);
   const todayStr = new Date().toISOString().split('T')[0];
   const [filterDate, setFilterDate] = useState(todayStr);
@@ -80,7 +82,15 @@ export default function KanbanBoard({ city, user, theme }) {
       const q = search.toLowerCase();
       filtered = filtered.filter(l => l.client_name?.toLowerCase().includes(q) || l.phone?.includes(q) || l.device?.toLowerCase().includes(q));
     }
+    // Фильтр по клику на StatBar
+    if (statsFilter === 'overdue') {
+      filtered = filtered.filter(l => (Date.now()-new Date(l.updated_at||l.created_at).getTime()) > 10*3600*1000);
+    }
     return filtered;
+  };
+
+  const toggleCollapse = (colId) => {
+    setCollapsed(prev => ({ ...prev, [colId]: !prev[colId] }));
   };
 
   const isOverdue = (lead) => {
@@ -157,7 +167,7 @@ export default function KanbanBoard({ city, user, theme }) {
 
   return (
     <>
-      <StatsBar city={city} user={user} theme={t} />
+      <StatsBar city={city} user={user} theme={t} onFilter={setStatsFilter} />
 
       {totalUnread > 0 && (
         <div style={{ margin:'0 24px 10px',background:'rgba(240,180,41,0.1)',border:'1px solid rgba(240,180,41,0.3)',borderRadius:10,color:'#f0b429',fontSize:13,fontWeight:600,padding:'8px 16px' }}>
@@ -187,6 +197,7 @@ export default function KanbanBoard({ city, user, theme }) {
         {COLUMNS.map(col => {
           const colLeads = getColumnLeads(col);
           const isOver = dragOver === col.id;
+          const isCollapsed = collapsed[col.id];
           const colUnread = colLeads.reduce((s,l)=>s+(l.unread_count||0),0);
           const colSum = col.showSum ? colLeads.reduce((s,l)=>s+(Number(l.estimate_amount)||0),0) : 0;
 
@@ -197,40 +208,57 @@ export default function KanbanBoard({ city, user, theme }) {
               onDrop={e => handleDrop(e,col.id)}
               onDragLeave={e => { if(!e.currentTarget.contains(e.relatedTarget)) setDragOver(null); }}
             >
-              <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 14px 10px',borderBottom:`1px solid ${t.border}` }}>
+              {/* Заголовок — кликабельный для сворачивания */}
+              <div
+                onClick={() => toggleCollapse(col.id)}
+                style={{ display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 14px 10px',borderBottom:`1px solid ${t.border}`,cursor:'pointer',userSelect:'none' }}
+              >
                 <div style={{ display:'flex',alignItems:'center',gap:6 }}>
                   <span>{col.emoji}</span>
                   <span style={{ fontFamily:'Unbounded,sans-serif',fontSize:11,fontWeight:600,color:col.color }}>{col.label}</span>
                   {colUnread>0 && <span style={{ background:'#f0b429',color:'#0f0f13',fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:20 }}>{colUnread}</span>}
                 </div>
-                <span style={{ fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:20,background:col.color+'22',color:col.color }}>{colLeads.length}</span>
+                <div style={{ display:'flex',alignItems:'center',gap:6 }}>
+                  <span style={{ fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:20,background:col.color+'22',color:col.color }}>{colLeads.length}</span>
+                  <span style={{ color:t.text2,fontSize:12,transition:'transform 0.2s',transform:isCollapsed?'rotate(-90deg)':'rotate(0deg)' }}>▾</span>
+                </div>
               </div>
 
-              {col.showSum && colSum > 0 && (
+              {!isCollapsed && col.showSum && colSum > 0 && (
                 <div style={{ padding:'5px 14px',background:t.surface2,color:t.text2,fontSize:11,borderBottom:`1px solid ${t.border}` }}>
                   {colLeads.length} заявок · {fmt(colSum)} ₸
                   {col.filterByDate && !isToday && <span style={{ color:'#f0b429',marginLeft:4 }}>({filterDate})</span>}
                 </div>
               )}
 
-              <div style={{ padding:10,display:'flex',flexDirection:'column',gap:8,minHeight:80 }}>
-                {colLeads.length===0 && (
-                  <div style={{ color:isOver?col.color:t.text2,fontSize:12,textAlign:'center',padding:'20px 0',border:isOver?`2px dashed ${col.color}66`:'none',borderRadius:8,transition:'all 0.15s' }}>
-                    {isOver?'➕ Отпусти здесь':'Нет заявок'}
-                  </div>
-                )}
-                {colLeads.map(lead => (
-                  <LeadCard key={lead.id} lead={lead} colColor={col.color} theme={t}
-                    isDragging={draggingRef.current?.id===lead.id}
-                    isOverdue={isOverdue(lead)} isRepeat={isRepeatClient(lead)}
-                    showTimer={col.timerOn} ticker={ticker}
-                    onClick={() => handleCardClick(lead)}
-                    onDragStart={e => handleDragStart(e,lead)}
-                    onDragEnd={handleDragEnd}
-                    onContextMenu={e => handleContextMenu(e,lead)}
-                  />
-                ))}
-              </div>
+              {!isCollapsed && (
+                <div style={{ padding:10,display:'flex',flexDirection:'column',gap:8,minHeight:80 }}>
+                  {colLeads.length===0 && (
+                    <div style={{ color:isOver?col.color:t.text2,fontSize:12,textAlign:'center',padding:'20px 0',border:isOver?`2px dashed ${col.color}66`:'none',borderRadius:8,transition:'all 0.15s' }}>
+                      {isOver?'➕ Отпусти здесь':'Нет заявок'}
+                    </div>
+                  )}
+                  {colLeads.map(lead => (
+                    <LeadCard key={lead.id} lead={lead} colColor={col.color} theme={t}
+                      isDragging={draggingRef.current?.id===lead.id}
+                      isOverdue={isOverdue(lead)} isRepeat={isRepeatClient(lead)}
+                      showTimer={col.timerOn} ticker={ticker}
+                      onClick={() => handleCardClick(lead)}
+                      onDragStart={e => handleDragStart(e,lead)}
+                      onDragEnd={handleDragEnd}
+                      onContextMenu={e => handleContextMenu(e,lead)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Если свёрнуто — показываем мини итог */}
+              {isCollapsed && (
+                <div style={{ padding:'8px 14px',color:t.text2,fontSize:11,display:'flex',justifyContent:'space-between' }}>
+                  <span>{colLeads.length} заявок</span>
+                  {colSum > 0 && <span style={{ color:'#f0b429' }}>{fmt(colSum)} ₸</span>}
+                </div>
+              )}
             </div>
           );
         })}
