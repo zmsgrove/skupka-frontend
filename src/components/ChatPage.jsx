@@ -345,8 +345,3 @@ function CreateChatModal({ user, allUsers, theme, onClose, onCreate }) {
     </>
   );
 }
-
-function useState(init) { return React.useState(init); }
-function useEffect(fn, deps) { return React.useEffect(fn, deps); }
-function useRef(init) { return React.useRef(init); }
-function useCallback(fn, deps) { return React.useCallback(fn, deps); }
