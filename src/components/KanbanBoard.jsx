@@ -10,58 +10,61 @@ import ContextMenu from './ContextMenu';
 const API = process.env.REACT_APP_BACKEND_URL;
 
 const COLUMNS = [
-  { id:'new', label:'Новые', color:'#3b82f6', emoji:'🆕', filterByDate:false, showSum:false, timerOn:true },
-  { id:'in_progress', label:'В работе', color:'#8b5cf6', emoji:'⚡', filterByDate:false, showSum:true, timerOn:true },
-  { id:'waiting', label:'Ждём на филиал', color:'#f59e0b', emoji:'🏪', filterByDate:false, showSum:true, timerOn:true },
-  { id:'success', label:'Успешно', color:'#10b981', emoji:'✅', filterByDate:true, showSum:true, timerOn:false },
-  { id:'fail', label:'Провал', color:'#ef4444', emoji:'❌', filterByDate:true, showSum:false, timerOn:false },
+  { id:'new',         label:'Новые',          color:'#3b82f6', emoji:'🆕', filterByDate:false, showSum:false, timerOn:true },
+  { id:'in_progress', label:'В работе',        color:'#8b5cf6', emoji:'⚡', filterByDate:false, showSum:true,  timerOn:true },
+  { id:'waiting',     label:'Ждём на филиал',  color:'#f59e0b', emoji:'🏪', filterByDate:false, showSum:true,  timerOn:true },
+  { id:'success',     label:'Успешно',         color:'#10b981', emoji:'✅', filterByDate:true,  showSum:true,  timerOn:false },
+  { id:'fail',        label:'Провал',          color:'#ef4444', emoji:'❌', filterByDate:true,  showSum:true,  timerOn:false },
 ];
 
-// Статусы которые требуют попап при drag
 const POPUP_STATUSES = ['in_progress','waiting','success','fail'];
 
 function getDateRange(dateStr) {
   const start = new Date(dateStr); start.setHours(0,0,0,0);
-  const end = new Date(dateStr); end.setHours(23,59,59,999);
+  const end   = new Date(dateStr); end.setHours(23,59,59,999);
   return { start, end };
 }
 
 function fmt(n) { return new Intl.NumberFormat('ru-KZ').format(Math.round(n||0)); }
 
-export default function KanbanBoard({ city, user, theme }) {
+export default function KanbanBoard({ city, user, theme, settings = {} }) {
   const t = theme;
-  const [leads, setLeads] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const showTimers = settings.showTimers !== false;
+  const compact    = settings.compact === true;
+
+  const [leads, setLeads]           = useState([]);
+  const [loading, setLoading]       = useState(true);
   const [selectedLead, setSelectedLead] = useState(null);
-  const [dragOver, setDragOver] = useState(null);
-  const [search, setSearch] = useState('');
+  const [dragOver, setDragOver]     = useState(null);
+  const [search, setSearch]         = useState('');
   const [contextMenu, setContextMenu] = useState(null);
-  const [dragPopup, setDragPopup] = useState(null);
-  const [collapsed, setCollapsed] = useState({});
+  const [dragPopup, setDragPopup]   = useState(null);
+  const [collapsed, setCollapsed]   = useState({});
   const [statsFilter, setStatsFilter] = useState(null);
   const draggingRef = useRef(null);
   const todayStr = new Date().toISOString().split('T')[0];
   const [filterDate, setFilterDate] = useState(todayStr);
-  const [ticker, setTicker] = useState(0);
+  const [ticker, setTicker]         = useState(0);
 
-  // Таймер обновляет каждую минуту для счётчика времени
   useEffect(() => {
     const interval = setInterval(() => setTicker(t => t+1), 60000);
     return () => clearInterval(interval);
   }, []);
 
   const fetchLeads = useCallback(async () => {
-    let query = supabase.from('leads').select('*').eq('is_deleted', false).eq('is_archived', false).order('created_at', { ascending:false });
-    if (city !== 'all') query = query.eq('city', city);
+    let query = supabase.from('leads').select('*')
+      .eq('is_deleted',false).eq('is_archived',false)
+      .order('created_at',{ascending:false});
+    if (city !== 'all') query = query.eq('city',city);
     const { data } = await query;
-    setLeads(data || []);
+    setLeads(data||[]);
     setLoading(false);
   }, [city]);
 
   useEffect(() => {
     fetchLeads();
     const channel = supabase.channel(`leads-${city}`)
-      .on('postgres_changes', { event:'*', schema:'public', table:'leads' }, () => fetchLeads())
+      .on('postgres_changes',{event:'*',schema:'public',table:'leads'},() => fetchLeads())
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, [city, fetchLeads]);
@@ -82,52 +85,31 @@ export default function KanbanBoard({ city, user, theme }) {
       const q = search.toLowerCase();
       filtered = filtered.filter(l => l.client_name?.toLowerCase().includes(q) || l.phone?.includes(q) || l.device?.toLowerCase().includes(q));
     }
-    // Фильтр по клику на StatBar
     if (statsFilter === 'overdue') {
       filtered = filtered.filter(l => (Date.now()-new Date(l.updated_at||l.created_at).getTime()) > 10*3600*1000);
     }
     return filtered;
   };
 
-  const toggleCollapse = (colId) => {
-    setCollapsed(prev => ({ ...prev, [colId]: !prev[colId] }));
-  };
-
-  const isOverdue = (lead) => {
-    if (lead.status !== 'in_progress') return false;
-    return (Date.now() - new Date(lead.updated_at||lead.created_at).getTime()) > 10*3600*1000;
-  };
-
+  const toggleCollapse = (colId) => setCollapsed(prev => ({ ...prev, [colId]: !prev[colId] }));
+  const isOverdue = (lead) => lead.status==='in_progress' && (Date.now()-new Date(lead.updated_at||lead.created_at).getTime()) > 10*3600*1000;
   const isRepeatClient = (lead) => leads.filter(l => l.phone===lead.phone && l.id!==lead.id).length > 0;
 
-  const handleDragStart = (e, lead) => {
-    draggingRef.current = lead;
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', lead.id);
-  };
-
-  const handleDragOver = (e, colId) => { e.preventDefault(); e.stopPropagation(); setDragOver(colId); };
-
+  const handleDragStart = (e, lead) => { draggingRef.current = lead; e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',lead.id); };
+  const handleDragOver  = (e, colId) => { e.preventDefault(); e.stopPropagation(); setDragOver(colId); };
   const handleDrop = async (e, colId) => {
-    e.preventDefault(); e.stopPropagation();
-    setDragOver(null);
+    e.preventDefault(); e.stopPropagation(); setDragOver(null);
     const lead = draggingRef.current; draggingRef.current = null;
-    if (!lead || lead.status === colId) return;
-
-    // Показать попап если нужно
-    if (POPUP_STATUSES.includes(colId)) {
-      setDragPopup({ lead, toStatus: colId });
-    } else {
-      await updateLeadStatus(lead.id, { status: colId });
-    }
+    if (!lead || lead.status===colId) return;
+    if (POPUP_STATUSES.includes(colId)) { setDragPopup({ lead, toStatus:colId }); }
+    else { await updateLeadStatus(lead.id, { status:colId }); }
   };
-
-  const handleDragEnd = () => { draggingRef.current = null; setDragOver(null); };
+  const handleDragEnd = () => { draggingRef.current=null; setDragOver(null); };
 
   const updateLeadStatus = async (id, data) => {
-    setLeads(prev => prev.map(l => l.id===id ? { ...l, ...data } : l));
+    setLeads(prev => prev.map(l => l.id===id ? {...l,...data} : l));
     try { await axios.patch(`${API}/api/leads/${id}`, data); }
-    catch(err) { console.error('❌ Update error:', err); fetchLeads(); }
+    catch(err) { console.error('❌ Update error:',err); fetchLeads(); }
   };
 
   const handleDragPopupConfirm = async (data) => {
@@ -140,15 +122,11 @@ export default function KanbanBoard({ city, user, theme }) {
     setSelectedLead(lead);
     if (lead.unread_count > 0) {
       await axios.post(`${API}/api/leads/${lead.id}/read`);
-      setLeads(prev => prev.map(l => l.id===lead.id ? { ...l, unread_count:0 } : l));
+      setLeads(prev => prev.map(l => l.id===lead.id ? {...l,unread_count:0} : l));
     }
   };
 
-  const handleContextMenu = (e, lead) => {
-    e.preventDefault();
-    setContextMenu({ x:e.clientX, y:e.clientY, lead });
-  };
-
+  const handleContextMenu = (e, lead) => { e.preventDefault(); setContextMenu({ x:e.clientX, y:e.clientY, lead }); };
   const handleDelete = async (lead) => {
     if (!window.confirm(`Удалить карточку ${lead.client_name}?`)) return;
     await axios.delete(`${API}/api/leads/${lead.id}`);
@@ -192,14 +170,14 @@ export default function KanbanBoard({ city, user, theme }) {
         </div>
       </div>
 
-      {/* Доска */}
+      {/* Board */}
       <div style={{ display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:14,padding:'0 24px 24px',minHeight:'calc(100vh - 260px)',alignItems:'start',overflowX:'auto' }}>
         {COLUMNS.map(col => {
-          const colLeads = getColumnLeads(col);
-          const isOver = dragOver === col.id;
+          const colLeads  = getColumnLeads(col);
+          const isOver    = dragOver === col.id;
           const isCollapsed = collapsed[col.id];
-          const colUnread = colLeads.reduce((s,l)=>s+(l.unread_count||0),0);
-          const colSum = col.showSum ? colLeads.reduce((s,l)=>s+(Number(l.estimate_amount)||0),0) : 0;
+          const colUnread = colLeads.reduce((s,l) => s+(l.unread_count||0), 0);
+          const colSum    = col.showSum ? colLeads.reduce((s,l) => s+(Number(l.estimate_amount)||0), 0) : 0;
 
           return (
             <div key={col.id}
@@ -208,31 +186,28 @@ export default function KanbanBoard({ city, user, theme }) {
               onDrop={e => handleDrop(e,col.id)}
               onDragLeave={e => { if(!e.currentTarget.contains(e.relatedTarget)) setDragOver(null); }}
             >
-              {/* Заголовок — кликабельный для сворачивания */}
-              <div
-                onClick={() => toggleCollapse(col.id)}
-                style={{ display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 14px 10px',borderBottom:`1px solid ${t.border}`,cursor:'pointer',userSelect:'none' }}
-              >
-                <div style={{ display:'flex',alignItems:'center',gap:6 }}>
-                  <span>{col.emoji}</span>
-                  <span style={{ fontFamily:'Unbounded,sans-serif',fontSize:11,fontWeight:600,color:col.color }}>{col.label}</span>
-                  {colUnread>0 && <span style={{ background:'#f0b429',color:'#0f0f13',fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:20 }}>{colUnread}</span>}
+              {/* Заголовок колонки */}
+              <div onClick={() => toggleCollapse(col.id)} style={{ display:'flex',alignItems:'center',justifyContent:'space-between',padding:'11px 14px',borderBottom:`1px solid ${t.border}`,cursor:'pointer',userSelect:'none' }}>
+                <div style={{ display:'flex',alignItems:'center',gap:6,minWidth:0 }}>
+                  <span style={{ flexShrink:0 }}>{col.emoji}</span>
+                  <span style={{ fontFamily:'Unbounded,sans-serif',fontSize:11,fontWeight:600,color:col.color,whiteSpace:'nowrap' }}>{col.label}</span>
+                  {colUnread > 0 && <span style={{ background:'#f0b429',color:'#0f0f13',fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:20,flexShrink:0 }}>{colUnread}</span>}
                 </div>
-                <div style={{ display:'flex',alignItems:'center',gap:6 }}>
+                <div style={{ display:'flex',alignItems:'center',gap:6,flexShrink:0,marginLeft:6 }}>
+                  {/* Счётчик заявок */}
                   <span style={{ fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:20,background:col.color+'22',color:col.color }}>{colLeads.length}</span>
+                  {/* Сумма в той же строке */}
+                  {col.showSum && colSum > 0 && (
+                    <span style={{ fontSize:11,fontWeight:700,color:'#f0b429',background:'rgba(240,180,41,0.1)',padding:'2px 8px',borderRadius:20 }}>
+                      {fmt(colSum)} ₸
+                    </span>
+                  )}
                   <span style={{ color:t.text2,fontSize:12,transition:'transform 0.2s',transform:isCollapsed?'rotate(-90deg)':'rotate(0deg)' }}>▾</span>
                 </div>
               </div>
 
-              {!isCollapsed && col.showSum && colSum > 0 && (
-                <div style={{ padding:'5px 14px',background:t.surface2,color:t.text2,fontSize:11,borderBottom:`1px solid ${t.border}` }}>
-                  {colLeads.length} заявок · {fmt(colSum)} ₸
-                  {col.filterByDate && !isToday && <span style={{ color:'#f0b429',marginLeft:4 }}>({filterDate})</span>}
-                </div>
-              )}
-
               {!isCollapsed && (
-                <div style={{ padding:10,display:'flex',flexDirection:'column',gap:8,minHeight:80 }}>
+                <div style={{ padding:10,display:'flex',flexDirection:'column',gap:compact?4:8,minHeight:80 }}>
                   {colLeads.length===0 && (
                     <div style={{ color:isOver?col.color:t.text2,fontSize:12,textAlign:'center',padding:'20px 0',border:isOver?`2px dashed ${col.color}66`:'none',borderRadius:8,transition:'all 0.15s' }}>
                       {isOver?'➕ Отпусти здесь':'Нет заявок'}
@@ -242,7 +217,8 @@ export default function KanbanBoard({ city, user, theme }) {
                     <LeadCard key={lead.id} lead={lead} colColor={col.color} theme={t}
                       isDragging={draggingRef.current?.id===lead.id}
                       isOverdue={isOverdue(lead)} isRepeat={isRepeatClient(lead)}
-                      showTimer={col.timerOn} ticker={ticker}
+                      showTimer={col.timerOn && showTimers} ticker={ticker}
+                      compact={compact}
                       onClick={() => handleCardClick(lead)}
                       onDragStart={e => handleDragStart(e,lead)}
                       onDragEnd={handleDragEnd}
@@ -252,7 +228,6 @@ export default function KanbanBoard({ city, user, theme }) {
                 </div>
               )}
 
-              {/* Если свёрнуто — показываем мини итог */}
               {isCollapsed && (
                 <div style={{ padding:'8px 14px',color:t.text2,fontSize:11,display:'flex',justifyContent:'space-between' }}>
                   <span>{colLeads.length} заявок</span>
@@ -264,16 +239,12 @@ export default function KanbanBoard({ city, user, theme }) {
         })}
       </div>
 
-      {/* Контекстное меню */}
       {contextMenu && (
         <ContextMenu x={contextMenu.x} y={contextMenu.y} lead={contextMenu.lead} user={user} theme={t}
           onClose={() => setContextMenu(null)}
           onStatusChange={async (newStatus) => {
-            if (POPUP_STATUSES.includes(newStatus)) {
-              setDragPopup({ lead:contextMenu.lead, toStatus:newStatus });
-            } else {
-              await updateLeadStatus(contextMenu.lead.id, { status:newStatus });
-            }
+            if (POPUP_STATUSES.includes(newStatus)) { setDragPopup({ lead:contextMenu.lead, toStatus:newStatus }); }
+            else { await updateLeadStatus(contextMenu.lead.id, { status:newStatus }); }
           }}
           onOpenCard={() => handleCardClick(contextMenu.lead)}
           onRead={async () => {
@@ -284,7 +255,6 @@ export default function KanbanBoard({ city, user, theme }) {
         />
       )}
 
-      {/* Попап при drag */}
       {dragPopup && (
         <DragDropModal fromStatus={dragPopup.lead.status} toStatus={dragPopup.toStatus}
           lead={dragPopup.lead} theme={t}
@@ -293,7 +263,6 @@ export default function KanbanBoard({ city, user, theme }) {
         />
       )}
 
-      {/* Модалка карточки */}
       {selectedLead && (
         <LeadModal lead={selectedLead} user={user} theme={t}
           onClose={() => setSelectedLead(null)}

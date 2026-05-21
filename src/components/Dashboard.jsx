@@ -7,11 +7,11 @@ function fmt(n) { return new Intl.NumberFormat('ru-KZ').format(Math.round(n||0))
 
 export default function Dashboard({ user, theme }) {
   const t = theme;
-  const [stats, setStats] = useState(null);
+  const [stats, setStats]     = useState(null);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState('today');
+  const [period, setPeriod]   = useState('today');
   const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const [toDate, setToDate]   = useState('');
   const city = user.cities.length === 1 ? user.cities[0] : null;
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -30,25 +30,20 @@ export default function Dashboard({ user, theme }) {
   }
 
   const cities = city ? [city] : ['Атырау','Актобе','Уральск'];
-
   const periodLabel = {
     today: `Сегодня — ${new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}`,
-    week: 'За последние 7 дней',
+    week:  'За последние 7 дней',
     month: 'За текущий месяц',
     custom: fromDate && toDate ? `${fromDate} — ${toDate}` : 'Выберите период',
   }[period];
 
   return (
     <div style={{ padding:'0 24px 32px', overflowY:'auto', maxHeight:'calc(100vh - 60px)' }}>
-
-      {/* Заголовок + фильтр периода */}
       <div style={{ padding:'20px 0 16px', display:'flex', alignItems:'flex-start', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
         <div>
           <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:20, fontWeight:700, color:t.text }}>📊 Дашборд</div>
           <div style={{ color:t.text2, fontSize:13, marginTop:4 }}>{periodLabel}</div>
         </div>
-
-        {/* Фильтр */}
         <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
           {[['today','Сегодня'],['week','Неделя'],['month','Месяц'],['custom','Период']].map(([val,label]) => (
             <button key={val} onClick={() => setPeriod(val)} style={{
@@ -68,18 +63,13 @@ export default function Dashboard({ user, theme }) {
                 style={{ background:t.inputBg, border:`1px solid ${t.border}`, borderRadius:8, color:t.text, fontSize:13, padding:'6px 10px', outline:'none' }} />
             </div>
           )}
-          <button onClick={fetchStats} style={{ background:t.surface2, border:`1px solid ${t.border}`, borderRadius:8, color:t.text2, fontSize:12, padding:'6px 12px', cursor:'pointer' }}>
-            🔄
-          </button>
+          <button onClick={fetchStats} style={{ background:t.surface2, border:`1px solid ${t.border}`, borderRadius:8, color:t.text2, fontSize:12, padding:'6px 12px', cursor:'pointer' }}>🔄</button>
         </div>
       </div>
 
       {loading ? (
         <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:300, color:t.text2 }}>
-          <div style={{ textAlign:'center' }}>
-            <div style={{ fontSize:32, marginBottom:12 }}>📊</div>
-            <div>Загрузка...</div>
-          </div>
+          <div style={{ textAlign:'center' }}><div style={{ fontSize:32, marginBottom:12 }}>📊</div><div>Загрузка...</div></div>
         </div>
       ) : !stats ? null : <DashboardContent stats={stats} cities={cities} city={city} t={t} />}
     </div>
@@ -88,27 +78,26 @@ export default function Dashboard({ user, theme }) {
 
 function DashboardContent({ stats, cities, city, t }) {
   const maxCityAmount = Math.max(...cities.map(c => stats.byCity?.[c]?.amount || 0), 1);
-  const maxDayTotal = Math.max(...Object.values(stats.byDay||{}).map(d=>d.total), 1);
-  const days = Object.entries(stats.byDay||{}).slice(-14);
-  const totalFails = Object.values(stats.failReasons||{}).reduce((s,v)=>s+v,0);
+  const maxDayTotal   = Math.max(...Object.values(stats.byDay||{}).map(d=>d.total), 1);
+  const days          = Object.entries(stats.byDay||{}).slice(-14);
+  const totalFails    = Object.values(stats.failReasons||{}).reduce((s,v)=>s+v,0);
 
   return (
     <>
-      {/* KPI карточки */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))', gap:12, marginBottom:20 }}>
-        <KpiCard emoji="📥" label="Всего заявок" value={stats.total} color="#3b82f6" t={t} />
-        <KpiCard emoji="⚡" label="В работе" value={stats.inProgress} color="#8b5cf6" t={t} />
-        <KpiCard emoji="🏪" label="Ждём на филиал" value={stats.waiting} color="#f59e0b" t={t} />
-        <KpiCard emoji="✅" label="Успешно" value={stats.success} color="#10b981" t={t} />
-        <KpiCard emoji="❌" label="Провал" value={stats.fail} color="#ef4444" t={t} />
-        <KpiCard emoji="💰" label="Сумма сделок" value={`${fmt(stats.totalAmount)} ₸`} color="#f0b429" t={t} big />
-        <KpiCard emoji="📊" label="Конверсия" value={`${stats.conversion}%`} color={stats.conversion>=40?'#10b981':'#f59e0b'} t={t} />
-        <KpiCard emoji="💎" label="Средний чек" value={`${fmt(stats.avgCheck)} ₸`} color="#06b6d4" t={t} />
+        <KpiCard emoji="📥" label="Всего заявок"    value={stats.total}              color="#3b82f6" t={t} />
+        <KpiCard emoji="⚡" label="В работе"        value={stats.inProgress}         color="#8b5cf6" t={t} />
+        <KpiCard emoji="🏪" label="Ждём на филиал"  value={stats.waiting}            color="#f59e0b" t={t} />
+        <KpiCard emoji="✅" label="Успешно"         value={stats.success}            color="#10b981" t={t} />
+        <KpiCard emoji="❌" label="Провал"          value={stats.fail}               color="#ef4444" t={t} />
+        <KpiCard emoji="💰" label="Сумма сделок"    value={`${fmt(stats.totalAmount)} ₸`} color="#f0b429" t={t} big />
+        <KpiCard emoji="📊" label="Конверсия"       value={`${stats.conversion}%`}   color={stats.conversion>=40?'#10b981':'#f59e0b'} t={t} />
+        <KpiCard emoji="💎" label="Средний чек"     value={`${fmt(stats.avgCheck)} ₸`} color="#06b6d4" t={t} />
         {stats.overdue > 0 && <KpiCard emoji="🔴" label="Просрочено 10ч+" value={stats.overdue} color="#ef4444" t={t} alert />}
       </div>
 
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
-        {/* График по дням */}
+        {/* График */}
         <div style={cardStyle(t)}>
           <div style={cardTitle(t)}>📈 Заявки за 14 дней</div>
           <div style={{ display:'flex', alignItems:'flex-end', gap:3, height:120, padding:'8px 0' }}>
@@ -131,7 +120,7 @@ function DashboardContent({ stats, cities, city, t }) {
           </div>
         </div>
 
-        {/* По городам или воронка */}
+        {/* По городам / воронка */}
         {!city ? (
           <div style={cardStyle(t)}>
             <div style={cardTitle(t)}>🏙️ По городам</div>
@@ -162,10 +151,10 @@ function DashboardContent({ stats, cities, city, t }) {
             <div style={cardTitle(t)}>🎯 Воронка — {city}</div>
             <div style={{ display:'flex', flexDirection:'column', gap:10, marginTop:10 }}>
               {[
-                { label:'Новые', value:stats.new||0, color:'#3b82f6' },
+                { label:'Новые',    value:stats.new||0,        color:'#3b82f6' },
                 { label:'В работе', value:stats.inProgress||0, color:'#8b5cf6' },
-                { label:'Ждём', value:stats.waiting||0, color:'#f59e0b' },
-                { label:'Успешно', value:stats.success||0, color:'#10b981' },
+                { label:'Ждём',     value:stats.waiting||0,    color:'#f59e0b' },
+                { label:'Успешно',  value:stats.success||0,    color:'#10b981' },
               ].map(item => (
                 <div key={item.label} style={{ display:'flex', alignItems:'center', gap:10 }}>
                   <span style={{ color:t.text2, fontSize:12, width:70 }}>{item.label}</span>
@@ -186,19 +175,19 @@ function DashboardContent({ stats, cities, city, t }) {
           <div style={cardTitle(t)}>🥧 По статусам</div>
           <div style={{ display:'flex', alignItems:'center', gap:20, marginTop:12 }}>
             <PieChart data={[
-              { label:'Новые', value:stats.new||0, color:'#3b82f6' },
+              { label:'Новые',    value:stats.new||0,        color:'#3b82f6' },
               { label:'В работе', value:stats.inProgress||0, color:'#8b5cf6' },
-              { label:'Ждём', value:stats.waiting||0, color:'#f59e0b' },
-              { label:'Успешно', value:stats.success||0, color:'#10b981' },
-              { label:'Провал', value:stats.fail||0, color:'#ef4444' },
+              { label:'Ждём',     value:stats.waiting||0,    color:'#f59e0b' },
+              { label:'Успешно',  value:stats.success||0,    color:'#10b981' },
+              { label:'Провал',   value:stats.fail||0,       color:'#ef4444' },
             ]} total={Math.max(stats.total,1)} />
             <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
               {[
-                { label:'Новые', value:stats.new||0, color:'#3b82f6' },
+                { label:'Новые',    value:stats.new||0,        color:'#3b82f6' },
                 { label:'В работе', value:stats.inProgress||0, color:'#8b5cf6' },
-                { label:'Ждём', value:stats.waiting||0, color:'#f59e0b' },
-                { label:'Успешно', value:stats.success||0, color:'#10b981' },
-                { label:'Провал', value:stats.fail||0, color:'#ef4444' },
+                { label:'Ждём',     value:stats.waiting||0,    color:'#f59e0b' },
+                { label:'Успешно',  value:stats.success||0,    color:'#10b981' },
+                { label:'Провал',   value:stats.fail||0,       color:'#ef4444' },
               ].map(s => (
                 <div key={s.label} style={{ display:'flex', alignItems:'center', gap:6 }}>
                   <div style={{ width:10, height:10, borderRadius:2, background:s.color, flexShrink:0 }} />
@@ -210,30 +199,10 @@ function DashboardContent({ stats, cities, city, t }) {
           </div>
         </div>
 
-        {/* Причины провала */}
-        <div style={cardStyle(t)}>
-          <div style={cardTitle(t)}>📉 Причины провалов</div>
-          {Object.keys(stats.failReasons||{}).length === 0 ? (
-            <div style={{ color:t.text2, fontSize:13, textAlign:'center', marginTop:24 }}>Нет провалов за период 🎉</div>
-          ) : (
-            <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:12 }}>
-              {Object.entries(stats.failReasons||{}).sort((a,b)=>b[1]-a[1]).map(([reason,count]) => (
-                <div key={reason}>
-                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
-                    <span style={{ color:t.text3, fontSize:12 }}>{reason}</span>
-                    <span style={{ color:'#ef4444', fontSize:12, fontWeight:600 }}>{count} ({Math.round(count/totalFails*100)}%)</span>
-                  </div>
-                  <div style={{ height:6, background:t.surface2, borderRadius:3 }}>
-                    <div style={{ height:'100%', width:`${Math.round(count/totalFails*100)}%`, background:'#ef4444', borderRadius:3 }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Причины провалов — топ-5 */}
+        <FailReasonsCard stats={stats} totalFails={totalFails} t={t} />
       </div>
 
-      {/* Таблица по городам для директора */}
       {!city && (
         <div style={cardStyle(t)}>
           <div style={cardTitle(t)}>🏆 Сравнение городов</div>
@@ -256,9 +225,7 @@ function DashboardContent({ stats, cities, city, t }) {
                       <td style={{ padding:'10px 12px', color:'#10b981', fontWeight:600 }}>{cs.success||0}</td>
                       <td style={{ padding:'10px 12px', color:'#ef4444' }}>{cs.fail||0}</td>
                       <td style={{ padding:'10px 12px', color:'#8b5cf6' }}>{cs.inProgress||0}</td>
-                      <td style={{ padding:'10px 12px' }}>
-                        <span style={{ color:(cs.conversion||0)>=40?'#10b981':'#f59e0b', fontWeight:700 }}>{cs.conversion||0}%</span>
-                      </td>
+                      <td style={{ padding:'10px 12px' }}><span style={{ color:(cs.conversion||0)>=40?'#10b981':'#f59e0b', fontWeight:700 }}>{cs.conversion||0}%</span></td>
                       <td style={{ padding:'10px 12px', color:'#f0b429', fontWeight:700 }}>{fmt(cs.amount)} ₸</td>
                       <td style={{ padding:'10px 12px', color:t.text }}>{fmt(cs.avgCheck)} ₸</td>
                     </tr>
@@ -283,6 +250,48 @@ function DashboardContent({ stats, cities, city, t }) {
   );
 }
 
+function FailReasonsCard({ stats, totalFails, t }) {
+  const [showAll, setShowAll] = useState(false);
+  const all = Object.entries(stats.failReasons||{}).sort((a,b)=>b[1]-a[1]);
+  const visible = showAll ? all : all.slice(0, 5);
+  const hasMore = all.length > 5;
+
+  return (
+    <div style={cardStyle(t)}>
+      <div style={cardTitle(t)}>📉 Причины провалов</div>
+      {all.length === 0 ? (
+        <div style={{ color:t.text2, fontSize:13, textAlign:'center', marginTop:24 }}>Нет провалов за период 🎉</div>
+      ) : (
+        <>
+          <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:12 }}>
+            {visible.map(([reason, count]) => (
+              <div key={reason}>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
+                  <span style={{ color:t.text3, fontSize:12 }}>{reason}</span>
+                  <span style={{ color:'#ef4444', fontSize:12, fontWeight:600 }}>{count} ({Math.round(count/totalFails*100)}%)</span>
+                </div>
+                <div style={{ height:6, background:t.surface2, borderRadius:3 }}>
+                  <div style={{ height:'100%', width:`${Math.round(count/totalFails*100)}%`, background:'#ef4444', borderRadius:3 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          {hasMore && (
+            <button onClick={() => setShowAll(v => !v)} style={{
+              marginTop:12, width:'100%', background:'transparent',
+              border:`1px solid ${t.border}`, borderRadius:8,
+              color:t.text2, fontSize:12, padding:'7px', cursor:'pointer',
+              transition:'all 0.15s',
+            }}>
+              {showAll ? '▲ Свернуть' : `▼ Показать все (${all.length})`}
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 function KpiCard({ emoji, label, value, color, t, big, alert }) {
   return (
     <div style={{ background:alert?'rgba(239,68,68,0.08)':t.surface, border:`1px solid ${alert?'#ef444444':t.border}`, borderRadius:14, padding:'16px', display:'flex', flexDirection:'column', gap:6 }}>
@@ -303,21 +312,15 @@ function LegendItem({ color, label }) {
 }
 
 function PieChart({ data, total }) {
-  const size = 100, r = 38, cx = 50, cy = 50;
-  let cumAngle = -90;
+  const size=100, r=38, cx=50, cy=50;
+  let cumAngle=-90;
   const slices = data.filter(d=>d.value>0).map(d => {
-    const angle = (d.value/total)*360;
-    const start = cumAngle; cumAngle += angle;
-    return { ...d, startAngle:start, angle };
+    const angle=(d.value/total)*360;
+    const start=cumAngle; cumAngle+=angle;
+    return {...d,startAngle:start,angle};
   });
-  function polar(cx, cy, r, angle) {
-    const rad = angle*Math.PI/180;
-    return { x:cx+r*Math.cos(rad), y:cy+r*Math.sin(rad) };
-  }
-  function arc(cx, cy, r, sa, ea) {
-    const s = polar(cx,cy,r,ea), e = polar(cx,cy,r,sa);
-    return `M ${cx} ${cy} L ${s.x} ${s.y} A ${r} ${r} 0 ${ea-sa<=180?'0':'1'} 0 ${e.x} ${e.y} Z`;
-  }
+  function polar(cx,cy,r,angle) { const rad=angle*Math.PI/180; return {x:cx+r*Math.cos(rad),y:cy+r*Math.sin(rad)}; }
+  function arc(cx,cy,r,sa,ea) { const s=polar(cx,cy,r,ea),e=polar(cx,cy,r,sa); return `M ${cx} ${cy} L ${s.x} ${s.y} A ${r} ${r} 0 ${ea-sa<=180?'0':'1'} 0 ${e.x} ${e.y} Z`; }
   return (
     <svg width={size} height={size} style={{ flexShrink:0 }}>
       {slices.map((s,i) => <path key={i} d={arc(cx,cy,r,s.startAngle,s.startAngle+s.angle)} fill={s.color} opacity={0.9} />)}
