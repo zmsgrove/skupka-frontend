@@ -12,7 +12,9 @@ export default function Dashboard({ user, theme }) {
   const [period, setPeriod]   = useState('today');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate]   = useState('');
-  const city = user.cities.length === 1 ? user.cities[0] : null;
+  const hasAllCities = user.cities.length > 1;
+  const [selectedCity, setSelectedCity] = useState(null); // null = все города
+  const city = hasAllCities ? selectedCity : user.cities[0];
   const todayStr = new Date().toISOString().split('T')[0];
 
   useEffect(() => { fetchStats(); }, [period, fromDate, toDate]);
@@ -45,6 +47,19 @@ export default function Dashboard({ user, theme }) {
           <div style={{ color:t.text2, fontSize:13, marginTop:4 }}>{periodLabel}</div>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+          {hasAllCities && (
+            <div style={{ display:'flex', gap:4, marginRight:4 }}>
+              {[null,'Атырау','Актобе','Уральск'].map(c => (
+                <button key={c||'all'} onClick={() => setSelectedCity(c)} style={{
+                  border:`1px solid ${selectedCity===c ? (CITY_COLORS[c]||'#f0b429') : t.border}`,
+                  background: selectedCity===c ? (CITY_COLORS[c]||'#f0b429')+'22' : 'transparent',
+                  color: selectedCity===c ? (CITY_COLORS[c]||'#f0b429') : t.text2,
+                  borderRadius:8, padding:'6px 12px', fontSize:11, cursor:'pointer',
+                  fontFamily:'Unbounded,sans-serif', transition:'all 0.15s',
+                }}>{c || 'Все'}</button>
+              ))}
+            </div>
+          )}
           {[['today','Сегодня'],['week','Неделя'],['month','Месяц'],['custom','Период']].map(([val,label]) => (
             <button key={val} onClick={() => setPeriod(val)} style={{
               border:`1px solid ${period===val?'#f0b429':t.border}`,

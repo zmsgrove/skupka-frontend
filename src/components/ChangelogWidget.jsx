@@ -2,6 +2,18 @@ import React, { useState } from 'react';
 
 const CHANGELOG = [
   {
+    version: 'v3 Patch 1',
+    date: 'Май 2026',
+    color: '#10b981',
+    changes: [
+      'Чат — исправлена загрузка (user.id → user.username)',
+      'Быстрые фильтры StatsBar — починены для всех статусов',
+      'Дашборд — фильтр по городу для администраторов',
+      'Страница входа — форма по центру, скролл только в changelog',
+      'Версия отображается как v3 · patch 1 · 2026',
+    ],
+  },
+  {
     version: 'v3',
     date: 'Май 2026',
     color: '#10b981',
@@ -103,7 +115,7 @@ export default function ChangelogWidget({ theme }) {
         display:'flex', alignItems:'center', gap:6, fontFamily:'Inter,sans-serif', position:'relative',
       }}>
         📋
-        <span style={{ background:'#10b981', color:'#fff', fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:10, fontFamily:'Unbounded,sans-serif' }}>v3</span>
+        <span style={{ background:'#10b981', color:'#fff', fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:10, fontFamily:'Unbounded,sans-serif' }}>v3p1</span>
       </button>
 
       {open && (
@@ -138,7 +150,7 @@ export default function ChangelogWidget({ theme }) {
               ))}
             </div>
             <div style={{ padding:'12px 20px', borderTop:`1px solid ${t.border}`, textAlign:'center', color:t.text2, fontSize:11 }}>
-              SKUPKA CRM · <span style={{ color:'#10b981' }}>v3</span> · 2026
+              SKUPKA CRM · <span style={{ color:'#10b981' }}>v3p1</span> · <span style={{ color:'#9090a8' }}>patch 1</span> · 2026
             </div>
           </div>
         </>

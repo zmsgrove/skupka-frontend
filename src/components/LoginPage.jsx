@@ -29,6 +29,16 @@ const SLOGANS = [
 
 const CHANGELOG = [
   {
+    version: 'v3 Patch 1',
+    date: 'Май 2026',
+    changes: [
+      'Чат — исправлена загрузка и отображение',
+      'Быстрые фильтры StatsBar починены',
+      'Дашборд — фильтр по городу',
+      'Страница входа — форма по центру',
+    ],
+  },
+  {
     version: 'v3',
     date: 'Май 2026',
     changes: [
@@ -121,10 +131,10 @@ export default function LoginPage({ onLogin, theme }) {
   };
 
   return (
-    <div style={{ minHeight:'100vh', display:'flex', background:'radial-gradient(ellipse at 50% 0%, #2a1f00 0%, #0f0f13 60%)' }}>
+    <div style={{ height:'100vh', display:'flex', overflow:'hidden', background:'radial-gradient(ellipse at 50% 0%, #2a1f00 0%, #0f0f13 60%)' }}>
 
       {/* Левая часть — форма */}
-      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
+      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:24, overflow:'hidden' }}>
         <div style={{ width:'100%', maxWidth:400 }}>
           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
             <span style={{ fontFamily:'Unbounded,sans-serif', fontSize:32, fontWeight:700, color:'#f0b429', letterSpacing:3 }}>SKUPKA</span>
@@ -156,7 +166,7 @@ export default function LoginPage({ onLogin, theme }) {
           </div>
 
           <div style={{ textAlign:'center', marginTop:20, color:'#4a4a5e', fontSize:11 }}>
-            SKUPKA CRM · <span style={{ color:'#10b981' }}>v3</span> · 2026
+            SKUPKA CRM · <span style={{ color:'#10b981' }}>v3</span> · <span style={{ color:'#9090a8' }}>patch 1</span> · 2026
           </div>
         </div>
       </div>

@@ -20,7 +20,7 @@ export default function ChatPage({ user, theme, onUnreadChange }) {
 
   // Load chats where user is member
   const fetchChats = useCallback(async () => {
-    const { data: memberships } = await supabase.from('chat_members').select('chat_id').eq('user_id', user.id);
+    const { data: memberships } = await supabase.from('chat_members').select('chat_id').eq('user_id', user.username);
     if (!memberships) return;
     const ids = memberships.map(m => m.chat_id);
     if (!ids.length) { setChats([]); setLoading(false); return; }
@@ -32,7 +32,7 @@ export default function ChatPage({ user, theme, onUnreadChange }) {
       const general = data.find(c => c.is_general) || data[0];
       setActiveChat(general);
     }
-  }, [user.id]);
+  }, [user.username]);
 
   useEffect(() => { fetchChats(); }, [fetchChats]);
 
@@ -48,7 +48,7 @@ export default function ChatPage({ user, theme, onUnreadChange }) {
       if (!cancelled) setMessages(data || []);
       // Mark as read
       await supabase.from('chat_reads').upsert({
-        chat_id: activeChat.id, user_id: user.id, last_read_at: new Date().toISOString()
+        chat_id: activeChat.id, user_id: user.username, last_read_at: new Date().toISOString()
       }, { onConflict: 'chat_id,user_id' });
       if (onUnreadChange) onUnreadChange(0); // will be recalculated
     }
@@ -58,7 +58,7 @@ export default function ChatPage({ user, theme, onUnreadChange }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_reactions' }, fetchMessages)
       .subscribe();
     return () => { cancelled = true; supabase.removeChannel(ch); };
-  }, [activeChat?.id, user.id]);
+  }, [activeChat?.id, user.username]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -77,7 +77,7 @@ export default function ChatPage({ user, theme, onUnreadChange }) {
     setText('');
     await supabase.from('chat_messages').insert({
       chat_id: activeChat.id,
-      user_id: user.id,
+      user_id: user.username,
       sender_name: user.name,
       text: msg,
     });
@@ -89,11 +89,11 @@ export default function ChatPage({ user, theme, onUnreadChange }) {
 
   const toggleReaction = async (messageId, emoji) => {
     const existing = messages.find(m => m.id === messageId)
-      ?.chat_reactions?.find(r => r.user_id === user.id && r.emoji === emoji);
+      ?.chat_reactions?.find(r => r.user_id === user.username && r.emoji === emoji);
     if (existing) {
       await supabase.from('chat_reactions').delete().eq('id', existing.id);
     } else {
-      await supabase.from('chat_reactions').insert({ message_id: messageId, user_id: user.id, emoji });
+      await supabase.from('chat_reactions').insert({ message_id: messageId, user_id: user.username, emoji });
     }
   };
 
@@ -174,7 +174,7 @@ export default function ChatPage({ user, theme, onUnreadChange }) {
           {/* Messages */}
           <div style={{ flex:1, overflowY:'auto', padding:'16px 20px', display:'flex', flexDirection:'column', gap:12 }}>
             {messages.map(msg => {
-              const isMe = msg.user_id === user.id;
+              const isMe = msg.user_id === user.username;
               const reactionMap = {};
               (msg.chat_reactions || []).forEach(r => {
                 if (!reactionMap[r.emoji]) reactionMap[r.emoji] = [];
@@ -207,8 +207,8 @@ export default function ChatPage({ user, theme, onUnreadChange }) {
                       <div style={{ display:'flex', gap:4, marginTop:4, flexWrap:'wrap', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
                         {Object.entries(reactionMap).map(([emoji, users]) => (
                           <button key={emoji} onClick={() => toggleReaction(msg.id, emoji)} style={{
-                            background: users.includes(user.id) ? 'rgba(240,180,41,0.2)' : t.surface2,
-                            border: `1px solid ${users.includes(user.id) ? 'rgba(240,180,41,0.4)' : t.border}`,
+                            background: users.includes(user.username) ? 'rgba(240,180,41,0.2)' : t.surface2,
+                            border: `1px solid ${users.includes(user.username) ? 'rgba(240,180,41,0.4)' : t.border}`,
                             borderRadius:20, padding:'2px 7px', cursor:'pointer',
                             fontSize:12, display:'flex', alignItems:'center', gap:3,
                           }}>
@@ -263,9 +263,9 @@ export default function ChatPage({ user, theme, onUnreadChange }) {
         <CreateChatModal user={user} allUsers={allUsers} theme={t}
           onClose={() => setShowCreate(false)}
           onCreate={async (name, memberIds) => {
-            const { data: chat } = await supabase.from('chats').insert({ name, created_by: user.id, is_general: false }).select().single();
+            const { data: chat } = await supabase.from('chats').insert({ name, created_by: user.username, is_general: false }).select().single();
             if (!chat) return;
-            const members = [...new Set([user.id, ...memberIds])].map(uid => ({ chat_id: chat.id, user_id: uid }));
+            const members = [...new Set([user.username, ...memberIds])].map(uid => ({ chat_id: chat.id, user_id: uid }));
             await supabase.from('chat_members').insert(members);
             setShowCreate(false);
             fetchChats();
@@ -325,7 +325,7 @@ function CreateChatModal({ user, allUsers, theme, onClose, onCreate }) {
         <div>
           <label style={{ color:t.text2, fontSize:12, marginBottom:8, display:'block' }}>Участники</label>
           <div style={{ display:'flex', flexDirection:'column', gap:4, maxHeight:220, overflowY:'auto' }}>
-            {allUsers.filter(u => u.id !== user.id).map(u => (
+            {allUsers.filter(u => u.id !== user.username).map(u => (
               <label key={u.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'7px 10px', borderRadius:8, cursor:'pointer', background: selected.includes(u.id) ? 'rgba(240,180,41,0.1)' : 'transparent', border:`1px solid ${selected.includes(u.id) ? 'rgba(240,180,41,0.3)' : t.border}`, transition:'all 0.1s' }}>
                 <input type="checkbox" checked={selected.includes(u.id)} onChange={() => toggle(u.id)} style={{ accentColor:'#f0b429' }} />
                 <span style={{ color:t.text, fontSize:13 }}>{u.name}</span>
@@ -345,3 +345,8 @@ function CreateChatModal({ user, allUsers, theme, onClose, onCreate }) {
     </>
   );
 }
+
+function useState(init) { return React.useState(init); }
+function useEffect(fn, deps) { return React.useEffect(fn, deps); }
+function useRef(init) { return React.useRef(init); }
+function useCallback(fn, deps) { return React.useCallback(fn, deps); }

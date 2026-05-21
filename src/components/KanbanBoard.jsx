@@ -87,6 +87,15 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
     }
     if (statsFilter === 'overdue') {
       filtered = filtered.filter(l => (Date.now()-new Date(l.updated_at||l.created_at).getTime()) > 10*3600*1000);
+    } else if (statsFilter === 'new') {
+      filtered = filtered.filter(l => l.status === 'new');
+    } else if (statsFilter === 'in_progress') {
+      filtered = filtered.filter(l => l.status === 'in_progress');
+    } else if (statsFilter === 'waiting') {
+      filtered = filtered.filter(l => l.status === 'waiting');
+    } else if (statsFilter === 'success') {
+      const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+      filtered = filtered.filter(l => l.status === 'success' && new Date(l.updated_at||l.created_at) >= todayStart);
     }
     return filtered;
   };

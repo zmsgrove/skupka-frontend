@@ -223,14 +223,14 @@ export default function App() {
     let cancelled = false;
     async function fetchChatUnread() {
       try {
-        const { data: reads } = await supabase.from('chat_reads').select('chat_id,last_read_at').eq('user_id', user.id);
-        const { data: memberships } = await supabase.from('chat_members').select('chat_id').eq('user_id', user.id);
+        const { data: reads } = await supabase.from('chat_reads').select('chat_id,last_read_at').eq('user_id', user.username);
+        const { data: memberships } = await supabase.from('chat_members').select('chat_id').eq('user_id', user.username);
         if (!memberships || cancelled) return;
         let total = 0;
         for (const m of memberships) {
           const read = reads?.find(r => r.chat_id === m.chat_id);
           const { count } = await supabase.from('chat_messages').select('id', { count:'exact', head:true })
-            .eq('chat_id', m.chat_id).neq('user_id', user.id).gt('created_at', read?.last_read_at || '1970-01-01');
+            .eq('chat_id', m.chat_id).neq('user_id', user.username).gt('created_at', read?.last_read_at || '1970-01-01');
           total += count || 0;
         }
         if (!cancelled) setChatUnread(total);
