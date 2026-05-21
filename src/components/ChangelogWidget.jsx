@@ -2,8 +2,22 @@ import React, { useState } from 'react';
 
 const CHANGELOG = [
   {
-    version: 'v2 Patch 1',
+    version: 'v2 Patch 3',
     date: '21 мая 2026',
+    color: '#10b981',
+    changes: [
+      'Левый сайдбар 200px/60px с кнопкой свернуть',
+      'Навигация перенесена из хедера в сайдбар',
+      'Бейдж непрочитанных сообщений на WAZZUP',
+      'Заглушки: Чат (v3) и Задачи (v5)',
+      'Хедер — только логотип, города, утилиты',
+      'Индикатор статуса сервера 🟢/🔴 в хедере',
+      'Мобильный режим: гамбургер ☰, сайдбар выезжает сбоку',
+    ],
+  },
+  {
+    version: 'v2 Patch 2',
+    date: 'Май 2026',
     color: '#f0b429',
     changes: [
       'Логика повторных сообщений исправлена',
@@ -51,7 +65,6 @@ export default function ChangelogWidget({ theme }) {
 
   return (
     <>
-      {/* Кнопка */}
       <button
         onClick={() => setOpen(!open)}
         title="История обновлений"
@@ -65,18 +78,14 @@ export default function ChangelogWidget({ theme }) {
         }}
       >
         📋
-        <span style={{ background:'#f0b429', color:'#0f0f13', fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:10, fontFamily:'Unbounded,sans-serif' }}>
-          v2p1
+        <span style={{ background:'#10b981', color:'#fff', fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:10, fontFamily:'Unbounded,sans-serif' }}>
+          v2p3
         </span>
       </button>
 
-      {/* Попап */}
       {open && (
         <>
-          {/* Оверлей */}
           <div style={{ position:'fixed', inset:0, zIndex:1500 }} onClick={() => setOpen(false)} />
-
-          {/* Окно */}
           <div style={{
             position:'fixed', top:64, right:16,
             width:320, maxHeight:'80vh',
@@ -124,7 +133,7 @@ export default function ChangelogWidget({ theme }) {
             </div>
 
             <div style={{ padding:'12px 20px', borderTop:`1px solid ${t.border}`, textAlign:'center', color:t.text2, fontSize:11 }}>
-              SKUPKA CRM · <span style={{ color:'#f0b429' }}>v2 patch 1</span> · 2026
+              SKUPKA CRM · <span style={{ color:'#10b981' }}>v2 patch 3</span> · 2026
             </div>
           </div>
         </>
