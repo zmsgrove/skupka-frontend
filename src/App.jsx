@@ -3,6 +3,7 @@ import LoginPage from './components/LoginPage';
 import KanbanBoard from './components/KanbanBoard';
 import Dashboard from './components/Dashboard';
 import ExcelExport from './components/ExcelExport';
+import ChangelogWidget from './components/ChangelogWidget';
 import { getSession, clearSession } from './auth';
 import { themes, getTheme, saveTheme } from './theme';
 import { supabase } from './supabase';
@@ -122,6 +123,7 @@ export default function App() {
 
         <div style={{ display:'flex',alignItems:'center',gap:8 }}>
           <ExcelExport user={user} theme={t} />
+          <ChangelogWidget theme={t} />
           <button onClick={toggleSound} title={soundOn?'Выключить звук':'Включить звук'} style={{ background:t.surface2,border:`1px solid ${t.border}`,borderRadius:8,fontSize:15,padding:'5px 10px',cursor:'pointer' }}>
             {soundOn ? '🔔' : '🔕'}
           </button>

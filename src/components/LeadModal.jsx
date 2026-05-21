@@ -45,6 +45,8 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
   const [status, setStatus] = useState(lead.status);
   const [saving, setSaving] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [editName, setEditName] = useState(lead.client_name || '');
   const chatEndRef = useRef(null);
 
   // История прошлых заявок клиента
@@ -156,8 +158,45 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
         <div style={styles.header}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div>
-              <div style={styles.clientName}>{cur.client_name}</div>
-              <div style={styles.clientPhone}>{cur.phone}
+              {/* Имя клиента с редактированием */}
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                {editingName ? (
+                  <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                    <input
+                      style={{ background:'#22222e', border:'1px solid #f0b429', borderRadius:8, color:'#f0f0f5', fontSize:16, fontWeight:700, padding:'4px 10px', outline:'none', fontFamily:'Unbounded,sans-serif' }}
+                      value={editName}
+                      onChange={e => setEditName(e.target.value)}
+                      autoFocus
+                      onKeyDown={async e => {
+                        if (e.key === 'Enter') {
+                          await axios.patch(`${API}/api/leads/${lead.id}`, { client_name: editName });
+                          onUpdate({ ...cur, client_name: editName });
+                          setEditingName(false);
+                        }
+                        if (e.key === 'Escape') setEditingName(false);
+                      }}
+                    />
+                    <button onClick={async () => {
+                      await axios.patch(`${API}/api/leads/${lead.id}`, { client_name: editName });
+                      onUpdate({ ...cur, client_name: editName });
+                      setEditingName(false);
+                    }} style={{ background:'#10b981', border:'none', borderRadius:6, color:'#fff', fontSize:12, padding:'4px 10px', cursor:'pointer' }}>✓</button>
+                    <button onClick={() => setEditingName(false)} style={{ background:'transparent', border:'1px solid #2e2e3e', borderRadius:6, color:'#9090a8', fontSize:12, padding:'4px 8px', cursor:'pointer' }}>✕</button>
+                  </div>
+                ) : (
+                  <>
+                    <div style={styles.clientName}>{cur.client_name}</div>
+                    <button onClick={() => { setEditName(cur.client_name); setEditingName(true); }} title="Изменить имя" style={{ background:'transparent', border:'none', color:'#9090a8', fontSize:14, cursor:'pointer', padding:'2px 4px' }}>✏️</button>
+                  </>
+                )}
+              </div>
+              <div style={styles.clientPhone}>
+                {cur.phone}
+                {cur.wa_name && cur.wa_name !== cur.client_name && (
+                  <span style={{ color:'#06b6d4', fontSize:11, background:'rgba(6,182,212,0.1)', padding:'1px 8px', borderRadius:20 }}>
+                    WA: {cur.wa_name}
+                  </span>
+                )}
                 {prevLeads.length > 0 && (
                   <span style={styles.repeatBadge}>🔄 Повторный — {prevLeads.length} заявок</span>
                 )}
