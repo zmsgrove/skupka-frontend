@@ -43,6 +43,8 @@ function renderMarkdown(text) {
     return part;
   });
 }
+
+export default function LeadModal({ lead, user, onClose, onUpdate }) {
   const [data, setData] = useState(null);
   const [activeTab, setActiveTab] = useState('chat');
   const [msgText, setMsgText] = useState('');
