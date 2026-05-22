@@ -5,7 +5,8 @@ import Dashboard from './components/Dashboard';
 import ExcelExport from './components/ExcelExport';
 import ChangelogWidget from './components/ChangelogWidget';
 import ChatPage from './components/ChatPage';
-import { TasksPage, KassaPage, ZrsPage, AttendancePage } from './components/PlaceholderPages';
+import TasksPage from './components/TasksPage';
+import { KassaPage, ZrsPage, AttendancePage } from './components/PlaceholderPages';
 import SettingsPage from './components/SettingsPage';
 
 import { getSession, clearSession } from './auth';
@@ -137,7 +138,7 @@ function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, tota
         <SideItem icon="💬" label="WAZZUP"    active={activeTab==='board'}    onClick={() => { setActiveTab('board');    setMobileOpen(false); }} badge={totalUnread} collapsed={!forMobile && collapsed} t={t} />
         <SideItem icon="📊" label="Дашборд"   active={activeTab==='dashboard'} onClick={() => { if(canSeeDashboard){ setActiveTab('dashboard'); setMobileOpen(false); } }} collapsed={!forMobile && collapsed} t={t} />
         <SideItem icon="🗨️" label="Чат"       active={activeTab==='chat'}      onClick={() => { setActiveTab('chat');     setMobileOpen(false); }} badge={chatUnread} collapsed={!forMobile && collapsed} t={t} />
-        <SideItem icon="✅" label="Задачи"    active={activeTab==='tasks'}     onClick={() => { setActiveTab('tasks');    setMobileOpen(false); }} collapsed={!forMobile && collapsed} t={t} />
+        <SideItem icon="✅" label="Задачи"    active={activeTab==='tasks'}     onClick={() => { setActiveTab('tasks'); setMobileOpen(false); }} collapsed={!forMobile && collapsed} t={t} />
         <SideItem icon="💰" label="Касса"     active={activeTab==='kassa'}     onClick={() => { setActiveTab('kassa');    setMobileOpen(false); }} collapsed={!forMobile && collapsed} t={t} />
         <SideItem icon="📝" label="ЗРС" active={activeTab==='zrs'} onClick={() => { setActiveTab('zrs'); setMobileOpen(false); }} collapsed={!forMobile && collapsed} t={t} />
         <SideItem icon="🕐" label="Смена" active={activeTab==='attendance'} onClick={() => { setActiveTab('attendance'); setMobileOpen(false); }} collapsed={!forMobile && collapsed} t={t} />
@@ -345,7 +346,7 @@ export default function App() {
           {activeTab==='board' && activeCity && <KanbanBoard key={activeCity} city={activeCity} user={user} theme={t} settings={settings} />}
           {activeTab==='dashboard' && canSeeDashboard && <Dashboard user={user} theme={t} />}
           {activeTab==='chat' && <ChatPage user={user} theme={t} onUnreadChange={setChatUnread} />}
-          {activeTab==='tasks' && <TasksPage theme={t} />}
+          {activeTab==='tasks' && <TasksPage user={user} theme={t} />}
           {activeTab==='kassa' && <KassaPage theme={t} />}
           {activeTab==='zrs' && <ZrsPage theme={t} />}
           {activeTab==='attendance' && <AttendancePage theme={t} />}

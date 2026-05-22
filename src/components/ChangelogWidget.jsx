@@ -2,15 +2,59 @@ import React, { useState } from 'react';
 
 const CHANGELOG = [
   {
+    version: 'v4',
+    date: 'Май 2026',
+    color: '#8b5cf6',
+    changes: [
+      'Полноценный канбан задач — 5 колонок с drag & drop',
+      'Карточка задачи — чеклист, комментарии, история, теги',
+      'Виды: Канбан, Календарь, Моя доска',
+      'Шаблоны задач — сохранить и повторно использовать',
+      'Повторяющиеся задачи — ежедневно/еженедельно/ежемесячно',
+      'Архив задач — автоматически через 15 дней',
+      'Статистика задач для администраторов',
+      'Поиск, фильтры, сортировка по задачам',
+      'Быстрое создание и закрытие задач',
+      'Избранное, закрепление, цвет карточки',
+    ],
+  },
+  {
+    version: 'v3 Patch 4',
+    date: 'Май 2026',
+    color: '#06b6d4',
+    changes: [
+      'Заглушки с описанием: Касса, ЗРС, Отметка на смене',
+      'Обновлена дорожная карта версий',
+    ],
+  },
+  {
+    version: 'v3 Patch 3',
+    date: 'Май 2026',
+    color: '#06b6d4',
+    changes: [
+      'Telegram уведомления разделены по 3 городам',
+      'Утренний отчёт, просрочки, новые заявки — в свой канал',
+    ],
+  },
+  {
+    version: 'v3 Patch 2',
+    date: 'Май 2026',
+    color: '#06b6d4',
+    changes: [
+      '10 тем оформления от тёмной до светлой',
+      '10 вариантов звука уведомлений с превью',
+      'Страницы ЗРС и Отметка на смене в сайдбаре',
+    ],
+  },
+  {
     version: 'v3 Patch 1',
     date: 'Май 2026',
-    color: '#10b981',
+    color: '#06b6d4',
     changes: [
       'Чат — исправлена загрузка (user.id → user.username)',
-      'Быстрые фильтры StatsBar — починены для всех статусов',
+      'Быстрые фильтры StatsBar починены',
       'Дашборд — фильтр по городу для администраторов',
-      'Страница входа — форма по центру, скролл только в changelog',
-      'Версия отображается как v3 · patch 1 · 2026',
+      'Страница входа — форма по центру',
     ],
   },
   {
@@ -20,84 +64,38 @@ const CHANGELOG = [
     changes: [
       'Чат между сотрудниками — общий и приватные',
       'Реакции на сообщения в чате',
-      'Логотип SKUPKA CRM всегда виден в хедере',
-      'Страница настроек в сайдбаре',
-      'Регулировка громкости уведомлений',
-      'Выбор главного экрана при входе',
-      'Компактный вид карточек',
-      'Управление таймером и автообновлением',
+      'Страница настроек — громкость, тема, главный экран',
       'Сумма заявок в шапке колонок канбана',
-      'Касса — заглушка (утренний/вечерний отчёт, пересменка)',
-      'ЗРС и Отметка на смене — заглушки v6',
-      'Топ-5 причин провалов с кнопкой «Показать все»',
+      'Касса, ЗРС, Смена — заглушки',
+      'Топ-5 причин провалов в дашборде',
     ],
   },
   {
     version: 'v2 Patch 3',
     date: '21 мая 2026',
-    color: '#06b6d4',
-    changes: [
-      'Левый сайдбар 200px/60px — навигация вынесена из хедера',
-      'Сайдбар сворачивается и запоминает состояние',
-      'Бейдж непрочитанных сообщений на пункте WAZZUP',
-      'Хедер — логотип, города, утилиты',
-      'Индикатор статуса сервера 🟢/🔴 с пингом каждые 30 сек',
-      'Мобильный режим — гамбургер ☰, сайдбар выезжает сбоку',
-    ],
-  },
-  {
-    version: 'v2 Patch 2',
-    date: '21 мая 2026',
     color: '#f0b429',
     changes: [
-      'Фикс ошибок',
-    ],
-  },
-  {
-    version: 'v2 Patch 1',
-    date: '21 мая 2026',
-    color: '#f0b429',
-    changes: [
-      'Логика повторных сообщений — диалог без создания лишних заявок',
-      'Новая заявка только если статус closed или тишина 2+ суток',
-      'Редактирование имени клиента в карточке',
-      'WhatsApp имя клиента сохраняется и отображается',
-      'Страница входа — версия, слоган, история изменений',
-      'Виджет changelog на доске',
+      'Левый сайдбар 200px/60px',
+      'Индикатор статуса сервера 🟢/🔴',
+      'Мобильный гамбургер ☰',
     ],
   },
   {
     version: 'v2',
     date: 'Май 2026',
-    color: '#8b5cf6',
+    color: '#3b82f6',
     changes: [
       '5 колонок канбан включая Ждём на филиал',
-      'Drag & Drop с попапами при переносе статуса',
-      'Контекстное меню (ПКМ) на карточках',
-      'Telegram уведомления — новые заявки и расписание',
-      'Дашборд с фильтром периода для директора и РГМ',
-      'Excel выгрузка 5 листов с диаграммами',
-      'Тёмная и светлая тема',
-      'Звуковые уведомления',
-      'Таймер на карточках',
-      'Авто-возврат из провала через 2 недели',
-      'Архивирование через 3 месяца',
-      'Расширенный список городов 30+ вариантов',
-      'Меню для повторных клиентов (1/2)',
-      '11 пользователей с ролями',
+      'Drag & Drop, контекстное меню, Telegram',
+      'Дашборд, Excel, темы, звук, таймер',
     ],
   },
   {
     version: 'v1',
     date: 'Апрель 2026',
-    color: '#3b82f6',
+    color: '#6b7280',
     changes: [
-      'Базовый канбан — 4 колонки',
-      'Интеграция с Wazzup WhatsApp',
-      'Бот — сбор имени, города, техники',
-      'Авторизация по логину и паролю',
-      'Realtime через Supabase',
-      'Деплой на Render',
+      'Базовый канбан, Wazzup, бот, авторизация',
     ],
   },
 ];
@@ -105,19 +103,12 @@ const CHANGELOG = [
 export default function ChangelogWidget({ theme }) {
   const t = theme;
   const [open, setOpen] = useState(false);
-
   return (
     <>
-      <button onClick={() => setOpen(!open)} title="История обновлений" style={{
-        background:t.surface2, border:`1px solid ${t.border}`,
-        borderRadius:8, color:'#f0b429', fontSize:13,
-        padding:'5px 10px', cursor:'pointer',
-        display:'flex', alignItems:'center', gap:6, fontFamily:'Inter,sans-serif', position:'relative',
-      }}>
+      <button onClick={() => setOpen(!open)} title="История обновлений" style={{ background:t.surface2, border:`1px solid ${t.border}`, borderRadius:8, color:'#8b5cf6', fontSize:13, padding:'5px 10px', cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontFamily:'Inter,sans-serif' }}>
         📋
-        <span style={{ background:'#10b981', color:'#fff', fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:10, fontFamily:'Unbounded,sans-serif' }}>v3p1</span>
+        <span style={{ background:'#8b5cf6', color:'#fff', fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:10, fontFamily:'Unbounded,sans-serif' }}>v4</span>
       </button>
-
       {open && (
         <>
           <div style={{ position:'fixed', inset:0, zIndex:1500 }} onClick={() => setOpen(false)} />
@@ -135,7 +126,7 @@ export default function ChangelogWidget({ theme }) {
                   <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
                     <span style={{ background:entry.color+'22', color:entry.color, border:`1px solid ${entry.color}44`, fontFamily:'Unbounded,sans-serif', fontSize:9, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>{entry.version}</span>
                     <span style={{ color:t.text2, fontSize:11 }}>{entry.date}</span>
-                    {i===0 && <span style={{ background:'#10b98122', color:'#10b981', fontSize:9, padding:'1px 6px', borderRadius:10 }}>НОВОЕ</span>}
+                    {i===0 && <span style={{ background:'#8b5cf622', color:'#8b5cf6', fontSize:9, padding:'1px 6px', borderRadius:10 }}>НОВОЕ</span>}
                   </div>
                   <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
                     {entry.changes.map((c, j) => (
@@ -150,7 +141,7 @@ export default function ChangelogWidget({ theme }) {
               ))}
             </div>
             <div style={{ padding:'12px 20px', borderTop:`1px solid ${t.border}`, textAlign:'center', color:t.text2, fontSize:11 }}>
-              SKUPKA CRM · <span style={{ color:'#10b981' }}>v3p1</span> · <span style={{ color:'#9090a8' }}>patch 1</span> · 2026
+              SKUPKA CRM · <span style={{ color:'#8b5cf6' }}>v4</span> · 2026
             </div>
           </div>
         </>
