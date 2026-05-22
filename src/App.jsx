@@ -5,9 +5,9 @@ import Dashboard from './components/Dashboard';
 import ExcelExport from './components/ExcelExport';
 import ChangelogWidget from './components/ChangelogWidget';
 import ChatPage from './components/ChatPage';
-import { TasksPage, ZrsPage, AttendancePage } from './components/PlaceholderPages';
+import { TasksPage, KassaPage, ZrsPage, AttendancePage } from './components/PlaceholderPages';
 import SettingsPage from './components/SettingsPage';
-import KassaPage from './components/KassaPage';
+
 import { getSession, clearSession } from './auth';
 import { themes, getTheme, saveTheme } from './theme';
 import { supabase } from './supabase';
@@ -346,7 +346,7 @@ export default function App() {
           {activeTab==='dashboard' && canSeeDashboard && <Dashboard user={user} theme={t} />}
           {activeTab==='chat' && <ChatPage user={user} theme={t} onUnreadChange={setChatUnread} />}
           {activeTab==='tasks' && <TasksPage theme={t} />}
-          {activeTab==='kassa' && <KassaPage user={user} theme={t} />}
+          {activeTab==='kassa' && <KassaPage theme={t} />}
           {activeTab==='zrs' && <ZrsPage theme={t} />}
           {activeTab==='attendance' && <AttendancePage theme={t} />}
           {activeTab==='archive' && <ArchiveView user={user} theme={t} />}
