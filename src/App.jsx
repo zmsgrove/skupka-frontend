@@ -147,7 +147,7 @@ function Logo() {
   );
 }
 
-function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, totalUnread, chatUnread, collapsed, setCollapsed, mobileOpen, setMobileOpen, t }) {
+function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, totalUnread, chatUnread, collapsed, setCollapsed, mobileOpen, setMobileOpen, setShowCalc, t }) {
   const items = (forMobile) => (
     <>
       <div style={{ flex:1, padding:'10px 6px', display:'flex', flexDirection:'column', gap:2, overflowY:'auto' }}>
@@ -218,21 +218,11 @@ export default function App() {
     return () => clearInterval(iv);
   }, [user]);
 
-  // Auto-open summary at 09:00, 14:00, 21:00 UTC+5
+
   useEffect(() => {
-    if (!user) return;
-    function checkAutoOpen() {
-      const kz = new Date(Date.now() + 5*3600*1000);
-      const h = kz.getUTCHours();
-      const m = kz.getUTCMinutes();
-      const s = kz.getUTCSeconds();
-      if ((h===9||h===14||h===21) && m===0 && s===0) {
-        setShowSummary(true);
-      }
-    }
-    const iv = setInterval(checkAutoOpen, 1000);
-    return () => clearInterval(iv);
-  }, [user]);
+    document.body.style.overflow = showSummary ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [showSummary]);
 
   const themeName = settings.theme || getTheme();
   const t = themes[themeName];
@@ -372,6 +362,7 @@ export default function App() {
           totalUnread={totalUnread} chatUnread={chatUnread}
           collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed}
           mobileOpen={mobileOpen} setMobileOpen={setMobileOpen}
+          setShowCalc={setShowCalc}
           t={t}
         />
         <main style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
