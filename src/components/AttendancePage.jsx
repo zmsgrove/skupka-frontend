@@ -195,7 +195,7 @@ function AdminCard({ shift, t, onOpen, canMove, onMove }) {
       <div style={{ color:t.text, fontSize:13, fontWeight:600, marginBottom:4 }}>{shift.worker_name}</div>
       <div style={{ display:'flex', gap:8, marginBottom:4 }}>
         <span style={{ background:'rgba(139,92,246,0.15)', color:'#8b5cf6', fontSize:10, padding:'2px 7px', borderRadius:20 }}>{shift.city}</span>
-        {shift.lat && <span style={{ background:'rgba(16,185,129,0.15)', color:'#10b981', fontSize:10, padding:'2px 7px', borderRadius:20 }}>📍 Локация</span>}
+        {shift.address && <span style={{ background:'rgba(16,185,129,0.15)', color:'#10b981', fontSize:10, padding:'2px 7px', borderRadius:20 }}>📍 {shift.address.slice(0,25)}...</span>}
       </div>
       <div style={{ color:t.text2, fontSize:11 }}>{new Date(shift.shift_date).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
       {canMove && (
@@ -213,7 +213,7 @@ function ShiftForm({ type, user, t, onClose, onCreate }) {
   const [form, setForm] = useState({
     worker_name:'', filial:'', manager:'', shift_date:'',
     shift_type:'day', is_replacement:false, replace_who:'', replace_hours:'',
-    city:'', lat:null, lng:null,
+    city:'', lat:null, lng:null, address:'',
   });
   const [locLoading, setLocLoading] = useState(false);
   const set = (k,v) => setForm(p=>({...p,[k]:v}));
@@ -221,7 +221,20 @@ function ShiftForm({ type, user, t, onClose, onCreate }) {
   const getLocation = () => {
     setLocLoading(true);
     navigator.geolocation?.getCurrentPosition(
-      pos => { set('lat', pos.coords.latitude); set('lng', pos.coords.longitude); setLocLoading(false); },
+      async pos => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        set('lat', lat); set('lng', lng);
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ru`);
+          const data = await res.json();
+          const addr = data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+          set('address', addr);
+        } catch {
+          set('address', `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+        }
+        setLocLoading(false);
+      },
       () => { alert('Не удалось получить геолокацию'); setLocLoading(false); }
     );
   };
@@ -242,7 +255,7 @@ function ShiftForm({ type, user, t, onClose, onCreate }) {
       if (!form.worker_name || !form.city || !form.shift_date) return;
       await supabase.from('shifts_admin').insert({
         worker_name:form.worker_name, city:form.city,
-        shift_date:form.shift_date, lat:form.lat, lng:form.lng,
+        shift_date:form.shift_date, lat:form.lat, lng:form.lng, address:form.address,
         created_by:user.username,
       });
     }
@@ -325,7 +338,7 @@ function ShiftForm({ type, user, t, onClose, onCreate }) {
                   <button onClick={getLocation} disabled={locLoading} style={{ background:'rgba(16,185,129,0.15)', border:'1px solid rgba(16,185,129,0.4)', borderRadius:8, color:'#10b981', fontSize:12, padding:'8px 14px', cursor:'pointer', flex:1 }}>
                     {locLoading ? '⏳ Получаем...' : form.lat ? '📍 Получено' : '📍 Поделиться локацией'}
                   </button>
-                  {form.lat && <span style={{ color:'#10b981', fontSize:11 }}>✅ {form.lat.toFixed(4)}, {form.lng.toFixed(4)}</span>}
+                  {form.address && <span style={{ color:'#10b981', fontSize:11, maxWidth:180, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>✅ {form.address.slice(0,50)}...</span>}
                 </div>
               </FRow>
             </>
@@ -376,7 +389,7 @@ function ShiftModal({ item, t, onClose }) {
                 ['Сотрудник', data.worker_name],
                 ['Город', data.city],
                 ['Дата и время', new Date(data.shift_date).toLocaleString('ru-RU')],
-                ['Локация', data.lat?`${data.lat.toFixed(4)}, ${data.lng.toFixed(4)}`:'Не указана'],
+                ['Адрес', data.address||'Не указан'],
                 ['Статус', data.status==='active'?'🟢 На смене':'✅ Отработано'],
               ].map(([l,v])=>(
                 <div key={l} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:`1px solid ${t.border}22` }}>
