@@ -135,50 +135,44 @@ export default function StatsBar({ city, user, theme, onFilter }) {
   }
 
   return (
-    <div style={{ padding:'0 24px 14px' }}>
-      <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
-        {cards.map(card => {
-          const isActive = activeFilter === card.id;
-          const bgColor = card.alert ? card.alertColor+'15' : t.surface;
-          const borderColor = isActive ? card.color : card.alert ? card.alertColor+'44' : t.border;
-
-          return (
-            <div key={card.id} onClick={() => handleClick(card.id)}
-              style={{
-                background: isActive ? card.color+'20' : bgColor,
-                border: `1px solid ${borderColor}`,
-                borderRadius: 12, padding:'12px 16px',
-                display:'flex', flexDirection:'column', gap:3,
-                minWidth: card.big ? 160 : 110,
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-                transform: isActive ? 'translateY(-2px)' : 'none',
-                boxShadow: isActive ? `0 4px 12px ${card.color}33` : 'none',
-              }}>
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <span style={{ fontSize: 18 }}>{card.emoji}</span>
-                {card.trend && (
-                  <span style={{ fontSize:11, fontWeight:700, color:card.trend.color }}>
-                    {card.trend.arrow}
-                  </span>
-                )}
+    <div style={{ padding:'0 24px 10px' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+        {/* Cards — 80% */}
+        <div style={{ display:'flex', alignItems:'center', gap:8, flex:'0 0 80%', flexWrap:'nowrap', overflowX:'auto' }}>
+          {cards.map(card => {
+            const isActive = activeFilter === card.id;
+            const bgColor = card.alert ? card.alertColor+'15' : t.surface;
+            const borderColor = isActive ? card.color : card.alert ? card.alertColor+'44' : t.border;
+            return (
+              <div key={card.id} onClick={() => handleClick(card.id)}
+                style={{
+                  background: isActive ? card.color+'20' : bgColor,
+                  border: `1px solid ${borderColor}`,
+                  borderRadius: 10, padding:'8px 14px',
+                  display:'flex', flexDirection:'column', gap:2,
+                  flex:'1 1 0', minWidth: card.big ? 140 : 90,
+                  cursor: 'pointer', transition: 'all 0.15s',
+                  transform: isActive ? 'translateY(-2px)' : 'none',
+                  boxShadow: isActive ? `0 4px 12px ${card.color}33` : 'none',
+                }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                  <span style={{ fontSize:16 }}>{card.emoji}</span>
+                  {card.trend && <span style={{ fontSize:10, fontWeight:700, color:card.trend.color }}>{card.trend.arrow}</span>}
+                </div>
+                <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:card.big?16:18, fontWeight:700, color:card.color, lineHeight:1.2 }}>
+                  {card.value}
+                </div>
+                {card.sub && <div style={{ fontSize:10, color:card.color, fontWeight:600 }}>{card.sub}</div>}
+                <div style={{ color:t.text2, fontSize:10 }}>{card.label}</div>
               </div>
-              <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:card.big?18:20, fontWeight:700, color:card.color }}>
-                {card.value}
-              </div>
-              {card.sub && (
-                <div style={{ fontSize:11, color:card.color, fontWeight:600 }}>{card.sub}</div>
-              )}
-              <div style={{ color:t.text2, fontSize:11 }}>{card.label}</div>
-            </div>
-          );
-        })}
-
-        {/* Время обновления */}
+            );
+          })}
+        </div>
+        {/* Time — 20% */}
         {lastUpdated && (
-          <div style={{ marginLeft:'auto', color:t.text2, fontSize:11, display:'flex', alignItems:'center', gap:4 }}>
-            🕐 {lastUpdated}
-            <button onClick={fetchStats} style={{ background:'transparent', border:'none', color:t.text2, cursor:'pointer', fontSize:13, padding:'2px 4px' }}>↻</button>
+          <div style={{ flex:'0 0 20%', display:'flex', flexDirection:'column', alignItems:'flex-end', justifyContent:'center', gap:4 }}>
+            <span style={{ color:t.text2, fontSize:12 }}>🕐 {lastUpdated}</span>
+            <button onClick={fetchStats} style={{ background:'transparent', border:`1px solid ${t.border}`, borderRadius:6, color:t.text2, cursor:'pointer', fontSize:11, padding:'3px 8px' }}>↻ Обновить</button>
           </div>
         )}
       </div>

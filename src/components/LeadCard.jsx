@@ -48,7 +48,7 @@ export default function LeadCard({ lead, colColor, onClick, onDragStart, onDragE
       {!isOverdue && hasUnread && (
         <div style={{ display:'flex',alignItems:'center',gap:6,padding:'5px 12px',background:'rgba(240,180,41,0.1)',borderBottom:'1px solid rgba(240,180,41,0.2)' }}>
           <span style={{ color:'#f0b429',fontSize:10 }}>●</span>
-          <span style={{ color:'#f0b429',fontSize:11,fontWeight:600,flex:1 }}>{lead.unread_count} новое{lead.unread_count>1?'я':''}</span>
+          <span style={{ color:'#f0b429',fontSize:11,fontWeight:600,flex:1 }}>{lead.unread_count} {lead.unread_count===1?'новое':lead.unread_count>=2&&lead.unread_count<=4?'новых':'новых'}</span>
           <span style={{ background:'#f0b429',color:'#0f0f13',fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:20 }}>{lead.unread_count}</span>
         </div>
       )}

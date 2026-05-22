@@ -181,7 +181,7 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
 
           return (
             <div key={col.id}
-              style={{ border:`2px solid ${isOver?col.color:t.border}`,borderRadius:14,overflow:'hidden',transition:'border-color 0.15s,background 0.15s',background:isOver?col.color+'0a':t.surface,minWidth:190 }}
+              style={{ border:`2px solid ${isOver?col.color:t.border}`,borderRadius:14,overflow:'hidden',transition:'border-color 0.15s,background 0.15s',background:isOver?col.color+'0a':t.surface,minWidth:190,display:'flex',flexDirection:'column',height:'100%' }}
               onDragOver={e => handleDragOver(e,col.id)}
               onDrop={e => handleDrop(e,col.id)}
               onDragLeave={e => { if(!e.currentTarget.contains(e.relatedTarget)) setDragOver(null); }}
@@ -207,7 +207,7 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
               </div>
 
               {!isCollapsed && (
-                <div style={{ padding:10,display:'flex',flexDirection:'column',gap:compact?4:8,minHeight:80 }}>
+                <div style={{ padding:10,display:'flex',flexDirection:'column',gap:compact?4:8,flex:1,overflowY:'auto' }}>
                   {colLeads.length===0 && (
                     <div style={{ color:isOver?col.color:t.text2,fontSize:12,textAlign:'center',padding:'20px 0',border:isOver?`2px dashed ${col.color}66`:'none',borderRadius:8,transition:'all 0.15s' }}>
                       {isOver?'➕ Отпусти здесь':'Нет заявок'}

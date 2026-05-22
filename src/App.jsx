@@ -11,6 +11,7 @@ import ZrsPage from './components/ZrsPage';
 import AttendancePage from './components/AttendancePage';
 import TasksPage from './components/TasksPage';
 import SummaryPanel from './components/SummaryPanel';
+import Calculator from './components/Calculator';
 import { TildaPage } from './components/PlaceholderPages';
 import { getSession, clearSession } from './auth';
 import { themes, getTheme, saveTheme } from './theme';
@@ -160,6 +161,7 @@ function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, tota
         <SideItem icon="🌐" label="Tilda"     active={activeTab==='tilda'}       onClick={() => { setActiveTab('tilda');      setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
         <div style={{ flex:1 }} />
         <div style={{ height:1, background:t.border, margin:'6px 0' }} />
+        <SideItem icon="🧮" label="Калькулятор" active={false} onClick={() => { setShowCalc(true); setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
         <SideItem icon="🗄️" label="Архив"     active={activeTab==='archive'}     onClick={() => { setActiveTab('archive');    setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
         {canSeeDeleted && <SideItem icon="🗑️" label="Удалённые" active={activeTab==='deleted'} onClick={() => { setActiveTab('deleted'); setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />}
         <div style={{ height:1, background:t.border, margin:'6px 0' }} />
@@ -178,7 +180,7 @@ function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, tota
 
   return (
     <>
-      <div className="sidebar-desktop" style={{ width:collapsed?60:200, background:t.headerBg, borderRight:`1px solid ${t.border}`, display:'flex', flexDirection:'column', height:'100%', transition:'width 0.2s ease', overflow:'hidden', flexShrink:0, position:'sticky', top:0, alignSelf:'flex-start', maxHeight:'calc(100vh - 54px)' }}>
+      <div className="sidebar-desktop" style={{ width:collapsed?60:200, background:t.headerBg, borderRight:`1px solid ${t.border}`, display:'flex', flexDirection:'column', height:'100%', transition:'width 0.2s ease', overflow:'hidden', flexShrink:0 }}>
         {items(false)}
       </div>
       {mobileOpen && <div onClick={() => setMobileOpen(false)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:199 }} />}
@@ -203,6 +205,18 @@ export default function App() {
   const [totalUnread, setTotalUnread] = useState(0);
   const [chatUnread, setChatUnread]   = useState(0);
   const [showSummary, setShowSummary] = useState(false);
+  const [showCalc, setShowCalc] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    function checkAutoOpen() {
+      const kz = new Date(Date.now() + 5*3600*1000);
+      const h = kz.getUTCHours(), m = kz.getUTCMinutes(), s = kz.getUTCSeconds();
+      if ((h===9||h===14||h===21) && m===0 && s===0) setShowSummary(true);
+    }
+    const iv = setInterval(checkAutoOpen, 1000);
+    return () => clearInterval(iv);
+  }, [user]);
 
   // Auto-open summary at 09:00, 14:00, 21:00 UTC+5
   useEffect(() => {
@@ -297,7 +311,7 @@ export default function App() {
   if (!user) return <LoginPage onLogin={handleLogin} theme={t} />;
 
   return (
-    <div style={{ height:'100vh', background:t.bg, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+    <div style={{ minHeight:'100vh', background:t.bg, display:'flex', flexDirection:'column' }}>
       <style>{`
         @keyframes spin { to { transform:rotate(360deg); } }
         @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
@@ -351,7 +365,7 @@ export default function App() {
       </header>
 
       {/* Body */}
-      <div style={{ display:'flex', flex:1, overflow:'hidden', minHeight:0 }}>
+      <div style={{ display:'flex', flex:1, overflow:'hidden' }}>
         <Sidebar
           activeTab={activeTab} setActiveTab={setActiveTab}
           canSeeDashboard={canSeeDashboard} canSeeDeleted={canSeeDeleted}
@@ -360,7 +374,7 @@ export default function App() {
           mobileOpen={mobileOpen} setMobileOpen={setMobileOpen}
           t={t}
         />
-        <main style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column', minHeight:0 }}>
+        <main style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
           {activeTab==='board'      && activeCity && <KanbanBoard key={activeCity} city={activeCity} user={user} theme={t} settings={settings} />}
           {activeTab==='dashboard'  && canSeeDashboard && <Dashboard user={user} theme={t} />}
           {activeTab==='chat'       && <ChatPage user={user} theme={t} onUnreadChange={setChatUnread} />}
@@ -376,12 +390,7 @@ export default function App() {
       </div>
 
       {/* Summary panel */}
-      {showSummary && (
-        <>
-          <style>{`body { overflow: hidden !important; }`}</style>
-          <SummaryPanel user={user} theme={t} onClose={() => setShowSummary(false)} />
-        </>
-      )}
+      {showSummary && <SummaryPanel user={user} theme={t} onClose={() => setShowSummary(false)} />}
     </div>
   );
 }
