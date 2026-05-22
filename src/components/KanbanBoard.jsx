@@ -87,15 +87,6 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
     }
     if (statsFilter === 'overdue') {
       filtered = filtered.filter(l => (Date.now()-new Date(l.updated_at||l.created_at).getTime()) > 10*3600*1000);
-    } else if (statsFilter === 'new') {
-      filtered = filtered.filter(l => l.status === 'new');
-    } else if (statsFilter === 'in_progress') {
-      filtered = filtered.filter(l => l.status === 'in_progress');
-    } else if (statsFilter === 'waiting') {
-      filtered = filtered.filter(l => l.status === 'waiting');
-    } else if (statsFilter === 'success') {
-      const todayStart = new Date(); todayStart.setHours(0,0,0,0);
-      filtered = filtered.filter(l => l.status === 'success' && new Date(l.updated_at||l.created_at) >= todayStart);
     }
     return filtered;
   };
@@ -180,7 +171,7 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
       </div>
 
       {/* Board */}
-      <div style={{ display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:14,padding:'0 24px 24px',minHeight:'calc(100vh - 260px)',alignItems:'start',overflowX:'auto' }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(5,minmax(190px,1fr))', gap:14, padding:'0 24px 16px', flex:1, overflow:'auto', alignItems:'start' }}>
         {COLUMNS.map(col => {
           const colLeads  = getColumnLeads(col);
           const isOver    = dragOver === col.id;

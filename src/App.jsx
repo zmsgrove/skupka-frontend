@@ -178,7 +178,7 @@ function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, tota
 
   return (
     <>
-      <div className="sidebar-desktop" style={{ width:collapsed?60:200, background:t.headerBg, borderRight:`1px solid ${t.border}`, display:'flex', flexDirection:'column', height:'100%', transition:'width 0.2s ease', overflow:'hidden', flexShrink:0 }}>
+      <div className="sidebar-desktop" style={{ width:collapsed?60:200, background:t.headerBg, borderRight:`1px solid ${t.border}`, display:'flex', flexDirection:'column', height:'100%', transition:'width 0.2s ease', overflow:'hidden', flexShrink:0, position:'sticky', top:0, alignSelf:'flex-start', maxHeight:'calc(100vh - 54px)' }}>
         {items(false)}
       </div>
       {mobileOpen && <div onClick={() => setMobileOpen(false)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:199 }} />}
@@ -297,7 +297,7 @@ export default function App() {
   if (!user) return <LoginPage onLogin={handleLogin} theme={t} />;
 
   return (
-    <div style={{ minHeight:'100vh', background:t.bg, display:'flex', flexDirection:'column' }}>
+    <div style={{ height:'100vh', background:t.bg, display:'flex', flexDirection:'column', overflow:'hidden' }}>
       <style>{`
         @keyframes spin { to { transform:rotate(360deg); } }
         @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
@@ -351,7 +351,7 @@ export default function App() {
       </header>
 
       {/* Body */}
-      <div style={{ display:'flex', flex:1, overflow:'hidden' }}>
+      <div style={{ display:'flex', flex:1, overflow:'hidden', minHeight:0 }}>
         <Sidebar
           activeTab={activeTab} setActiveTab={setActiveTab}
           canSeeDashboard={canSeeDashboard} canSeeDeleted={canSeeDeleted}
@@ -360,7 +360,7 @@ export default function App() {
           mobileOpen={mobileOpen} setMobileOpen={setMobileOpen}
           t={t}
         />
-        <main style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
+        <main style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column', minHeight:0 }}>
           {activeTab==='board'      && activeCity && <KanbanBoard key={activeCity} city={activeCity} user={user} theme={t} settings={settings} />}
           {activeTab==='dashboard'  && canSeeDashboard && <Dashboard user={user} theme={t} />}
           {activeTab==='chat'       && <ChatPage user={user} theme={t} onUnreadChange={setChatUnread} />}
@@ -376,7 +376,12 @@ export default function App() {
       </div>
 
       {/* Summary panel */}
-      {showSummary && <SummaryPanel user={user} theme={t} onClose={() => setShowSummary(false)} />}
+      {showSummary && (
+        <>
+          <style>{`body { overflow: hidden !important; }`}</style>
+          <SummaryPanel user={user} theme={t} onClose={() => setShowSummary(false)} />
+        </>
+      )}
     </div>
   );
 }
