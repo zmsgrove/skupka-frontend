@@ -171,7 +171,7 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
       </div>
 
       {/* Board */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(5,minmax(190px,1fr))', gridAutoRows:'1fr', gap:14, padding:'0 24px 16px', flex:1, overflowX:'auto', overflowY:'hidden' }}>
+      <div style={{ display:'flex', gap:14, padding:'0 24px 16px', flex:1, overflowX:'auto', overflowY:'hidden', minHeight:0 }}>
         {COLUMNS.map(col => {
           const colLeads  = getColumnLeads(col);
           const isOver    = dragOver === col.id;
@@ -181,22 +181,20 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
 
           return (
             <div key={col.id}
-              style={{ border:`2px solid ${isOver?col.color:t.border}`,borderRadius:14,overflow:'hidden',transition:'border-color 0.15s,background 0.15s',background:isOver?col.color+'0a':t.surface,minWidth:190,display:'flex',flexDirection:'column',height:'100%' }}
+              style={{ flex:'1 0 190px',minWidth:190,minHeight:0,border:`2px solid ${isOver?col.color:t.border}`,borderRadius:14,overflow:'hidden',transition:'border-color 0.15s,background 0.15s',background:isOver?col.color+'0a':t.surface,display:'flex',flexDirection:'column' }}
               onDragOver={e => handleDragOver(e,col.id)}
               onDrop={e => handleDrop(e,col.id)}
               onDragLeave={e => { if(!e.currentTarget.contains(e.relatedTarget)) setDragOver(null); }}
             >
               {/* Заголовок колонки */}
-              <div onClick={() => toggleCollapse(col.id)} style={{ display:'flex',alignItems:'center',justifyContent:'space-between',padding:'11px 14px',borderBottom:`1px solid ${t.border}`,cursor:'pointer',userSelect:'none' }}>
+              <div onClick={() => toggleCollapse(col.id)} style={{ display:'flex',alignItems:'center',justifyContent:'space-between',padding:'11px 14px',borderBottom:`1px solid ${t.border}`,cursor:'pointer',userSelect:'none',flexShrink:0 }}>
                 <div style={{ display:'flex',alignItems:'center',gap:6,minWidth:0 }}>
                   <span style={{ flexShrink:0 }}>{col.emoji}</span>
                   <span style={{ fontFamily:'Unbounded,sans-serif',fontSize:11,fontWeight:600,color:col.color,whiteSpace:'nowrap' }}>{col.label}</span>
                   {colUnread > 0 && <span style={{ background:'#f0b429',color:'#0f0f13',fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:20,flexShrink:0 }}>{colUnread}</span>}
                 </div>
                 <div style={{ display:'flex',alignItems:'center',gap:6,flexShrink:0,marginLeft:6 }}>
-                  {/* Счётчик заявок */}
                   <span style={{ fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:20,background:col.color+'22',color:col.color }}>{colLeads.length}</span>
-                  {/* Сумма в той же строке */}
                   {col.showSum && colSum > 0 && (
                     <span style={{ fontSize:11,fontWeight:700,color:'#f0b429',background:'rgba(240,180,41,0.1)',padding:'2px 8px',borderRadius:20 }}>
                       {fmt(colSum)} ₸
@@ -207,29 +205,31 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
               </div>
 
               {!isCollapsed && (
-                <div style={{ padding:10,display:'flex',flexDirection:'column',gap:compact?4:8,flex:1,overflowY:'auto' }}>
+                <div style={{ padding:10,display:'flex',flexDirection:'column',gap:compact?4:8,flex:1,overflowY:'auto',minHeight:0 }}>
                   {colLeads.length===0 && (
-                    <div style={{ color:isOver?col.color:t.text2,fontSize:12,textAlign:'center',padding:'20px 0',border:isOver?`2px dashed ${col.color}66`:'none',borderRadius:8,transition:'all 0.15s' }}>
+                    <div style={{ color:isOver?col.color:t.text2,fontSize:12,textAlign:'center',padding:'20px 0',border:isOver?`2px dashed ${col.color}66`:'none',borderRadius:8,transition:'all 0.15s',flexShrink:0 }}>
                       {isOver?'➕ Отпусти здесь':'Нет заявок'}
                     </div>
                   )}
                   {colLeads.map(lead => (
-                    <LeadCard key={lead.id} lead={lead} colColor={col.color} theme={t}
-                      isDragging={draggingRef.current?.id===lead.id}
-                      isOverdue={isOverdue(lead)} isRepeat={isRepeatClient(lead)}
-                      showTimer={col.timerOn && showTimers} ticker={ticker}
-                      compact={compact}
-                      onClick={() => handleCardClick(lead)}
-                      onDragStart={e => handleDragStart(e,lead)}
-                      onDragEnd={handleDragEnd}
-                      onContextMenu={e => handleContextMenu(e,lead)}
-                    />
+                    <div key={lead.id} style={{ flexShrink:0 }}>
+                      <LeadCard lead={lead} colColor={col.color} theme={t}
+                        isDragging={draggingRef.current?.id===lead.id}
+                        isOverdue={isOverdue(lead)} isRepeat={isRepeatClient(lead)}
+                        showTimer={col.timerOn && showTimers} ticker={ticker}
+                        compact={compact}
+                        onClick={() => handleCardClick(lead)}
+                        onDragStart={e => handleDragStart(e,lead)}
+                        onDragEnd={handleDragEnd}
+                        onContextMenu={e => handleContextMenu(e,lead)}
+                      />
+                    </div>
                   ))}
                 </div>
               )}
 
               {isCollapsed && (
-                <div style={{ padding:'8px 14px',color:t.text2,fontSize:11,display:'flex',justifyContent:'space-between' }}>
+                <div style={{ padding:'8px 14px',color:t.text2,fontSize:11,display:'flex',justifyContent:'space-between',flexShrink:0 }}>
                   <span>{colLeads.length} заявок</span>
                   {colSum > 0 && <span style={{ color:'#f0b429' }}>{fmt(colSum)} ₸</span>}
                 </div>
