@@ -171,7 +171,7 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
       </div>
 
       {/* Board */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(5,minmax(190px,1fr))', gap:14, padding:'0 24px 16px', flex:1, overflowX:'auto', overflowY:'hidden' }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(5,minmax(190px,1fr))', gridAutoRows:'1fr', gap:14, padding:'0 24px 16px', flex:1, overflowX:'auto', overflowY:'hidden' }}>
         {COLUMNS.map(col => {
           const colLeads  = getColumnLeads(col);
           const isOver    = dragOver === col.id;

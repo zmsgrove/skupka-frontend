@@ -301,7 +301,7 @@ export default function App() {
   if (!user) return <LoginPage onLogin={handleLogin} theme={t} />;
 
   return (
-    <div style={{ minHeight:'100vh', background:t.bg, display:'flex', flexDirection:'column' }}>
+    <div style={{ height:'100vh', overflow:'hidden', background:t.bg, display:'flex', flexDirection:'column' }}>
       <style>{`
         @keyframes spin { to { transform:rotate(360deg); } }
         @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
@@ -322,7 +322,7 @@ export default function App() {
       `}</style>
 
       {/* Header */}
-      <header style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 20px', height:54, background:t.headerBg, borderBottom:`1px solid ${t.border}`, position:'sticky', top:0, zIndex:100, flexShrink:0, boxShadow:t.shadow }}>
+      <header style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 20px', height:54, background:t.headerBg, borderBottom:`1px solid ${t.border}`, flexShrink:0, zIndex:100, boxShadow:t.shadow }}>
         <div style={{ display:'flex', alignItems:'center', gap:12 }}>
           <button className="hamburger-btn" onClick={() => setMobileOpen(v=>!v)} style={{ background:'transparent', border:`1px solid ${t.border}`, borderRadius:8, color:t.text, fontSize:18, width:36, height:36, cursor:'pointer', display:'none', alignItems:'center', justifyContent:'center' }}>☰</button>
           <Logo />
@@ -382,6 +382,8 @@ export default function App() {
 
       {/* Summary panel */}
       {showSummary && <SummaryPanel user={user} theme={t} onClose={() => setShowSummary(false)} />}
+      {/* Calculator */}
+      {showCalc && <Calculator theme={t} onClose={() => setShowCalc(false)} />}
     </div>
   );
 }
