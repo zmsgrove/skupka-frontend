@@ -18,6 +18,17 @@ const WEATHER_COORDS = {
   'Атырау':  { lat:47.1167, lon:51.8833 },
 };
 
+const DEFAULT_CONFIG = { tasks:true, leads:true, cities:true, kassa:true, zrs:true, shifts:true };
+
+const SECTION_DEFS = [
+  { key:'tasks',  icon:'✅', label:'Задачи',         adminOnly:false },
+  { key:'leads',  icon:'💬', label:'Заявки WAZZUP',  adminOnly:false },
+  { key:'cities', icon:'🏙️', label:'По городам',     adminOnly:true  },
+  { key:'kassa',  icon:'💰', label:'Касса',           adminOnly:true  },
+  { key:'zrs',    icon:'📝', label:'ЗРС',             adminOnly:true  },
+  { key:'shifts', icon:'🕐', label:'Смены',           adminOnly:true  },
+];
+
 function kzHour() { return new Date(Date.now()+5*3600*1000).getUTCHours(); }
 function getGreeting() {
   const h=kzHour();
@@ -40,13 +51,44 @@ function trendCalc(curr,prev) { if(!prev) return null; const pct=Math.round(((cu
 
 export default function SummaryPanel({ user, theme, onClose }) {
   const t = theme;
-  const [data, setData]       = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [weather, setWeather] = useState(null);
+  const [data, setData]           = useState(null);
+  const [loading, setLoading]     = useState(true);
+  const [weather, setWeather]     = useState(null);
+  const [config, setConfig]       = useState(DEFAULT_CONFIG);
+  const [showSettings, setShowSettings] = useState(false);
+  const [editConfig, setEditConfig]     = useState(DEFAULT_CONFIG);
+  const [saving, setSaving]       = useState(false);
   const isAdmin = ['admin','dir','zamdir'].includes(user.role);
   const isRgm   = ['rgmu','rgma'].includes(user.role);
 
-  useEffect(() => { load(); loadWeather(); }, []);
+  useEffect(() => { load(); loadWeather(); loadConfig(); }, []);
+
+  async function loadConfig() {
+    const { data: row } = await supabase
+      .from('user_settings')
+      .select('summary_config')
+      .eq('user_id', user.username)
+      .single();
+    if (row?.summary_config) {
+      setConfig({ ...DEFAULT_CONFIG, ...row.summary_config });
+    }
+  }
+
+  async function saveConfig() {
+    setSaving(true);
+    await supabase.from('user_settings').upsert(
+      { user_id: user.username, summary_config: editConfig, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id' }
+    );
+    setConfig(editConfig);
+    setSaving(false);
+    setShowSettings(false);
+  }
+
+  function openSettings() {
+    setEditConfig({ ...config });
+    setShowSettings(true);
+  }
 
   async function loadWeather() {
     const city = USER_CITIES[user.username] || user.cities?.[0] || 'Астана';
@@ -146,7 +188,6 @@ export default function SummaryPanel({ user, theme, onClose }) {
   const avgLast  = successLastWeek.length>0?Math.round(amountLastWeek/successLastWeek.length):0;
 
   const ydSuccess = myLeads.filter(l=>l.status==='success'&&new Date(l.updated_at||l.created_at)>=ydS&&new Date(l.updated_at||l.created_at)<todayS);
-  const ydFail    = myLeads.filter(l=>l.status==='fail'&&new Date(l.updated_at||l.created_at)>=ydS&&new Date(l.updated_at||l.created_at)<todayS);
   const inWork    = myLeads.filter(l=>l.status==='in_progress');
   const waiting   = myLeads.filter(l=>l.status==='waiting');
   const todaySucc = myLeads.filter(l=>l.status==='success'&&new Date(l.updated_at||l.created_at)>=todayS);
@@ -173,41 +214,86 @@ export default function SummaryPanel({ user, theme, onClose }) {
   const unlaunchedFilials=FILIALS.filter(f=>!launchedFilials.includes(f));
   const kassaDiffs=kassa.filter(k=>k.cash_diff||k.noncash_diff);
 
+  const visibleSections = SECTION_DEFS.filter(s => !s.adminOnly || isAdmin || isRgm);
+
   return (
-    <Popup t={t} onClose={onClose} user={user} weather={weather} onRefresh={load}>
-      <div style={{ flex:1, overflowY:'auto', padding:'16px 24px', display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+    <Popup t={t} onClose={onClose} user={user} weather={weather} onRefresh={load} onSettings={openSettings} showSettings={showSettings}>
 
-        {/* Задачи */}
-        <Group icon="✅" title="Задачи" color="#8b5cf6" t={t}>
-          <MetricRow label="На сегодня"    value={todayTasks.length}   color={todayTasks.length>0?'#8b5cf6':t.text2} t={t} />
-          <MetricRow label="Просрочено"    value={overdueTasks.length} color={overdueTasks.length>0?'#ef4444':t.text2} t={t} alert={overdueTasks.length>0} />
-          <MetricRow label="На проверке"   value={reviewTasks.length}  color={reviewTasks.length>0?'#f97316':t.text2} t={t} />
-          {inTimePct!==null&&<MetricRow label="В срок" value={`${inTimePct}%`} color={inTimePct>=70?'#10b981':'#f59e0b'} t={t} trend={trendCalc(inTimePct,70)}/>}
-          {overdueTasks.length>0&&(
-            <div style={{marginTop:6,padding:'8px',background:'rgba(239,68,68,0.06)',borderRadius:8,border:'1px solid rgba(239,68,68,0.15)'}}>
-              {overdueTasks.slice(0,3).map(task=><div key={task.id} style={{fontSize:11,color:'#ef4444',padding:'1px 0'}}>⚠️ {task.title}</div>)}
-              {overdueTasks.length>3&&<div style={{fontSize:11,color:t.text2}}>+{overdueTasks.length-3} ещё</div>}
-            </div>
-          )}
-        </Group>
-
-        {/* Заявки */}
-        <Group icon="💬" title="Заявки WAZZUP" color="#06b6d4" t={t}>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:8}}>
-            <MiniCard label="Сегодня" value={todaySucc.length} sub={`${FMT(todaySucc.reduce((s,l)=>s+(Number(l.estimate_amount)||0),0))} ₸`} color="#10b981" t={t}/>
-            <MiniCard label="Вчера"   value={ydSuccess.length} sub={`${FMT(ydSuccess.reduce((s,l)=>s+(Number(l.estimate_amount)||0),0))} ₸`} color="#10b981" t={t}/>
-            <MiniCard label="В работе" value={inWork.length} color="#8b5cf6" t={t}/>
-            <MiniCard label="Ждём" value={waiting.length} color="#f59e0b" t={t}/>
+      {showSettings ? (
+        <div style={{ flex:1, overflowY:'auto', padding:'20px 24px' }}>
+          <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:11, color:t.text2, marginBottom:16, letterSpacing:1 }}>
+            НАСТРОЙКА БЛОКОВ СВОДКИ
           </div>
-          <MetricRow label="Неделя" value={leadsThisWeek.length} color={t.text} t={t} trend={trendCalc(leadsThisWeek.length,leadsLastWeek.length)}/>
-          <MetricRow label="Конверсия 7д" value={`${convThis}%`} color={convThis>=30?'#10b981':'#f59e0b'} t={t} trend={trendCalc(convThis,convLast)}/>
-          <MetricRow label="Средний чек" value={`${FMT(avgThis)} ₸`} color="#f0b429" t={t} trend={trendCalc(avgThis,avgLast)}/>
-          {bestDay&&<MetricRow label="Лучший день" value={bestDay} color="#8b5cf6" t={t}/>}
-        </Group>
+          {visibleSections.map(s => (
+            <label key={s.key} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'13px 0', borderBottom:`1px solid ${t.border}`, cursor:'pointer' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                <span style={{ fontSize:18 }}>{s.icon}</span>
+                <span style={{ color:t.text, fontSize:13, fontFamily:'Inter,sans-serif' }}>{s.label}</span>
+              </div>
+              <div
+                onClick={() => setEditConfig(prev => ({ ...prev, [s.key]: !prev[s.key] }))}
+                style={{
+                  width:42, height:24, borderRadius:12, cursor:'pointer', transition:'background 0.2s',
+                  background: editConfig[s.key] ? '#f0b429' : t.border,
+                  position:'relative', flexShrink:0,
+                }}
+              >
+                <div style={{
+                  position:'absolute', top:3, left: editConfig[s.key] ? 21 : 3,
+                  width:18, height:18, borderRadius:'50%', background:'#fff',
+                  transition:'left 0.2s', boxShadow:'0 1px 3px rgba(0,0,0,0.3)',
+                }}/>
+              </div>
+            </label>
+          ))}
+          <div style={{ display:'flex', gap:8, marginTop:20 }}>
+            <button
+              onClick={saveConfig} disabled={saving}
+              style={{ flex:1, background:'#f0b429', border:'none', borderRadius:10, color:'#0f0f13', fontSize:13, fontWeight:700, padding:'11px', cursor:'pointer', fontFamily:'Inter,sans-serif' }}
+            >
+              {saving ? 'Сохраняю...' : 'Сохранить'}
+            </button>
+            <button
+              onClick={() => setShowSettings(false)}
+              style={{ background:'transparent', border:`1px solid ${t.border}`, borderRadius:10, color:t.text2, fontSize:13, padding:'11px 18px', cursor:'pointer', fontFamily:'Inter,sans-serif' }}
+            >
+              Отмена
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ flex:1, overflowY:'auto', padding:'16px 24px', display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
 
-        {/* По городам */}
-        {(isAdmin||isRgm)&&cityStats.length>0&&(
-          <Group icon="🏙️" title="По городам" color="#f59e0b" t={t}>
+          {/* Задачи */}
+          {config.tasks && <Group icon="✅" title="Задачи" color="#8b5cf6" t={t}>
+            <MetricRow label="На сегодня"    value={todayTasks.length}   color={todayTasks.length>0?'#8b5cf6':t.text2} t={t} />
+            <MetricRow label="Просрочено"    value={overdueTasks.length} color={overdueTasks.length>0?'#ef4444':t.text2} t={t} alert={overdueTasks.length>0} />
+            <MetricRow label="На проверке"   value={reviewTasks.length}  color={reviewTasks.length>0?'#f97316':t.text2} t={t} />
+            {inTimePct!==null&&<MetricRow label="В срок" value={`${inTimePct}%`} color={inTimePct>=70?'#10b981':'#f59e0b'} t={t} trend={trendCalc(inTimePct,70)}/>}
+            {overdueTasks.length>0&&(
+              <div style={{marginTop:6,padding:'8px',background:'rgba(239,68,68,0.06)',borderRadius:8,border:'1px solid rgba(239,68,68,0.15)'}}>
+                {overdueTasks.slice(0,3).map(task=><div key={task.id} style={{fontSize:11,color:'#ef4444',padding:'1px 0'}}>⚠️ {task.title}</div>)}
+                {overdueTasks.length>3&&<div style={{fontSize:11,color:t.text2}}>+{overdueTasks.length-3} ещё</div>}
+              </div>
+            )}
+          </Group>}
+
+          {/* Заявки */}
+          {config.leads && <Group icon="💬" title="Заявки WAZZUP" color="#06b6d4" t={t}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:8}}>
+              <MiniCard label="Сегодня" value={todaySucc.length} sub={`${FMT(todaySucc.reduce((s,l)=>s+(Number(l.estimate_amount)||0),0))} ₸`} color="#10b981" t={t}/>
+              <MiniCard label="Вчера"   value={ydSuccess.length} sub={`${FMT(ydSuccess.reduce((s,l)=>s+(Number(l.estimate_amount)||0),0))} ₸`} color="#10b981" t={t}/>
+              <MiniCard label="В работе" value={inWork.length} color="#8b5cf6" t={t}/>
+              <MiniCard label="Ждём" value={waiting.length} color="#f59e0b" t={t}/>
+            </div>
+            <MetricRow label="Неделя" value={leadsThisWeek.length} color={t.text} t={t} trend={trendCalc(leadsThisWeek.length,leadsLastWeek.length)}/>
+            <MetricRow label="Конверсия 7д" value={`${convThis}%`} color={convThis>=30?'#10b981':'#f59e0b'} t={t} trend={trendCalc(convThis,convLast)}/>
+            <MetricRow label="Средний чек" value={`${FMT(avgThis)} ₸`} color="#f0b429" t={t} trend={trendCalc(avgThis,avgLast)}/>
+            {bestDay&&<MetricRow label="Лучший день" value={bestDay} color="#8b5cf6" t={t}/>}
+          </Group>}
+
+          {/* По городам */}
+          {config.cities && (isAdmin||isRgm) && cityStats.length>0 && <Group icon="🏙️" title="По городам" color="#f59e0b" t={t}>
             {cityStats.map(cs=>(
               <div key={cs.city} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'6px 0',borderBottom:`1px solid ${t.border}22`}}>
                 <span style={{color:t.text,fontSize:13}}>{cs.city}</span>
@@ -218,12 +304,10 @@ export default function SummaryPanel({ user, theme, onClose }) {
                 </div>
               </div>
             ))}
-          </Group>
-        )}
+          </Group>}
 
-        {/* Касса */}
-        {(isAdmin||isRgm)&&(
-          <Group icon="💰" title="Касса сегодня" color="#f0b429" t={t}>
+          {/* Касса */}
+          {config.kassa && (isAdmin||isRgm) && <Group icon="💰" title="Касса сегодня" color="#f0b429" t={t}>
             {launchedFilials.length>0&&<MetricRow label="Запустили" value={launchedFilials.map(f=>filialLabels[f]).join(', ')} color="#10b981" t={t}/>}
             {unlaunchedFilials.length>0&&(
               <div style={{padding:'8px',background:'rgba(239,68,68,0.06)',borderRadius:8,border:'1px solid rgba(239,68,68,0.15)',marginTop:4}}>
@@ -232,12 +316,10 @@ export default function SummaryPanel({ user, theme, onClose }) {
               </div>
             )}
             <MetricRow label="Расхождения" value={kassaDiffs.length>0?`${kassaDiffs.length} ⚠️`:'Нет ✅'} color={kassaDiffs.length>0?'#ef4444':'#10b981'} t={t}/>
-          </Group>
-        )}
+          </Group>}
 
-        {/* ЗРС */}
-        {(isAdmin||isRgm)&&zrs.length>0&&(
-          <Group icon="📝" title={`ЗРС (${zrs.length})`} color="#06b6d4" t={t}>
+          {/* ЗРС */}
+          {config.zrs && (isAdmin||isRgm) && zrs.length>0 && <Group icon="📝" title={`ЗРС (${zrs.length})`} color="#06b6d4" t={t}>
             {zrs.slice(0,4).map(z=>(
               <div key={z.id} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:`1px solid ${t.border}22`}}>
                 <span style={{color:t.text,fontSize:12}}>{z.requester}</span>
@@ -245,12 +327,10 @@ export default function SummaryPanel({ user, theme, onClose }) {
               </div>
             ))}
             {zrs.length>4&&<div style={{fontSize:11,color:t.text2,marginTop:4}}>+{zrs.length-4} ещё</div>}
-          </Group>
-        )}
+          </Group>}
 
-        {/* Смены */}
-        {(isAdmin||isRgm)&&(
-          <Group icon="🕐" title="Смены" color="#10b981" t={t}>
+          {/* Смены */}
+          {config.shifts && (isAdmin||isRgm) && <Group icon="🕐" title="Смены" color="#10b981" t={t}>
             {shifts.length===0
               ?<div style={{color:t.text2,fontSize:12,textAlign:'center',padding:'8px 0'}}>Никого нет</div>
               :shifts.slice(0,5).map(s=>(
@@ -260,15 +340,15 @@ export default function SummaryPanel({ user, theme, onClose }) {
                 </div>
               ))
             }
-          </Group>
-        )}
+          </Group>}
 
-      </div>
+        </div>
+      )}
     </Popup>
   );
 }
 
-function Popup({ t, onClose, user, weather, onRefresh, children }) {
+function Popup({ t, onClose, user, weather, onRefresh, onSettings, showSettings, children }) {
   const w = Math.min(window.innerWidth * 0.9, 900);
   return (
     <>
@@ -289,8 +369,22 @@ function Popup({ t, onClose, user, weather, onRefresh, children }) {
             <span style={{fontFamily:'Unbounded,sans-serif',fontSize:11,fontWeight:700,color:'#f0b429'}}>SKUPKA CRM</span>
             <span style={{color:t.text2,fontSize:11}}>· Сводка</span>
           </div>
-          <div style={{display:'flex',gap:6}}>
-            {onRefresh&&<button onClick={onRefresh} style={{background:'transparent',border:`1px solid ${t.border}`,borderRadius:6,color:t.text2,fontSize:12,padding:'3px 8px',cursor:'pointer'}}>🔄</button>}
+          <div style={{display:'flex',gap:6,alignItems:'center'}}>
+            {onRefresh && !showSettings && (
+              <button onClick={onRefresh} style={{background:'transparent',border:`1px solid ${t.border}`,borderRadius:6,color:t.text2,fontSize:12,padding:'3px 8px',cursor:'pointer'}}>🔄</button>
+            )}
+            {onSettings && (
+              <button
+                onClick={onSettings}
+                title="Настроить сводку"
+                style={{
+                  background: showSettings ? 'rgba(240,180,41,0.15)' : 'transparent',
+                  border: `1px solid ${showSettings ? 'rgba(240,180,41,0.4)' : t.border}`,
+                  borderRadius:6, color: showSettings ? '#f0b429' : t.text2,
+                  fontSize:14, padding:'3px 8px', cursor:'pointer',
+                }}
+              >⚙️</button>
+            )}
             <button onClick={onClose} style={{background:'transparent',border:'none',color:t.text2,fontSize:18,cursor:'pointer',lineHeight:1}}>✕</button>
           </div>
         </div>
