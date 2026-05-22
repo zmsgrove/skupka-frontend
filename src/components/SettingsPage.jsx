@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { getSettings, saveSettings } from '../App';
+import { themes } from '../theme';
 
-const CITY_OPTIONS = ['Атырау','Актобе','Уральск'];
 const HOME_TAB_OPTIONS = [
   { value:'board',     label:'💬 WAZZUP (Доска)' },
   { value:'dashboard', label:'📊 Дашборд' },
@@ -9,35 +9,67 @@ const HOME_TAB_OPTIONS = [
   { value:'tasks',     label:'✅ Задачи' },
 ];
 
+const SOUNDS = [
+  { id:'ping',     label:'🔔 Пинг',         desc:'Классический',  freq:[880,440],   type:'sine' },
+  { id:'chime',    label:'🎵 Звон',          desc:'Мелодичный',    freq:[1047,784],  type:'sine' },
+  { id:'pop',      label:'🫧 Поп',           desc:'Мягкий',        freq:[600,300],   type:'sine' },
+  { id:'beep',     label:'📟 Бип',           desc:'Чёткий',        freq:[1200,1200], type:'square' },
+  { id:'soft',     label:'🌊 Мягкий',        desc:'Тихий',         freq:[440,330],   type:'sine' },
+  { id:'alert',    label:'🚨 Алерт',         desc:'Срочный',       freq:[1500,1000], type:'sawtooth' },
+  { id:'bell',     label:'🔕 Колокол',       desc:'Долгий',        freq:[523,392],   type:'sine' },
+  { id:'blip',     label:'👾 Блип',          desc:'Игровой',       freq:[800,1600],  type:'square' },
+  { id:'knock',    label:'🚪 Стук',          desc:'Глухой',        freq:[200,150],   type:'triangle' },
+  { id:'digital',  label:'💻 Цифровой',      desc:'Электронный',   freq:[2000,1500], type:'sawtooth' },
+];
+
+function playSound(sound, volume) {
+  try {
+    const vol = (volume ?? 40) / 100;
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = sound.type;
+    o.frequency.setValueAtTime(sound.freq[0], ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(sound.freq[1], ctx.currentTime + 0.15);
+    g.gain.setValueAtTime(vol, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    o.start(ctx.currentTime);
+    o.stop(ctx.currentTime + 0.5);
+  } catch(e) {}
+}
+
 export default function SettingsPage({ user, theme, settings, onUpdate }) {
   const t = theme;
 
-  const handleVolume = (e) => onUpdate({ volume: Number(e.target.value) });
-  const handleSound  = () => onUpdate({ sound: !(settings.sound !== false) });
-  const handleTheme  = (v) => onUpdate({ theme: v });
-  const handleHomeTab = (v) => onUpdate({ homeTab: v });
-  const handleHomeCity = (v) => onUpdate({ homeCity: v });
-  const handleCompact  = () => onUpdate({ compact: !settings.compact });
-  const handleTimers   = () => onUpdate({ showTimers: settings.showTimers === false ? true : false });
+  const handleVolume    = (e) => onUpdate({ volume: Number(e.target.value) });
+  const handleSound     = () => onUpdate({ sound: !(settings.sound !== false) });
+  const handleSoundType = (id) => { onUpdate({ soundType: id }); playSound(SOUNDS.find(s=>s.id===id), settings.volume??40); };
+  const handleTheme     = (v) => onUpdate({ theme: v });
+  const handleHomeTab   = (v) => onUpdate({ homeTab: v });
+  const handleHomeCity  = (v) => onUpdate({ homeCity: v });
+  const handleCompact   = () => onUpdate({ compact: !settings.compact });
+  const handleTimers    = () => onUpdate({ showTimers: settings.showTimers === false ? true : false });
   const handleAutoRefresh = (v) => onUpdate({ autoRefresh: v });
 
-  const volume = settings.volume ?? 40;
-  const soundOn = settings.sound !== false;
-  const themeName = settings.theme || 'dark';
-  const showTimers = settings.showTimers !== false;
-  const compact = !!settings.compact;
+  const volume      = settings.volume ?? 40;
+  const soundOn     = settings.sound !== false;
+  const soundType   = settings.soundType || 'ping';
+  const themeName   = settings.theme || 'dark';
+  const showTimers  = settings.showTimers !== false;
+  const compact     = !!settings.compact;
   const autoRefresh = settings.autoRefresh || 'off';
-  const homeTab = settings.homeTab || 'board';
-  const homeCity = settings.homeCity || user.cities[0];
+  const homeTab     = settings.homeTab || 'board';
+  const homeCity    = settings.homeCity || user.cities[0];
 
   return (
-    <div style={{ padding:'0 24px 40px', maxWidth:640 }}>
+    <div style={{ padding:'0 24px 40px', maxWidth:700 }}>
       <div style={{ padding:'20px 0 24px' }}>
         <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:20, fontWeight:700, color:t.text }}>⚙️ Настройки</div>
         <div style={{ color:t.text2, fontSize:13, marginTop:4 }}>Персональные настройки интерфейса</div>
       </div>
 
-      {/* Sound */}
+      {/* Уведомления */}
       <Section title="🔔 Уведомления" t={t}>
         <Row label="Звук уведомлений" t={t}>
           <Toggle value={soundOn} onChange={handleSound} t={t} />
@@ -46,19 +78,44 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
           <input type="range" min={0} max={100} value={volume} onChange={handleVolume}
             style={{ width:'100%', accentColor:'#f0b429', cursor:'pointer' }} />
         </Row>
+        <Row label="Тип звука" t={t} vertical>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:6, width:'100%' }}>
+            {SOUNDS.map(s => (
+              <button key={s.id} onClick={() => handleSoundType(s.id)} style={{
+                background: soundType===s.id ? 'rgba(240,180,41,0.15)' : t.surface2,
+                border:`1px solid ${soundType===s.id ? 'rgba(240,180,41,0.5)' : t.border}`,
+                borderRadius:10, padding:'10px 6px', cursor:'pointer', textAlign:'center',
+                transition:'all 0.15s',
+              }}>
+                <div style={{ fontSize:18 }}>{s.label.split(' ')[0]}</div>
+                <div style={{ color: soundType===s.id ? '#f0b429' : t.text, fontSize:11, fontWeight:600, marginTop:3 }}>{s.label.split(' ').slice(1).join(' ')}</div>
+                <div style={{ color:t.text2, fontSize:10, marginTop:1 }}>{s.desc}</div>
+              </button>
+            ))}
+          </div>
+        </Row>
       </Section>
 
-      {/* Theme */}
+      {/* Темы */}
       <Section title="🎨 Оформление" t={t}>
-        <Row label="Тема" t={t}>
-          <div style={{ display:'flex', gap:8 }}>
-            {[['dark','🌙 Тёмная'],['light','☀️ Светлая']].map(([val,label]) => (
-              <button key={val} onClick={() => handleTheme(val)} style={{
-                background: themeName===val ? 'rgba(240,180,41,0.15)' : 'transparent',
-                border:`1px solid ${themeName===val ? 'rgba(240,180,41,0.5)' : t.border}`,
-                borderRadius:8, color: themeName===val ? '#f0b429' : t.text2,
-                fontSize:12, padding:'6px 14px', cursor:'pointer', transition:'all 0.15s',
-              }}>{label}</button>
+        <Row label="Тема" t={t} vertical>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:6, width:'100%' }}>
+            {Object.entries(themes).map(([key, th]) => (
+              <button key={key} onClick={() => handleTheme(key)} style={{
+                background: themeName===key ? th.surface2 : th.surface,
+                border:`2px solid ${themeName===key ? '#f0b429' : th.border}`,
+                borderRadius:10, padding:'10px 6px', cursor:'pointer', textAlign:'center',
+                transition:'all 0.15s', position:'relative',
+              }}>
+                {themeName===key && <div style={{ position:'absolute', top:4, right:4, width:8, height:8, borderRadius:'50%', background:'#f0b429' }} />}
+                <div style={{ fontSize:16 }}>{th.name.split(' ')[0]}</div>
+                <div style={{ color:th.text, fontSize:10, fontWeight:600, marginTop:3, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{th.name.split(' ').slice(1).join(' ')}</div>
+                <div style={{ display:'flex', gap:2, marginTop:4, justifyContent:'center' }}>
+                  {[th.bg, th.surface, th.accent, th.text2].map((c,i) => (
+                    <div key={i} style={{ width:10, height:10, borderRadius:2, background:c, border:`1px solid ${th.border}` }} />
+                  ))}
+                </div>
+              </button>
             ))}
           </div>
         </Row>
@@ -70,7 +127,7 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
         </Row>
       </Section>
 
-      {/* Home screen */}
+      {/* Главный экран */}
       <Section title="🏠 Главный экран" t={t}>
         <Row label="Открывать при входе" t={t}>
           <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
@@ -98,9 +155,9 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
         )}
       </Section>
 
-      {/* Auto refresh */}
+      {/* Автообновление */}
       <Section title="🔄 Автообновление" t={t}>
-        <Row label="Принудительно обновлять каждые" t={t}>
+        <Row label="Обновлять каждые" t={t}>
           <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
             {[['off','Выкл'],['5','5 мин'],['10','10 мин'],['30','30 мин']].map(([val,label]) => (
               <button key={val} onClick={() => handleAutoRefresh(val)} style={{
@@ -114,14 +171,12 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
         </Row>
       </Section>
 
-      {/* Info */}
-      <div style={{ marginTop:8, padding:'14px 18px', background:t.surface, border:`1px solid ${t.border}`, borderRadius:12 }}>
+      {/* Инфо */}
+      <div style={{ padding:'14px 18px', background:t.surface, border:`1px solid ${t.border}`, borderRadius:12 }}>
         <div style={{ color:t.text2, fontSize:12 }}>
           👤 <b style={{ color:t.text }}>{user.name}</b> · {user.username} · роль: <b style={{ color:'#f0b429' }}>{user.role}</b>
         </div>
-        <div style={{ color:t.text2, fontSize:11, marginTop:4 }}>
-          Города: {user.cities.join(', ')}
-        </div>
+        <div style={{ color:t.text2, fontSize:11, marginTop:4 }}>Города: {user.cities.join(', ')}</div>
       </div>
     </div>
   );
@@ -136,11 +191,12 @@ function Section({ title, children, t }) {
   );
 }
 
-function Row({ label, children, t }) {
+function Row({ label, children, t, vertical }) {
   return (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 18px', borderBottom:`1px solid ${t.border}22`, gap:16, flexWrap:'wrap' }}>
-      <span style={{ color:t.text3, fontSize:13, minWidth:180 }}>{label}</span>
-      <div style={{ flex:1, minWidth:160 }}>{children}</div>
+    <div style={{ display:'flex', alignItems: vertical ? 'flex-start' : 'center', justifyContent:'space-between', padding:'12px 18px', borderBottom:`1px solid ${t.border}22`, gap:16, flexWrap: vertical ? 'wrap' : 'nowrap', flexDirection: vertical ? 'column' : 'row' }}>
+      {!vertical && <span style={{ color:t.text2, fontSize:13, minWidth:180, flexShrink:0 }}>{label}</span>}
+      {vertical && <span style={{ color:t.text2, fontSize:13 }}>{label}</span>}
+      <div style={{ flex:1, width: vertical ? '100%' : 'auto' }}>{children}</div>
     </div>
   );
 }

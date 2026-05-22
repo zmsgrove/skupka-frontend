@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard';
 import ExcelExport from './components/ExcelExport';
 import ChangelogWidget from './components/ChangelogWidget';
 import ChatPage from './components/ChatPage';
+import { TasksPage, ZrsPage, AttendancePage } from './components/PlaceholderPages';
 import SettingsPage from './components/SettingsPage';
 import KassaPage from './components/KassaPage';
 import { getSession, clearSession } from './auth';
@@ -30,15 +31,29 @@ export function saveSettings(s) {
   localStorage.setItem('skupka_settings', JSON.stringify(s));
 }
 
-function playPing(volume) {
+function playPing(volume, soundType) {
+  const SOUNDS = {
+    ping:    { freq:[880,440],   type:'sine' },
+    chime:   { freq:[1047,784],  type:'sine' },
+    pop:     { freq:[600,300],   type:'sine' },
+    beep:    { freq:[1200,1200], type:'square' },
+    soft:    { freq:[440,330],   type:'sine' },
+    alert:   { freq:[1500,1000], type:'sawtooth' },
+    bell:    { freq:[523,392],   type:'sine' },
+    blip:    { freq:[800,1600],  type:'square' },
+    knock:   { freq:[200,150],   type:'triangle' },
+    digital: { freq:[2000,1500], type:'sawtooth' },
+  };
+  const s = SOUNDS[soundType] || SOUNDS.ping;
   try {
     const vol = (volume !== undefined ? volume : (getSettings().volume ?? 40)) / 100;
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const o = ctx.createOscillator();
     const g = ctx.createGain();
     o.connect(g); g.connect(ctx.destination);
-    o.frequency.setValueAtTime(880, ctx.currentTime);
-    o.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
+    o.type = s.type;
+    o.frequency.setValueAtTime(s.freq[0], ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(s.freq[1], ctx.currentTime + 0.15);
     g.gain.setValueAtTime(vol, ctx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
     o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.4);
@@ -124,8 +139,8 @@ function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, tota
         <SideItem icon="🗨️" label="Чат"       active={activeTab==='chat'}      onClick={() => { setActiveTab('chat');     setMobileOpen(false); }} badge={chatUnread} collapsed={!forMobile && collapsed} t={t} />
         <SideItem icon="✅" label="Задачи"    active={activeTab==='tasks'}     onClick={() => { setActiveTab('tasks');    setMobileOpen(false); }} collapsed={!forMobile && collapsed} t={t} />
         <SideItem icon="💰" label="Касса"     active={activeTab==='kassa'}     onClick={() => { setActiveTab('kassa');    setMobileOpen(false); }} collapsed={!forMobile && collapsed} t={t} />
-        <SideItem icon="🏢" label="ЗРС"       active={false} onClick={() => {}} collapsed={!forMobile && collapsed} t={t} muted />
-        <SideItem icon="🕐" label="Смена"     active={false} onClick={() => {}} collapsed={!forMobile && collapsed} t={t} muted />
+        <SideItem icon="📝" label="ЗРС" active={activeTab==='zrs'} onClick={() => { setActiveTab('zrs'); setMobileOpen(false); }} collapsed={!forMobile && collapsed} t={t} />
+        <SideItem icon="🕐" label="Смена" active={activeTab==='attendance'} onClick={() => { setActiveTab('attendance'); setMobileOpen(false); }} collapsed={!forMobile && collapsed} t={t} />
         <div style={{ flex:1 }} />
         <div style={{ height:1, background:t.border, margin:'6px 0' }} />
         <SideItem icon="🗄️" label="Архив"     active={activeTab==='archive'}   onClick={() => { setActiveTab('archive');  setMobileOpen(false); }} collapsed={!forMobile && collapsed} t={t} />
@@ -212,7 +227,7 @@ export default function App() {
     fetchUnread();
     const ch = supabase.channel('unread-watcher')
       .on('postgres_changes', { event:'UPDATE', schema:'public', table:'leads' }, (payload) => {
-        if (soundOn && payload.new.unread_count > (payload.old.unread_count||0)) playPing(settings.volume);
+        if (soundOn && payload.new.unread_count > (payload.old.unread_count||0)) playPing(settings.volume, settings.soundType);
         fetchUnread();
       }).subscribe();
     return () => { cancelled = true; supabase.removeChannel(ch); };
@@ -330,8 +345,10 @@ export default function App() {
           {activeTab==='board' && activeCity && <KanbanBoard key={activeCity} city={activeCity} user={user} theme={t} settings={settings} />}
           {activeTab==='dashboard' && canSeeDashboard && <Dashboard user={user} theme={t} />}
           {activeTab==='chat' && <ChatPage user={user} theme={t} onUnreadChange={setChatUnread} />}
-          {activeTab==='tasks' && <PlaceholderPage icon="✅" title="Задачи" subtitle="Будет доступно в v5" t={t} />}
+          {activeTab==='tasks' && <TasksPage theme={t} />}
           {activeTab==='kassa' && <KassaPage user={user} theme={t} />}
+          {activeTab==='zrs' && <ZrsPage theme={t} />}
+          {activeTab==='attendance' && <AttendancePage theme={t} />}
           {activeTab==='archive' && <ArchiveView user={user} theme={t} />}
           {activeTab==='deleted' && canSeeDeleted && <DeletedView user={user} theme={t} />}
           {activeTab==='settings' && <SettingsPage user={user} theme={t} settings={settings} onUpdate={updateSettings} />}
