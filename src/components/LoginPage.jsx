@@ -17,7 +17,16 @@ const SLOGANS = [
 
 const CHANGELOG = [
   {
-    version: 'v5',
+    version: 'v6 + v7',
+    date: 'Май 2026',
+    changes: [
+      'ЗРС — заявки на расход ДС',
+      'Отметка на смене — СПО и Админ состав',
+      'Геолокация для Админ состава',
+    ],
+  },
+  {
+    version: 'v6+v7',
     date: 'Май 2026',
     changes: [
       'Касса — утренний и вечерний отчёт',
@@ -26,7 +35,7 @@ const CHANGELOG = [
     ],
   },
   {
-    version: 'v5',
+    version: 'v6+v7',
     date: 'Май 2026',
     changes: [
       'Полноценный канбан задач — 5 колонок',
@@ -113,7 +122,7 @@ export default function LoginPage({ onLogin, theme }) {
             </form>
           </div>
           <div style={{ textAlign:'center', marginTop:20, color:'#4a4a5e', fontSize:11 }}>
-            SKUPKA CRM · <span style={{ color:'#f0b429' }}>v5</span> · 2026
+            SKUPKA CRM · <span style={{ color:'#f0b429' }}>v6+v7</span> · 2026
           </div>
         </div>
       </div>

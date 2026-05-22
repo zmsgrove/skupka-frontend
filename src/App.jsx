@@ -7,7 +7,9 @@ import ChangelogWidget from './components/ChangelogWidget';
 import ChatPage from './components/ChatPage';
 import TasksPage from './components/TasksPage';
 import KassaPage from './components/KassaPage';
-import { ZrsPage, AttendancePage, TildaPage } from './components/PlaceholderPages';
+import ZrsPage from './components/ZrsPage';
+import AttendancePage from './components/AttendancePage';
+import { TildaPage } from './components/PlaceholderPages';
 import SettingsPage from './components/SettingsPage';
 
 import { getSession, clearSession } from './auth';
@@ -350,8 +352,8 @@ export default function App() {
           {activeTab==='chat' && <ChatPage user={user} theme={t} onUnreadChange={setChatUnread} />}
           {activeTab==='tasks' && <TasksPage user={user} theme={t} />}
           {activeTab==='kassa' && <KassaPage user={user} theme={t} />}
-          {activeTab==='zrs' && <ZrsPage theme={t} />}
-          {activeTab==='attendance' && <AttendancePage theme={t} />}
+          {activeTab==='zrs' && <ZrsPage user={user} theme={t} />}
+          {activeTab==='attendance' && <AttendancePage user={user} theme={t} />}
           {activeTab==='archive' && <ArchiveView user={user} theme={t} />}
           {activeTab==='deleted' && canSeeDeleted && <DeletedView user={user} theme={t} />}
           {activeTab==='tilda' && <TildaPage theme={t} />}

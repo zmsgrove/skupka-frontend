@@ -2,6 +2,19 @@ import React, { useState } from 'react';
 
 const CHANGELOG = [
   {
+    version: 'v6 + v7',
+    date: 'Май 2026',
+    color: '#06b6d4',
+    changes: [
+      'ЗРС — заявки на расход ДС, канбан 5 колонок',
+      'Согласование заявок: РКО с кассы или безнал',
+      'Отметка на смене — СПО и Админ состав',
+      'Геолокация для Админ состава',
+      'Ссылка на карту по локации',
+      'Ролевой доступ для всех разделов',
+    ],
+  },
+  {
     version: 'v5',
     date: 'Май 2026',
     color: '#f0b429',
@@ -119,7 +132,7 @@ export default function ChangelogWidget({ theme }) {
     <>
       <button onClick={() => setOpen(!open)} title="История обновлений" style={{ background:t.surface2, border:`1px solid ${t.border}`, borderRadius:8, color:'#8b5cf6', fontSize:13, padding:'5px 10px', cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontFamily:'Inter,sans-serif' }}>
         📋
-        <span style={{ background:'#f0b429', color:'#fff', fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:10, fontFamily:'Unbounded,sans-serif' }}>v5</span>
+        <span style={{ background:'#f0b429', color:'#fff', fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:10, fontFamily:'Unbounded,sans-serif' }}>v6+v7</span>
       </button>
       {open && (
         <>
@@ -153,7 +166,7 @@ export default function ChangelogWidget({ theme }) {
               ))}
             </div>
             <div style={{ padding:'12px 20px', borderTop:`1px solid ${t.border}`, textAlign:'center', color:t.text2, fontSize:11 }}>
-              SKUPKA CRM · <span style={{ color:'#8b5cf6' }}>v5</span> · 2026
+              SKUPKA CRM · <span style={{ color:'#8b5cf6' }}>v6+v7</span> · 2026
             </div>
           </div>
         </>
