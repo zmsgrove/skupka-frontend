@@ -6,7 +6,8 @@ import ExcelExport from './components/ExcelExport';
 import ChangelogWidget from './components/ChangelogWidget';
 import ChatPage from './components/ChatPage';
 import TasksPage from './components/TasksPage';
-import { KassaPage, ZrsPage, AttendancePage } from './components/PlaceholderPages';
+import KassaPage from './components/KassaPage';
+import { ZrsPage, AttendancePage, TildaPage } from './components/PlaceholderPages';
 import SettingsPage from './components/SettingsPage';
 
 import { getSession, clearSession } from './auth';
@@ -147,6 +148,7 @@ function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, tota
         <SideItem icon="🗄️" label="Архив"     active={activeTab==='archive'}   onClick={() => { setActiveTab('archive');  setMobileOpen(false); }} collapsed={!forMobile && collapsed} t={t} />
         {canSeeDeleted && <SideItem icon="🗑️" label="Удалённые" active={activeTab==='deleted'} onClick={() => { setActiveTab('deleted'); setMobileOpen(false); }} collapsed={!forMobile && collapsed} t={t} />}
         <div style={{ height:1, background:t.border, margin:'6px 0' }} />
+        <SideItem icon="🌐" label="Tilda" active={activeTab==='tilda'} onClick={() => { setActiveTab('tilda'); setMobileOpen(false); }} collapsed={!forMobile && collapsed} t={t} />
         <SideItem icon="⚙️" label="Настройки" active={activeTab==='settings'}  onClick={() => { setActiveTab('settings'); setMobileOpen(false); }} collapsed={!forMobile && collapsed} t={t} />
       </div>
       {!forMobile && (
@@ -347,11 +349,12 @@ export default function App() {
           {activeTab==='dashboard' && canSeeDashboard && <Dashboard user={user} theme={t} />}
           {activeTab==='chat' && <ChatPage user={user} theme={t} onUnreadChange={setChatUnread} />}
           {activeTab==='tasks' && <TasksPage user={user} theme={t} />}
-          {activeTab==='kassa' && <KassaPage theme={t} />}
+          {activeTab==='kassa' && <KassaPage user={user} theme={t} />}
           {activeTab==='zrs' && <ZrsPage theme={t} />}
           {activeTab==='attendance' && <AttendancePage theme={t} />}
           {activeTab==='archive' && <ArchiveView user={user} theme={t} />}
           {activeTab==='deleted' && canSeeDeleted && <DeletedView user={user} theme={t} />}
+          {activeTab==='tilda' && <TildaPage theme={t} />}
           {activeTab==='settings' && <SettingsPage user={user} theme={t} settings={settings} onUpdate={updateSettings} />}
         </main>
       </div>

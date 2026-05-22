@@ -1,75 +1,19 @@
 import React from 'react';
 
 export function TasksPage({ theme }) {
-  return (
-    <PlaceholderPage
-      emoji="✅" title="Задачи" version="v4" versionColor="#8b5cf6"
-      slogan="Работаем вместе!"
-      description="Личные и командные задачи с дедлайнами, приоритетами и статусами."
-      features={[
-        '📋 Личные задачи — создавай и отслеживай свои задачи',
-        '👥 Назначение задач — ставь задачи сотрудникам',
-        '⏰ Дедлайны — сроки выполнения с напоминаниями',
-        '🔴 Приоритеты — высокий, средний, низкий',
-        '📊 Статусы — новая, в работе, на проверке, выполнена',
-        '🔔 Уведомления — напоминания о задачах',
-      ]}
-      t={theme}
-    />
-  );
-}
-
-export function KassaPage({ theme }) {
-  return (
-    <PlaceholderPage
-      emoji="💰" title="Касса" version="v5" versionColor="#f0b429"
-      slogan="Деньги любят счёт!"
-      description="Управление кассовыми операциями: пересменка, отчёты и покупюрная ведомость."
-      features={[
-        '🌅 Пересменка кассира (утро) — приём кассы, пересчёт остатка',
-        '🌆 Пересменка кассира (вечер) — сдача кассы, итоговый остаток',
-        '📋 X-Отчёт — промежуточный отчёт без обнуления счётчиков',
-        '📊 Z-Отчёт — итоговый отчёт закрытия смены',
-        '💵 Покупюрная ведомость — подсчёт по номиналам купюр',
-      ]}
-      t={theme}
-    />
-  );
+  return <PlaceholderPage emoji="✅" title="Задачи" version="v4" versionColor="#8b5cf6" slogan="Работаем вместе!" description="Личные и командные задачи с дедлайнами, приоритетами и статусами." features={['📋 Личные задачи — создавай и отслеживай свои задачи','👥 Назначение задач — ставь задачи сотрудникам','⏰ Дедлайны — сроки выполнения с напоминаниями','🔴 Приоритеты — высокий, средний, низкий','📊 Статусы — новая, в работе, на проверке, выполнена']} t={theme} />;
 }
 
 export function ZrsPage({ theme }) {
-  return (
-    <PlaceholderPage
-      emoji="📝" title="ЗРС" version="v6" versionColor="#06b6d4"
-      slogan="Контроль каждого тенге!"
-      description="Заявка на расход денежных средств. Подача, согласование и контроль расходов."
-      features={[
-        '💸 Создание заявки — сумма, цель, обоснование',
-        '✅ Согласование — директор или зам. директор',
-        '📋 История заявок — все расходы в одном месте',
-        '📊 Аналитика расходов по категориям',
-      ]}
-      t={theme}
-    />
-  );
+  return <PlaceholderPage emoji="📝" title="ЗРС" version="v6" versionColor="#06b6d4" slogan="Контроль каждого тенге!" description="Заявка на расход денежных средств. Подача, согласование и контроль расходов." features={['💸 Создание заявки — сумма, цель, обоснование','✅ Согласование — директор или зам. директор','📋 История заявок — все расходы в одном месте','📊 Аналитика расходов по категориям']} t={theme} />;
 }
 
 export function AttendancePage({ theme }) {
-  return (
-    <PlaceholderPage
-      emoji="🕐" title="Отметка на смене" version="v7" versionColor="#10b981"
-      slogan="Всегда на месте!"
-      description="Учёт рабочего времени сотрудников. Кто, когда и на каком филиале на смене."
-      features={[
-        '📍 Отметка прихода и ухода на смену',
-        '🏢 Привязка к филиалу',
-        '👔 Отметка для административного состава',
-        '📊 Табель — история присутствия за период',
-        '🔔 Уведомление директору о начале смены',
-      ]}
-      t={theme}
-    />
-  );
+  return <PlaceholderPage emoji="🕐" title="Отметка на смене" version="v7" versionColor="#10b981" slogan="Всегда на месте!" description="Учёт рабочего времени сотрудников. Кто, когда и на каком филиале на смене." features={['📍 Отметка прихода и ухода на смену','🏢 Привязка к филиалу','👔 Отметка для административного состава','📊 Табель — история присутствия за период']} t={theme} />;
+}
+
+export function TildaPage({ theme }) {
+  return <PlaceholderPage emoji="🌐" title="Tilda" version="v8" versionColor="#f97316" slogan="Заявки прямо с сайта!" description="Интеграция с Tilda — заявки с сайта автоматически попадают в CRM." features={['🔗 Webhook интеграция с Tilda','📥 Заявки с сайта в канбан автоматически','🏙️ Автоматическое определение города','📊 Статистика заявок с сайта','🔔 Уведомления в Telegram при новой заявке']} t={theme} />;
 }
 
 function PlaceholderPage({ emoji, title, version, versionColor, slogan, description, features, t }) {
@@ -94,9 +38,7 @@ function PlaceholderPage({ emoji, title, version, versionColor, slogan, descript
             ))}
           </div>
         </div>
-        <div style={{ marginTop:16, color:t.text2, fontSize:12 }}>
-          🚧 Выйдет в <span style={{ color:versionColor, fontWeight:700 }}>{version}</span>
-        </div>
+        <div style={{ marginTop:16, color:t.text2, fontSize:12 }}>🚧 Выйдет в <span style={{ color:versionColor, fontWeight:700 }}>{version}</span></div>
       </div>
     </div>
   );
