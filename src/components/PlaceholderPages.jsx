@@ -13,10 +13,10 @@ export function AttendancePage({ theme }) {
 }
 
 export function TildaPage({ theme }) {
-  return <PlaceholderPage emoji="🌐" title="Tilda" version="v8" versionColor="#f97316" slogan="Заявки прямо с сайта!" description="Интеграция с Tilda — заявки с сайта автоматически попадают в CRM." features={['🔗 Webhook интеграция с Tilda','📥 Заявки с сайта в канбан автоматически','🏙️ Автоматическое определение города','📊 Статистика заявок с сайта','🔔 Уведомления в Telegram при новой заявке']} t={theme} />;
+  return <PlaceholderPage emoji="🌐" title="Tilda" version="Скоро" versionColor="#f97316" slogan="Заявки прямо с сайта!" description="Интеграция с Tilda — заявки с сайта автоматически попадают в CRM." features={['🔗 Webhook интеграция с Tilda','📥 Заявки с сайта в канбан автоматически','🏙️ Автоматическое определение города','📊 Статистика заявок с сайта','🔔 Уведомления в Telegram при новой заявке']} t={theme} comingSoon />;
 }
 
-function PlaceholderPage({ emoji, title, version, versionColor, slogan, description, features, t }) {
+function PlaceholderPage({ emoji, title, version, versionColor, slogan, description, features, t, comingSoon }) {
   return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'70vh', padding:24 }}>
       <div style={{ maxWidth:480, textAlign:'center' }}>
@@ -38,7 +38,7 @@ function PlaceholderPage({ emoji, title, version, versionColor, slogan, descript
             ))}
           </div>
         </div>
-        <div style={{ marginTop:16, color:t.text2, fontSize:12 }}>🚧 Выйдет в <span style={{ color:versionColor, fontWeight:700 }}>{version}</span></div>
+        <div style={{ marginTop:16, color:t.text2, fontSize:12 }}>{comingSoon ? '🚧 В будущих обновлениях' : <>🚧 Выйдет в <span style={{ color:versionColor, fontWeight:700 }}>{version}</span></>}</div>
       </div>
     </div>
   );

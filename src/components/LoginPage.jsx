@@ -17,7 +17,7 @@ const SLOGANS = [
 
 const CHANGELOG = [
   {
-    version: 'v5',
+    version: '2.0',
     date: 'Май 2026',
     changes: [
       'Касса — утренний и вечерний отчёт',
@@ -26,7 +26,7 @@ const CHANGELOG = [
     ],
   },
   {
-    version: 'v5',
+    version: '2.0',
     date: 'Май 2026',
     changes: [
       'Полноценный канбан задач — 5 колонок',
@@ -94,7 +94,8 @@ export default function LoginPage({ onLogin, theme }) {
             <span style={{ fontFamily:'Unbounded,sans-serif', fontSize:32, fontWeight:700, color:'#f0b429', letterSpacing:3 }}>SKUPKA</span>
             <span style={{ background:'#f0b429', color:'#0f0f13', fontFamily:'Unbounded,sans-serif', fontSize:11, fontWeight:700, padding:'3px 8px', borderRadius:6 }}>CRM</span>
           </div>
-          <p style={{ color:'#9090a8', fontSize:13, marginBottom:40, fontStyle:'italic' }}>{slogan}</p>
+          <p style={{ color:'#9090a8', fontSize:13, marginBottom:8, fontStyle:'italic' }}>{slogan}</p>
+          <p style={{ fontFamily:'Unbounded,sans-serif', fontSize:9, color:'#f0b42988', letterSpacing:2, marginBottom:32 }}>Лучше чем Все!</p>
           <div style={{ background:'#1a1a22', border:'1px solid #2e2e3e', borderRadius:20, padding:'36px 32px', boxShadow:'0 24px 80px rgba(0,0,0,0.5)' }}>
             <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:16, fontWeight:600, color:'#f0f0f5', marginBottom:24 }}>Войти в систему</div>
             <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:16 }}>
@@ -113,7 +114,7 @@ export default function LoginPage({ onLogin, theme }) {
             </form>
           </div>
           <div style={{ textAlign:'center', marginTop:20, color:'#4a4a5e', fontSize:11 }}>
-            SKUPKA CRM · <span style={{ color:'#f0b429' }}>v5</span> · 2026
+            SKUPKA CRM · <span style={{ color:'#f0b429' }}>2.0</span> · 2026
           </div>
         </div>
       </div>

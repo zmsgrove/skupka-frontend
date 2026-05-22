@@ -136,9 +136,12 @@ function SideItem({ icon, label, active, onClick, badge, collapsed, t }) {
 
 function Logo() {
   return (
-    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-      <span style={{ fontFamily:'Unbounded,sans-serif', fontSize:15, fontWeight:700, color:'#f0b429', letterSpacing:2 }}>SKUPKA</span>
-      <span style={{ background:'#f0b429', color:'#0f0f13', fontFamily:'Unbounded,sans-serif', fontSize:8, fontWeight:700, padding:'2px 6px', borderRadius:4 }}>CRM</span>
+    <div style={{ display:'flex', flexDirection:'column', gap:1 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+        <span style={{ fontFamily:'Unbounded,sans-serif', fontSize:15, fontWeight:700, color:'#f0b429', letterSpacing:2 }}>SKUPKA</span>
+        <span style={{ background:'#f0b429', color:'#0f0f13', fontFamily:'Unbounded,sans-serif', fontSize:8, fontWeight:700, padding:'2px 6px', borderRadius:4 }}>CRM</span>
+      </div>
+      <span style={{ fontFamily:'Unbounded,sans-serif', fontSize:7, color:'#f0b42966', letterSpacing:1, lineHeight:1 }}>Лучше чем Все!</span>
     </div>
   );
 }
@@ -200,6 +203,22 @@ export default function App() {
   const [totalUnread, setTotalUnread] = useState(0);
   const [chatUnread, setChatUnread]   = useState(0);
   const [showSummary, setShowSummary] = useState(false);
+
+  // Auto-open summary at 09:00, 14:00, 21:00 UTC+5
+  useEffect(() => {
+    if (!user) return;
+    function checkAutoOpen() {
+      const kz = new Date(Date.now() + 5*3600*1000);
+      const h = kz.getUTCHours();
+      const m = kz.getUTCMinutes();
+      const s = kz.getUTCSeconds();
+      if ((h===9||h===14||h===21) && m===0 && s===0) {
+        setShowSummary(true);
+      }
+    }
+    const iv = setInterval(checkAutoOpen, 1000);
+    return () => clearInterval(iv);
+  }, [user]);
 
   const themeName = settings.theme || getTheme();
   const t = themes[themeName];
