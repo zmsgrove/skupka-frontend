@@ -415,9 +415,9 @@ function Row({ label, value, highlight }) {
 }
 
 const styles = {
-  overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)', padding: 16 },
-  modal: { background: '#1a1a22', border: '1px solid #2e2e3e', borderRadius: 20, width: '100%', maxWidth: 960, maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 24px', borderBottom: '1px solid #2e2e3e', flexShrink: 0 },
+  overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(8px)', padding: 16 },
+  modal: { background: '#1a1a22ee', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 21, width: '100%', maxWidth: 960, maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', backdropFilter: 'blur(16px)', boxShadow: '0 32px 80px rgba(0,0,0,0.5)' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 },
   clientName: { fontFamily: 'Unbounded, sans-serif', fontSize: 17, fontWeight: 700, color: '#f0f0f5' },
   clientPhone: { color: '#9090a8', fontSize: 13, marginTop: 3, display: 'flex', alignItems: 'center', gap: 8 },
   repeatBadge: { background: '#06b6d418', border: '1px solid #06b6d433', color: '#06b6d4', fontSize: 11, padding: '2px 8px', borderRadius: 20 },

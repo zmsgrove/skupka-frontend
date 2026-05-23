@@ -89,3 +89,21 @@ export function getTheme() {
 export function saveTheme(theme) {
   localStorage.setItem('skupka_theme', theme);
 }
+
+export const fib = {
+  xs: 8, sm: 13, md: 21, lg: 34, xl: 55, xxl: 89,
+};
+
+export const radius = {
+  sm: 8, md: 13, lg: 21, xl: 34,
+};
+
+export const fontSize = {
+  xs: 8, sm: 13, md: 21, lg: 34,
+};
+
+export const glass = {
+  light:  { backdropFilter: 'blur(10px)',  border: '1px solid rgba(255,255,255,0.10)' },
+  medium: { backdropFilter: 'blur(16px)',  border: '1px solid rgba(255,255,255,0.14)' },
+  strong: { backdropFilter: 'blur(24px)',  border: '1px solid rgba(255,255,255,0.18)' },
+};

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { supabase } from '../supabase';
+import { radius, fib } from '../theme';
 import LeadCard from './LeadCard';
 import LeadModal from './LeadModal';
 import StatsBar from './StatsBar';
@@ -154,24 +155,24 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
       )}
 
       {/* Toolbar */}
-      <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',margin:'0 24px 14px',gap:12,flexWrap:'wrap' }}>
-        <div style={{ display:'flex',alignItems:'center',gap:8,background:t.surface,border:`1px solid ${t.border}`,borderRadius:10,padding:'8px 14px',flex:1,maxWidth:340 }}>
+      <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',margin:`0 ${fib.md}px ${fib.sm}px`,gap:fib.sm,flexWrap:'wrap' }}>
+        <div style={{ display:'flex',alignItems:'center',gap:8,background:t.surface,border:`1px solid ${t.border}`,borderRadius:radius.md,padding:'8px 14px',flex:1,maxWidth:340,boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
           <span>🔍</span>
           <input style={{ background:'transparent',border:'none',color:t.text,fontSize:13,outline:'none',flex:1,fontFamily:'Inter,sans-serif' }}
             placeholder="Поиск по имени, телефону, технике..."
             value={search} onChange={e => setSearch(e.target.value)} />
           {search && <button style={{ background:'transparent',border:'none',color:t.text2,cursor:'pointer',fontSize:12 }} onClick={() => setSearch('')}>✕</button>}
         </div>
-        <div style={{ display:'flex',alignItems:'center',gap:8,background:t.surface,border:`1px solid ${t.border}`,borderRadius:10,padding:'8px 14px' }}>
+        <div style={{ display:'flex',alignItems:'center',gap:8,background:t.surface,border:`1px solid ${t.border}`,borderRadius:radius.md,padding:'8px 14px',boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
           <span style={{ color:t.text2,fontSize:12 }}>📅 Успешно / Провал:</span>
           <input type="date" value={filterDate} max={todayStr} onChange={e => setFilterDate(e.target.value)}
-            style={{ background:t.inputBg,border:`1px solid ${t.border}`,borderRadius:7,color:t.text,fontSize:13,padding:'4px 8px',outline:'none' }} />
-          {!isToday && <button onClick={() => setFilterDate(todayStr)} style={{ background:'rgba(240,180,41,0.15)',border:'1px solid rgba(240,180,41,0.4)',borderRadius:7,color:'#f0b429',fontSize:12,padding:'4px 10px',cursor:'pointer' }}>Сегодня</button>}
+            style={{ background:t.inputBg,border:`1px solid ${t.border}`,borderRadius:radius.sm,color:t.text,fontSize:13,padding:'4px 8px',outline:'none' }} />
+          {!isToday && <button onClick={() => setFilterDate(todayStr)} style={{ background:'rgba(240,180,41,0.15)',border:'1px solid rgba(240,180,41,0.4)',borderRadius:radius.sm,color:'#f0b429',fontSize:12,padding:'4px 10px',cursor:'pointer' }}>Сегодня</button>}
         </div>
       </div>
 
       {/* Board */}
-      <div style={{ display:'flex', gap:14, padding:'0 24px 16px', flex:1, overflowX:'auto', overflowY:'hidden', minHeight:0 }}>
+      <div style={{ display:'flex', gap:fib.sm, padding:`0 ${fib.md}px ${fib.md}px`, flex:1, overflowX:'auto', overflowY:'hidden', minHeight:0 }}>
         {COLUMNS.map(col => {
           const colLeads  = getColumnLeads(col);
           const isOver    = dragOver === col.id;
@@ -181,13 +182,13 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
 
           return (
             <div key={col.id}
-              style={{ flex:'1 0 190px',minWidth:190,minHeight:0,border:`2px solid ${isOver?col.color:t.border}`,borderRadius:14,overflow:'hidden',transition:'border-color 0.15s,background 0.15s',background:isOver?col.color+'0a':t.surface,display:'flex',flexDirection:'column' }}
+              style={{ flex:'1 0 190px',minWidth:190,minHeight:0,border:`1px solid ${isOver?col.color:t.border}`,borderRadius:radius.lg,overflow:'hidden',transition:'border-color 0.18s,background 0.18s,box-shadow 0.18s',background:isOver?col.color+'0a':t.surface,display:'flex',flexDirection:'column',boxShadow:isOver?`0 0 0 2px ${col.color}44,0 8px 24px rgba(0,0,0,0.12)`:'0 2px 12px rgba(0,0,0,0.06)' }}
               onDragOver={e => handleDragOver(e,col.id)}
               onDrop={e => handleDrop(e,col.id)}
               onDragLeave={e => { if(!e.currentTarget.contains(e.relatedTarget)) setDragOver(null); }}
             >
               {/* Заголовок колонки */}
-              <div onClick={() => toggleCollapse(col.id)} style={{ display:'flex',alignItems:'center',justifyContent:'space-between',padding:'11px 14px',borderBottom:`1px solid ${t.border}`,cursor:'pointer',userSelect:'none',flexShrink:0 }}>
+              <div onClick={() => toggleCollapse(col.id)} style={{ display:'flex',alignItems:'center',justifyContent:'space-between',padding:`${fib.sm}px 14px`,borderBottom:`1px solid ${t.border}`,cursor:'pointer',userSelect:'none',flexShrink:0,background:col.color+'08' }}>
                 <div style={{ display:'flex',alignItems:'center',gap:6,minWidth:0 }}>
                   <span style={{ flexShrink:0 }}>{col.emoji}</span>
                   <span style={{ fontFamily:'Unbounded,sans-serif',fontSize:11,fontWeight:600,color:col.color,whiteSpace:'nowrap' }}>{col.label}</span>
@@ -205,7 +206,7 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
               </div>
 
               {!isCollapsed && (
-                <div style={{ padding:10,display:'flex',flexDirection:'column',gap:compact?4:8,flex:1,overflowY:'auto',minHeight:0 }}>
+                <div style={{ padding:fib.xs,display:'flex',flexDirection:'column',gap:compact?4:fib.xs,flex:1,overflowY:'auto',minHeight:0 }}>
                   {colLeads.length===0 && (
                     <div style={{ color:isOver?col.color:t.text2,fontSize:12,textAlign:'center',padding:'20px 0',border:isOver?`2px dashed ${col.color}66`:'none',borderRadius:8,transition:'all 0.15s',flexShrink:0 }}>
                       {isOver?'➕ Отпусти здесь':'Нет заявок'}

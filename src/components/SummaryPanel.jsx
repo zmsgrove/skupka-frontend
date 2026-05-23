@@ -431,12 +431,12 @@ function Popup({ t, onClose, user, weather, onRefresh, onSettings, showSettings,
 
 function Group({ icon, title, color, children, t }) {
   return (
-    <div style={{background:t.surface2,borderRadius:14,border:`1px solid ${t.border}`,overflow:'hidden'}}>
-      <div style={{padding:'8px 14px',background:color+'11',borderBottom:`1px solid ${color}22`,display:'flex',alignItems:'center',gap:8}}>
-        <span style={{fontSize:14}}>{icon}</span>
-        <span style={{fontFamily:'Unbounded,sans-serif',fontSize:10,fontWeight:600,color}}>{title}</span>
+    <div style={{background:t.surface2,borderRadius:13,border:`1px solid ${t.border}`,overflow:'hidden',boxShadow:'0 2px 8px rgba(0,0,0,0.08)',backdropFilter:'blur(8px)'}}>
+      <div style={{padding:'8px 13px',background:color+'0e',borderBottom:`1px solid ${color}1a`,display:'flex',alignItems:'center',gap:8}}>
+        <span style={{fontSize:13}}>{icon}</span>
+        <span style={{fontFamily:'Unbounded,sans-serif',fontSize:10,fontWeight:700,color,letterSpacing:0.5}}>{title}</span>
       </div>
-      <div style={{padding:'8px 14px'}}>{children}</div>
+      <div style={{padding:'8px 13px'}}>{children}</div>
     </div>
   );
 }

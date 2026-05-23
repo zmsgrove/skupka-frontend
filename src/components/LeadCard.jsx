@@ -1,4 +1,5 @@
 import React from 'react';
+import { radius } from '../theme';
 
 const CITY_COLORS = { 'Атырау':'#f59e0b', 'Актобе':'#06b6d4', 'Уральск':'#a78bfa' };
 
@@ -29,11 +30,18 @@ export default function LeadCard({ lead, colColor, onClick, onDragStart, onDragE
     <div draggable="true" onDragStart={onDragStart} onDragEnd={onDragEnd}
       onClick={onClick} onContextMenu={onContextMenu}
       style={{
-        background:t.cardBg, border:`1px solid ${borderColor}`, borderRadius:12,
-        overflow:'hidden', cursor:'grab', userSelect:'none',
-        transition:'transform 0.15s,opacity 0.15s,border-color 0.2s',
-        opacity:isDragging?0.4:1,
-        boxShadow: isOverdue?'0 0 0 1px rgba(239,68,68,0.3)':hasUnread?'0 0 0 1px rgba(240,180,41,0.3)':'none',
+        background: t.cardBg,
+        border: `1px solid ${borderColor}`,
+        borderRadius: radius.lg,
+        overflow: 'hidden', cursor: 'grab', userSelect: 'none',
+        transition: 'transform 0.18s, opacity 0.15s, border-color 0.2s, box-shadow 0.2s',
+        opacity: isDragging ? 0.4 : 1,
+        backdropFilter: 'blur(8px)',
+        boxShadow: isOverdue
+          ? '0 0 0 1px rgba(239,68,68,0.3), 0 4px 16px rgba(239,68,68,0.14)'
+          : hasUnread
+          ? '0 0 0 1px rgba(240,180,41,0.3), 0 4px 16px rgba(240,180,41,0.14)'
+          : '0 2px 8px rgba(0,0,0,0.10)',
       }}>
 
       {/* Просрочка */}
@@ -69,29 +77,29 @@ export default function LeadCard({ lead, colColor, onClick, onDragStart, onDragE
         </div>
       )}
 
-      <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 12px',background:colColor+'22',borderBottom:`1px solid ${colColor}44` }}>
-        <span style={{ fontSize:11,fontWeight:600,padding:'2px 8px',borderRadius:20,color:cityColor,background:cityColor+'18',fontFamily:'Unbounded,sans-serif' }}>{lead.city}</span>
+      <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 13px',background:colColor+'1a',borderBottom:`1px solid ${colColor}33` }}>
+        <span style={{ fontSize:10,fontWeight:700,padding:'3px 10px',borderRadius:radius.xl,color:cityColor,background:cityColor+'18',fontFamily:'Unbounded,sans-serif',letterSpacing:0.5 }}>{lead.city}</span>
         <div style={{ display:'flex',alignItems:'center',gap:6 }}>
           {showTimer && (
             <span style={{ fontSize:10,color:isOverdue?'#ef4444':'#9090a8',fontWeight:isOverdue?700:400 }}>
               ⏱ {getTimerLabel(lead)}
             </span>
           )}
-          <span style={{ color:t.text2,fontSize:11 }}>{date}</span>
+          <span style={{ color:t.text2,fontSize:10 }}>{date}</span>
         </div>
       </div>
 
-      <div style={{ padding:'10px 12px 10px',display:'flex',flexDirection:'column',gap:4 }}>
-        <div style={{ color:t.text,fontWeight:600,fontSize:14 }}>{lead.client_name}</div>
-        <div style={{ color:t.text2,fontSize:12 }}>{lead.phone}</div>
-        <div style={{ color:t.text3,fontSize:13,marginTop:4 }}>📱 {stripMarkdown(lead.device)}</div>
+      <div style={{ padding:'13px',display:'flex',flexDirection:'column',gap:5 }}>
+        <div style={{ color:t.text,fontWeight:600,fontSize:13,lineHeight:1.3 }}>{lead.client_name}</div>
+        <div style={{ color:t.text2,fontSize:11 }}>{lead.phone}</div>
+        <div style={{ color:t.text3,fontSize:12,marginTop:3 }}>📱 {stripMarkdown(lead.device)}</div>
         {lead.estimate_amount && (
-          <div style={{ color:'#f0b429',fontSize:13,fontWeight:600,marginTop:4 }}>
+          <div style={{ color:'#f0b429',fontSize:13,fontWeight:700,marginTop:3 }}>
             💰 {new Intl.NumberFormat('ru-KZ').format(lead.estimate_amount)} ₸
           </div>
         )}
         {lead.visit_date && (
-          <div style={{ color:'#06b6d4',fontSize:12,marginTop:4 }}>
+          <div style={{ color:'#06b6d4',fontSize:11,marginTop:3 }}>
             📅 Придёт: {new Date(lead.visit_date).toLocaleDateString('ru-RU')}
           </div>
         )}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabase';
+import { radius } from '../theme';
 
 export default function StatsBar({ city, user, theme, onFilter }) {
   const t = theme;
@@ -148,12 +149,14 @@ export default function StatsBar({ city, user, theme, onFilter }) {
                 style={{
                   background: isActive ? card.color+'20' : bgColor,
                   border: `1px solid ${borderColor}`,
-                  borderRadius: 10, padding:'8px 14px',
+                  borderRadius: radius.md,
+                  padding: '8px 13px',
                   display:'flex', flexDirection:'column', justifyContent:'space-between',
                   flex:'1 1 0', minWidth:110, minHeight:82,
-                  cursor: 'pointer', transition: 'all 0.15s',
+                  cursor: 'pointer', transition: 'all 0.18s',
                   transform: isActive ? 'translateY(-2px)' : 'none',
-                  boxShadow: isActive ? `0 4px 12px ${card.color}33` : 'none',
+                  backdropFilter: 'blur(8px)',
+                  boxShadow: isActive ? `0 4px 16px ${card.color}40` : '0 2px 8px rgba(0,0,0,0.06)',
                 }}>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                   <span style={{ fontSize:15 }}>{card.emoji}</span>

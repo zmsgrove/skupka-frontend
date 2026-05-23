@@ -14,7 +14,7 @@ import SummaryPanel from './components/SummaryPanel';
 import Calculator from './components/Calculator';
 import { TildaPage } from './components/PlaceholderPages';
 import { getSession, clearSession } from './auth';
-import { themes, getTheme, saveTheme } from './theme';
+import { themes, getTheme, saveTheme, radius, fib, glass } from './theme';
 import { supabase } from './supabase';
 import axios from 'axios';
 
@@ -112,14 +112,15 @@ function SideItem({ icon, label, active, onClick, badge, collapsed, t }) {
     <button onClick={onClick} title={collapsed ? label : undefined} style={{
       display:'flex', alignItems:'center', gap: collapsed?0:10,
       justifyContent: collapsed?'center':'flex-start',
-      width:'100%', padding: collapsed?'10px 0':'9px 14px',
+      width:'100%', padding: collapsed?'10px 0':'8px 13px',
       background: active?'rgba(240,180,41,0.13)':'transparent',
-      border:'none', borderLeft: active?'2px solid #f0b429':'2px solid transparent',
-      borderRadius:10, cursor:'pointer',
+      border:'none', borderLeft: active?'3px solid #f0b429':'3px solid transparent',
+      borderRadius: radius.sm, cursor:'pointer',
       color: active?'#f0b429':t.text2,
       fontSize:13, fontWeight: active?700:500,
-      fontFamily:'Inter,sans-serif', transition:'all 0.15s',
+      fontFamily:'Inter,sans-serif', transition:'all 0.18s',
       position:'relative', whiteSpace:'nowrap', overflow:'hidden',
+      boxShadow: active?'0 2px 8px rgba(240,180,41,0.12)':'none',
     }}>
       <span style={{ fontSize:17, flexShrink:0 }}>{icon}</span>
       {!collapsed && <span style={{ flex:1, textAlign:'left' }}>{label}</span>}
@@ -180,11 +181,11 @@ function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, tota
 
   return (
     <>
-      <div className="sidebar-desktop" style={{ width:collapsed?60:200, background:t.headerBg, borderRight:`1px solid ${t.border}`, display:'flex', flexDirection:'column', height:'100%', transition:'width 0.2s ease', overflow:'hidden', flexShrink:0 }}>
+      <div className="sidebar-desktop" style={{ width:collapsed?60:200, background:t.headerBg+'ee', borderRight:`1px solid ${t.border}`, display:'flex', flexDirection:'column', height:'100%', transition:'width 0.2s ease', overflow:'hidden', flexShrink:0, backdropFilter:'blur(12px)' }}>
         {items(false)}
       </div>
       {mobileOpen && <div onClick={() => setMobileOpen(false)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:199 }} />}
-      <div className="sidebar-mobile" style={{ position:'fixed', top:0, left:0, bottom:0, width:220, transform:mobileOpen?'translateX(0)':'translateX(-100%)', transition:'transform 0.25s cubic-bezier(0.4,0,0.2,1)', zIndex:200, background:t.headerBg, borderRight:`1px solid ${t.border}`, display:'flex', flexDirection:'column' }}>
+      <div className="sidebar-mobile" style={{ position:'fixed', top:0, left:0, bottom:0, width:220, transform:mobileOpen?'translateX(0)':'translateX(-100%)', transition:'transform 0.25s cubic-bezier(0.4,0,0.2,1)', zIndex:200, background:t.headerBg+'f0', borderRight:`1px solid ${t.border}`, display:'flex', flexDirection:'column', backdropFilter:'blur(16px)' }}>
         <div style={{ height:54, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 14px', borderBottom:`1px solid ${t.border}` }}>
           <Logo />
           <button onClick={() => setMobileOpen(false)} style={{ background:'transparent', border:'none', fontSize:20, color:t.text2, cursor:'pointer', padding:4 }}>✕</button>
@@ -336,7 +337,7 @@ export default function App() {
       `}</style>
 
       {/* Header */}
-      <header style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 20px', height:54, background:t.headerBg, borderBottom:`1px solid ${t.border}`, flexShrink:0, zIndex:100, boxShadow:t.shadow }}>
+      <header style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 20px', height:54, background:t.headerBg+'ee', borderBottom:`1px solid ${t.border}`, flexShrink:0, zIndex:100, backdropFilter:'blur(12px)', boxShadow:'0 2px 16px rgba(0,0,0,0.12)' }}>
         <div style={{ display:'flex', alignItems:'center', gap:12 }}>
           <button className="hamburger-btn" onClick={() => setMobileOpen(v=>!v)} style={{ background:'transparent', border:`1px solid ${t.border}`, borderRadius:8, color:t.text, fontSize:18, width:36, height:36, cursor:'pointer', display:'none', alignItems:'center', justifyContent:'center' }}>☰</button>
           <Logo />
