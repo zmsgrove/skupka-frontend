@@ -45,14 +45,14 @@ export default function CrmAssistant({ user, theme }) {
     const cutoff = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
     supabase.from('assistant_history')
       .select('role, message')
-      .eq('user_id', user.username)
+      .eq('user_id', user?.id)
       .gte('created_at', cutoff)
       .order('created_at')
       .then(({ data }) => {
         if (data && data.length > 0) setMsgs(data.map(r => ({ role: r.role, content: r.message })));
       })
       .catch(() => {});
-  }, [open, user.username]);
+  }, [open, user?.id]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -66,6 +66,7 @@ export default function CrmAssistant({ user, theme }) {
   };
 
   const send = async (override) => {
+    console.log('API URL:', process.env.REACT_APP_BACKEND_URL);
     const txt = (override ?? input).trim();
     if (!txt || loading) return;
 
@@ -77,10 +78,10 @@ export default function CrmAssistant({ user, theme }) {
     setActive(true);
 
     // Persist to Supabase
-    await supabase.from('assistant_history').insert({ user_id:user.username, role:'user', message:txt }).catch(() => {});
+    await supabase.from('assistant_history').insert({ user_id: user?.id, role: 'user', message: txt });
     // Cleanup old history
     const cutoff = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-    await supabase.from('assistant_history').delete().eq('user_id', user.username).lt('created_at', cutoff).catch(() => {});
+    await supabase.from('assistant_history').delete().eq('user_id', user?.id).lt('created_at', cutoff);
 
     try {
       const intent = detectIntent(txt);
@@ -121,7 +122,7 @@ export default function CrmAssistant({ user, theme }) {
 
       const botMsg = { role:'assistant', content: resp.response };
       setMsgs(prev => [...prev, botMsg]);
-      await supabase.from('assistant_history').insert({ user_id:user.username, role:'assistant', message:resp.response }).catch(() => {});
+      await supabase.from('assistant_history').insert({ user_id: user?.id, role: 'assistant', message: resp.response });
     } catch (err) {
       const errText = err?.response?.data?.error || err?.message || 'Неизвестная ошибка';
       console.error('[CrmAssistant] Ошибка:', errText, '\nURL:', `${API}/api/assistant`);
