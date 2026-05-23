@@ -48,10 +48,10 @@ export default function CrmAssistant({ user, theme }) {
       .eq('user_id', user?.id)
       .gte('created_at', cutoff)
       .order('created_at')
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error('assistant_history select:', error);
         if (data && data.length > 0) setMsgs(data.map(r => ({ role: r.role, content: r.message })));
-      })
-      .catch(() => {});
+      });
   }, [open, user?.id]);
 
   useEffect(() => {
@@ -78,10 +78,12 @@ export default function CrmAssistant({ user, theme }) {
     setActive(true);
 
     // Persist to Supabase
-    await supabase.from('assistant_history').insert({ user_id: user?.id, role: 'user', message: txt });
+    const { error: insErr } = await supabase.from('assistant_history').insert({ user_id: user?.id, role: 'user', message: txt });
+    if (insErr) console.error('assistant_history insert user:', insErr);
     // Cleanup old history
     const cutoff = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-    await supabase.from('assistant_history').delete().eq('user_id', user?.id).lt('created_at', cutoff);
+    const { error: delErr } = await supabase.from('assistant_history').delete().eq('user_id', user?.id).lt('created_at', cutoff);
+    if (delErr) console.error('assistant_history delete:', delErr);
 
     try {
       const intent = detectIntent(txt);
@@ -122,7 +124,8 @@ export default function CrmAssistant({ user, theme }) {
 
       const botMsg = { role:'assistant', content: resp.response };
       setMsgs(prev => [...prev, botMsg]);
-      await supabase.from('assistant_history').insert({ user_id: user?.id, role: 'assistant', message: resp.response });
+      const { error: botInsErr } = await supabase.from('assistant_history').insert({ user_id: user?.id, role: 'assistant', message: resp.response });
+      if (botInsErr) console.error('assistant_history insert bot:', botInsErr);
     } catch (err) {
       const errText = err?.response?.data?.error || err?.message || 'Неизвестная ошибка';
       console.error('[CrmAssistant] Ошибка:', errText, '\nURL:', `${API}/api/assistant`);
