@@ -136,7 +136,7 @@ export default function StatsBar({ city, user, theme, onFilter }) {
   }
 
   return (
-    <div style={{ padding:'0 24px 10px' }}>
+    <div style={{ padding:'21px 24px 10px' }}>
       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
         {/* Cards — 80% */}
         <div style={{ display:'flex', alignItems:'stretch', gap:8, flex:'0 0 80%', flexWrap:'nowrap', overflowX:'auto' }}>

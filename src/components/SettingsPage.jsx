@@ -100,7 +100,7 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
   const homeCity    = settings.homeCity || user.cities[0];
 
   return (
-    <div style={{ padding:'0 24px 40px', maxWidth:700 }}>
+    <div style={{ padding:'0 24px 40px', maxWidth:700, height:'100%', overflowY:'auto' }}>
       <div style={{ padding:'20px 0 24px' }}>
         <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:20, fontWeight:700, color:t.text }}>⚙️ Настройки</div>
         <div style={{ color:t.text2, fontSize:13, marginTop:4 }}>Персональные настройки интерфейса</div>

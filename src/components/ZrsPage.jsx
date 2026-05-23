@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../supabase';
 
 const COLS = [
@@ -20,6 +20,16 @@ export default function ZrsPage({ user, theme }) {
   const [selected, setSelected] = useState(null);
   const canSee  = CAN_SEE.includes(user.role);
   const canMove = CAN_MOVE.includes(user.role);
+  const isAdmin = ['admin','dir','zamdir'].includes(user.role);
+  const draggingRef = useRef(null);
+  const [dragOver, setDragOver]     = useState(null);
+  const [contextMenu, setContextMenu] = useState(null);
+
+  useEffect(() => {
+    const close = () => setContextMenu(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, []);
 
   const fetch = useCallback(async () => {
     const { data } = await supabase.from('zrs_requests').select('*').order('created_at',{ascending:false});
@@ -39,6 +49,30 @@ export default function ZrsPage({ user, theme }) {
   const moveCard = async (id, status) => {
     await supabase.from('zrs_requests').update({status,updated_at:new Date().toISOString()}).eq('id',id);
     fetch();
+  };
+
+  const handleDelete = async (card) => {
+    if (isAdmin) {
+      await supabase.from('zrs_requests').delete().eq('id', card.id);
+    } else {
+      await supabase.from('zrs_requests').update({ delete_requested: true }).eq('id', card.id).catch(() => {});
+    }
+    fetch();
+    setContextMenu(null);
+  };
+
+  const handleContextMenu = (card, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ card, x: Math.min(e.clientX, window.innerWidth - 190), y: Math.min(e.clientY, window.innerHeight - 220) });
+  };
+
+  const handleDrop = (targetStatus) => {
+    if (draggingRef.current && canMove && draggingRef.current.status !== targetStatus) {
+      moveCard(draggingRef.current.id, targetStatus);
+    }
+    draggingRef.current = null;
+    setDragOver(null);
   };
 
   if (!canSee) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:t.text2,fontSize:14}}>Нет доступа к разделу ЗРС</div>;
@@ -62,8 +96,13 @@ export default function ZrsPage({ user, theme }) {
         <div style={{display:'grid',gridTemplateColumns:`repeat(${COLS.length},minmax(200px,1fr))`,gap:12,height:'100%'}}>
           {COLS.map(col => {
             const cards = requests.filter(r=>r.status===col.id);
+            const isOver = dragOver === col.id;
             return (
-              <div key={col.id} style={{display:'flex',flexDirection:'column',background:t.surface,border:`2px solid ${t.border}`,borderRadius:14,overflow:'hidden',height:'100%'}}>
+              <div key={col.id}
+                onDragOver={e=>{ e.preventDefault(); setDragOver(col.id); }}
+                onDragLeave={()=>setDragOver(null)}
+                onDrop={()=>handleDrop(col.id)}
+                style={{display:'flex',flexDirection:'column',background:t.surface,border:`2px solid ${isOver?col.color:t.border}`,borderRadius:14,overflow:'hidden',height:'100%',transition:'border-color 0.15s'}}>
                 <div style={{padding:'10px 14px',borderBottom:`1px solid ${t.border}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
                   <span style={{fontFamily:'Unbounded,sans-serif',fontSize:11,fontWeight:600,color:col.color}}>{col.label}</span>
                   <span style={{background:col.color+'22',color:col.color,fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:20}}>{cards.length}</span>
@@ -75,6 +114,8 @@ export default function ZrsPage({ user, theme }) {
                       onOpen={()=>setSelected(card)}
                       canMove={canMove&&col.id!=='done'&&col.id!=='rejected'}
                       onMove={(s)=>moveCard(card.id,s)}
+                      draggingRef={draggingRef}
+                      onContextMenu={handleContextMenu}
                     />
                   ))}
                 </div>
@@ -85,11 +126,28 @@ export default function ZrsPage({ user, theme }) {
       </div>
       {showForm&&<ZrsForm user={user} t={t} onClose={()=>setShowForm(false)} onCreate={()=>{setShowForm(false);fetch();}}/>}
       {selected&&<ZrsModal request={selected} user={user} t={t} onClose={()=>setSelected(null)} canMove={canMove} onMove={(s)=>{moveCard(selected.id,s);setSelected(null);}}/>}
+
+      {contextMenu && (
+        <div onClick={e=>e.stopPropagation()} style={{ position:'fixed', top:contextMenu.y, left:contextMenu.x, zIndex:2000, background:t.surface, border:`1px solid ${t.border}`, borderRadius:10, boxShadow:'0 8px 24px rgba(0,0,0,0.3)', minWidth:180, overflow:'hidden' }}>
+          {[
+            { label:'✅ Закрыть', action:()=>{ moveCard(contextMenu.card.id,'done'); setContextMenu(null); } },
+            { label:'❌ Отказ', action:()=>{ moveCard(contextMenu.card.id,'rejected'); setContextMenu(null); } },
+            { label:'📂 Открыть', action:()=>{ setSelected(contextMenu.card); setContextMenu(null); } },
+            { label:'🗑️ Удалить', action:()=>handleDelete(contextMenu.card), danger:true },
+          ].map(item => (
+            <div key={item.label} onClick={item.action} style={{ padding:'9px 14px', cursor:'pointer', fontSize:13, color:item.danger?'#ef4444':t.text, borderBottom:`1px solid ${t.border}22` }}
+              onMouseEnter={e=>e.currentTarget.style.background=item.danger?'rgba(239,68,68,0.1)':t.surface2}
+              onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+              {item.label}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-function ZrsCard({ card, t, color, onOpen, canMove, onMove }) {
+function ZrsCard({ card, t, color, onOpen, canMove, onMove, draggingRef, onContextMenu }) {
   const MOVES = {
     new:    [{status:'review',label:'⚡ В работу'},{status:'rejected',label:'❌ Отказ'}],
     review: [{status:'waiting',label:'🕐 Ждёт закрывашки'},{status:'rejected',label:'❌ Отказ'}],
@@ -97,8 +155,17 @@ function ZrsCard({ card, t, color, onOpen, canMove, onMove }) {
   };
   const moves = MOVES[card.status]||[];
   return (
-    <div onClick={onOpen} style={{background:t.surface2,border:`1px solid ${t.border}`,borderLeft:`3px solid ${color}`,borderRadius:10,padding:'10px 12px',cursor:'pointer'}}>
-      <div style={{color:t.text,fontSize:13,fontWeight:600,marginBottom:4}}>{card.requester}</div>
+    <div
+      draggable
+      onDragStart={()=>{ draggingRef.current = card; }}
+      onDragEnd={()=>{ draggingRef.current = null; }}
+      onClick={onOpen}
+      onContextMenu={e=>onContextMenu(card,e)}
+      style={{background:t.surface2,border:`1px solid ${t.border}`,borderLeft:`3px solid ${card.delete_requested?'#ef4444':color}`,borderRadius:10,padding:'10px 12px',cursor:'grab',opacity:card.delete_requested?0.7:1}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
+        <span style={{color:t.text,fontSize:13,fontWeight:600}}>{card.requester}</span>
+        {card.delete_requested && <span style={{background:'rgba(239,68,68,0.15)',color:'#ef4444',fontSize:10,fontWeight:700,padding:'2px 6px',borderRadius:20}}>🗑️ На удаление</span>}
+      </div>
       <div style={{color:'#f0b429',fontSize:14,fontWeight:700,marginBottom:4}}>{FMT(card.amount)} ₸</div>
       <div style={{color:t.text2,fontSize:11,marginBottom:4}}>{card.goal}</div>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>

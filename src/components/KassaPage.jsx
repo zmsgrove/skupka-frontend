@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../supabase';
 
 const FILIALS = [
@@ -37,6 +37,16 @@ export default function KassaPage({ user, theme }) {
   const [selected, setSelected]   = useState(null);
   const todayStr = new Date().toISOString().split('T')[0];
   const [filterDate, setFilterDate] = useState(todayStr);
+  const draggingRef = useRef(null);
+  const [dragOver, setDragOver]   = useState(null);
+  const [contextMenu, setContextMenu] = useState(null);
+  const isAdmin = ['admin','dir','zamdir'].includes(user.role);
+
+  useEffect(() => {
+    const close = () => setContextMenu(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, []);
 
   const fetchReports = useCallback(async () => {
     const { data } = await supabase.from('kassa_reports').select('*').order('created_at',{ascending:false});
@@ -55,6 +65,30 @@ export default function KassaPage({ user, theme }) {
   const moveCard = async (id, status) => {
     await supabase.from('kassa_reports').update({status,updated_at:new Date().toISOString()}).eq('id',id);
     fetchReports();
+  };
+
+  const handleDelete = async (card) => {
+    if (isAdmin) {
+      await supabase.from('kassa_reports').delete().eq('id', card.id);
+    } else {
+      await supabase.from('kassa_reports').update({ delete_requested: true }).eq('id', card.id).catch(() => {});
+    }
+    fetchReports();
+    setContextMenu(null);
+  };
+
+  const handleContextMenu = (card, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ card, x: Math.min(e.clientX, window.innerWidth - 190), y: Math.min(e.clientY, window.innerHeight - 200) });
+  };
+
+  const handleDrop = (targetStatus) => {
+    if (draggingRef.current && draggingRef.current.status !== targetStatus) {
+      moveCard(draggingRef.current.id, targetStatus);
+    }
+    draggingRef.current = null;
+    setDragOver(null);
   };
 
   const filterStart = new Date(filterDate); filterStart.setHours(0,0,0,0);
@@ -106,22 +140,47 @@ export default function KassaPage({ user, theme }) {
       {/* Kanban — fixed height, scroll inside columns */}
       <div style={{flex:1,overflow:'hidden',padding:'16px 24px'}}>
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(240px,1fr))',gap:14,height:'100%'}}>
-          <KassaCol title="🌅 Утренний отчёт" color="#f59e0b" cards={morningReports} user={user} t={t} onOpen={setSelected} onMove={moveCard} launched={morningLaunched} unlaunched={morningUnlaunched} />
-          <KassaCol title="🌆 Вечерний отчёт" color="#8b5cf6" cards={eveningReports} user={user} t={t} onOpen={setSelected} onMove={moveCard} launched={eveningLaunched} unlaunched={eveningUnlaunched} />
-          <KassaCol title="✅ Завершённые"    color="#10b981" cards={doneReports}    user={user} t={t} onOpen={setSelected} onMove={null} isDone />
+          <KassaCol title="🌅 Утренний отчёт" color="#f59e0b" dropStatus="morning" cards={morningReports} user={user} t={t} onOpen={setSelected} onMove={moveCard} launched={morningLaunched} unlaunched={morningUnlaunched} draggingRef={draggingRef} dragOver={dragOver} setDragOver={setDragOver} onDrop={handleDrop} onContextMenu={handleContextMenu} />
+          <KassaCol title="🌆 Вечерний отчёт" color="#8b5cf6" dropStatus="evening" cards={eveningReports} user={user} t={t} onOpen={setSelected} onMove={moveCard} launched={eveningLaunched} unlaunched={eveningUnlaunched} draggingRef={draggingRef} dragOver={dragOver} setDragOver={setDragOver} onDrop={handleDrop} onContextMenu={handleContextMenu} />
+          <KassaCol title="✅ Завершённые"    color="#10b981" dropStatus="done"    cards={doneReports}    user={user} t={t} onOpen={setSelected} onMove={null} isDone draggingRef={draggingRef} dragOver={dragOver} setDragOver={setDragOver} onDrop={handleDrop} onContextMenu={handleContextMenu} />
         </div>
       </div>
 
       {showForm && <KassaForm type={showForm} user={user} t={t} onClose={()=>setShowForm(null)} onCreate={()=>{setShowForm(null);fetchReports();}} />}
       {selected && <KassaModal report={selected} user={user} t={t} onClose={()=>setSelected(null)} onMove={(s)=>{moveCard(selected.id,s);setSelected(null);}} onUpdate={fetchReports} />}
+
+      {contextMenu && (
+        <div onClick={e=>e.stopPropagation()} style={{ position:'fixed', top:contextMenu.y, left:contextMenu.x, zIndex:2000, background:t.surface, border:`1px solid ${t.border}`, borderRadius:10, boxShadow:'0 8px 24px rgba(0,0,0,0.3)', minWidth:180, overflow:'hidden' }}>
+          {[
+            { label:'✅ Завершить', action:()=>{ moveCard(contextMenu.card.id,'done'); setContextMenu(null); } },
+            { label:'↩️ На доработку', action:()=>{ moveCard(contextMenu.card.id,contextMenu.card.type); setContextMenu(null); } },
+            { label:'📂 Открыть', action:()=>{ setSelected(contextMenu.card); setContextMenu(null); } },
+            { label:'🗑️ Удалить', action:()=>handleDelete(contextMenu.card), danger:true },
+          ].map(item => (
+            <div key={item.label} onClick={item.action} style={{ padding:'9px 14px', cursor:'pointer', fontSize:13, color:item.danger?'#ef4444':t.text, borderBottom:`1px solid ${t.border}22` }}
+              onMouseEnter={e=>e.currentTarget.style.background=item.danger?'rgba(239,68,68,0.1)':t.surface2}
+              onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+              {item.label}
+            </div>
+          ))}
+          {!isAdmin && contextMenu.card.delete_requested && (
+            <div style={{ padding:'7px 14px', fontSize:11, color:'#f59e0b', background:'rgba(245,158,11,0.08)' }}>⏳ Запрос на удаление отправлен</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
-function KassaCol({ title, color, cards, user, t, onOpen, onMove, isDone, launched, unlaunched }) {
+function KassaCol({ title, color, dropStatus, cards, user, t, onOpen, onMove, isDone, launched, unlaunched, draggingRef, dragOver, setDragOver, onDrop, onContextMenu }) {
   const filialLabel = id => FILIALS.find(f=>f.id===id)?.label || id;
+  const isOver = dragOver === dropStatus;
   return (
-    <div style={{display:'flex',flexDirection:'column',background:t.surface,border:`2px solid ${t.border}`,borderRadius:14,overflow:'hidden',height:'100%'}}>
+    <div
+      onDragOver={e=>{ e.preventDefault(); setDragOver(dropStatus); }}
+      onDragLeave={()=>setDragOver(null)}
+      onDrop={()=>onDrop(dropStatus)}
+      style={{display:'flex',flexDirection:'column',background:t.surface,border:`2px solid ${isOver?color:t.border}`,borderRadius:14,overflow:'hidden',height:'100%',transition:'border-color 0.15s'}}>
       <div style={{padding:'10px 14px',borderBottom:`1px solid ${t.border}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
         <span style={{fontFamily:'Unbounded,sans-serif',fontSize:11,fontWeight:600,color}}>{title}</span>
         <span style={{background:color+'22',color,fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:20}}>{cards.length}</span>
@@ -148,6 +207,8 @@ function KassaCol({ title, color, cards, user, t, onOpen, onMove, isDone, launch
           <KassaCard key={card.id} card={card} user={user} t={t} color={color} isDone={isDone}
             onOpen={()=>onOpen(card)}
             onMove={onMove&&!isDone?(s)=>onMove(card.id,s):null}
+            draggingRef={draggingRef}
+            onContextMenu={onContextMenu}
           />
         ))}
       </div>
@@ -155,18 +216,25 @@ function KassaCol({ title, color, cards, user, t, onOpen, onMove, isDone, launch
   );
 }
 
-function KassaCard({ card, user, t, color, isDone, onOpen, onMove }) {
+function KassaCard({ card, user, t, color, isDone, onOpen, onMove, draggingRef, onContextMenu }) {
   const filial = FILIALS.find(f=>f.id===card.filial);
   const hasDiff = card.cash_diff || card.noncash_diff;
   const date = new Date(card.report_date).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
   const canMove = onMove && canMoveCard(user,card);
 
   return (
-    <div onClick={onOpen} style={{background:t.surface2,border:`1px solid ${hasDiff?'#ef4444':t.border}`,borderLeft:`3px solid ${hasDiff?'#ef4444':color}`,borderRadius:10,padding:'10px 12px',cursor:'pointer',transition:'all 0.15s'}}>
+    <div
+      draggable
+      onDragStart={()=>{ draggingRef.current = card; }}
+      onDragEnd={()=>{ draggingRef.current = null; }}
+      onClick={onOpen}
+      onContextMenu={e=>onContextMenu(card,e)}
+      style={{background:t.surface2,border:`1px solid ${hasDiff?'#ef4444':t.border}`,borderLeft:`3px solid ${card.delete_requested?'#ef4444':hasDiff?'#ef4444':color}`,borderRadius:10,padding:'10px 12px',cursor:'grab',transition:'all 0.15s',opacity:card.delete_requested?0.7:1}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
-        <div style={{display:'flex',gap:6}}>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
           <span style={{background:color+'22',color,fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:20}}>{filial?.label}</span>
           {isDone && <span style={{background:'rgba(255,255,255,0.08)',color:t.text2,fontSize:10,padding:'2px 6px',borderRadius:20}}>{TYPE_LABEL[card.type]}</span>}
+          {card.delete_requested && <span style={{background:'rgba(239,68,68,0.15)',color:'#ef4444',fontSize:10,fontWeight:700,padding:'2px 6px',borderRadius:20}}>🗑️ На удаление</span>}
         </div>
         <span style={{color:t.text2,fontSize:10}}>{date}</span>
       </div>

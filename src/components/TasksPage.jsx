@@ -32,6 +32,14 @@ export default function TasksPage({ user, theme }) {
   const [dragOver, setDragOver]     = useState(null);
   const draggingRef                 = useRef(null);
   const canSeeAll = CAN_SEE_ALL.includes(user.role);
+  const isAdmin = ['admin','dir','zamdir'].includes(user.role);
+  const [contextMenu, setContextMenu] = useState(null);
+
+  useEffect(() => {
+    const close = () => setContextMenu(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, []);
 
   const fetchTasks = useCallback(async () => {
     let q = supabase.from('tasks').select(`*, task_observers(*), task_checklist(*), task_comments(*), task_tags(*), task_favorites(*)`).eq('is_archived', false).order('is_pinned', { ascending: false }).order(sortBy, { ascending: false });
@@ -94,6 +102,22 @@ export default function TasksPage({ user, theme }) {
     await supabase.from('tasks').update({ status: colId, updated_at: new Date().toISOString(), ...(colId === 'done' ? { closed_at: new Date().toISOString() } : {}) }).eq('id', task.id);
     await supabase.from('task_history').insert({ task_id: task.id, user_id: user.username, user_name: user.name, action: `Перенёс в "${STATUS_COLS.find(c=>c.id===colId)?.label}"` });
     fetchTasks();
+  };
+
+  const handleDeleteTask = async (task) => {
+    if (isAdmin) {
+      await supabase.from('tasks').delete().eq('id', task.id);
+    } else {
+      await supabase.from('tasks').update({ delete_requested: true }).eq('id', task.id).catch(() => {});
+    }
+    fetchTasks();
+    setContextMenu(null);
+  };
+
+  const handleTaskContextMenu = (task, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ task, x: Math.min(e.clientX, window.innerWidth - 200), y: Math.min(e.clientY, window.innerHeight - 240) });
   };
 
   if (loading) return (
@@ -185,6 +209,7 @@ export default function TasksPage({ user, theme }) {
                         onClick={() => setSelectedTask(task)}
                         onDragStart={() => { draggingRef.current = task; }}
                         onDragEnd={() => { draggingRef.current = null; setDragOver(null); }}
+                        onContextMenu={(e) => handleTaskContextMenu(task, e)}
                         onQuickDone={async () => {
                           if (task.created_by !== user.username) return;
                           await supabase.from('tasks').update({ status:'done', closed_at:new Date().toISOString(), updated_at:new Date().toISOString() }).eq('id', task.id);
@@ -225,7 +250,7 @@ export default function TasksPage({ user, theme }) {
                     <span style={{ background:col.color+'22', color:col.color, fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>{colTasks.length}</span>
                   </div>
                   <div style={{ flex:1, overflowY:'auto', padding:8, display:'flex', flexDirection:'column', gap:6 }}>
-                    {colTasks.map(task => <TaskCard key={task.id} task={task} user={user} t={t} onClick={() => setSelectedTask(task)} onDragStart={() => { draggingRef.current = task; }} onDragEnd={() => { draggingRef.current = null; }} />)}
+                    {colTasks.map(task => <TaskCard key={task.id} task={task} user={user} t={t} onClick={() => setSelectedTask(task)} onDragStart={() => { draggingRef.current = task; }} onDragEnd={() => { draggingRef.current = null; }} onContextMenu={(e) => handleTaskContextMenu(task, e)} />)}
                     {colTasks.length === 0 && <div style={{ color:t.text2, fontSize:12, textAlign:'center', padding:'20px 0' }}>Нет задач</div>}
                   </div>
                 </div>
@@ -241,12 +266,38 @@ export default function TasksPage({ user, theme }) {
       {showTemplates && <TemplatesModal user={user} t={t} onClose={() => setShowTemplates(false)} onCreate={(tpl) => { setShowTemplates(false); setShowCreate(true); }} />}
       {showArchive && <ArchiveModal user={user} t={t} onClose={() => setShowArchive(false)} />}
       {showStats && canSeeAll && <StatsModal t={t} onClose={() => setShowStats(false)} />}
+
+      {contextMenu && (
+        <div onClick={e=>e.stopPropagation()} style={{ position:'fixed', top:contextMenu.y, left:contextMenu.x, zIndex:2000, background:t.surface, border:`1px solid ${t.border}`, borderRadius:10, boxShadow:'0 8px 24px rgba(0,0,0,0.3)', minWidth:190, overflow:'hidden' }}>
+          {[
+            { label:'📂 Открыть', action:()=>{ setSelectedTask(contextMenu.task); setContextMenu(null); } },
+            { label:'✅ Закрыть', action:async ()=>{ await supabase.from('tasks').update({status:'done',closed_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',contextMenu.task.id); fetchTasks(); setContextMenu(null); } },
+            { label:'🔴 Высокий приоритет', action:async ()=>{ await supabase.from('tasks').update({priority:'high',updated_at:new Date().toISOString()}).eq('id',contextMenu.task.id); fetchTasks(); setContextMenu(null); } },
+            { label:'🟡 Средний приоритет', action:async ()=>{ await supabase.from('tasks').update({priority:'medium',updated_at:new Date().toISOString()}).eq('id',contextMenu.task.id); fetchTasks(); setContextMenu(null); } },
+            { label:'🟢 Низкий приоритет', action:async ()=>{ await supabase.from('tasks').update({priority:'low',updated_at:new Date().toISOString()}).eq('id',contextMenu.task.id); fetchTasks(); setContextMenu(null); } },
+            { label:'⏰ +1 день', action:async ()=>{
+                const d = contextMenu.task.deadline ? new Date(contextMenu.task.deadline) : new Date();
+                d.setDate(d.getDate()+1);
+                await supabase.from('tasks').update({deadline:d.toISOString(),updated_at:new Date().toISOString()}).eq('id',contextMenu.task.id);
+                fetchTasks(); setContextMenu(null);
+              }
+            },
+            { label:'🗑️ Удалить', action:()=>handleDeleteTask(contextMenu.task), danger:true },
+          ].map(item => (
+            <div key={item.label} onClick={item.action} style={{ padding:'9px 14px', cursor:'pointer', fontSize:13, color:item.danger?'#ef4444':t.text, borderBottom:`1px solid ${t.border}22` }}
+              onMouseEnter={e=>e.currentTarget.style.background=item.danger?'rgba(239,68,68,0.1)':t.surface2}
+              onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+              {item.label}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── Task Card (канбан превью) ─────────────────────────────────
-function TaskCard({ task, user, t, onClick, onDragStart, onDragEnd, onQuickDone, onFavorite }) {
+function TaskCard({ task, user, t, onClick, onDragStart, onDragEnd, onQuickDone, onFavorite, onContextMenu }) {
   const done      = task.task_checklist?.filter(c => c.is_done).length || 0;
   const total     = task.task_checklist?.length || 0;
   const isFav     = task.task_favorites?.some(f => f.user_id === user.username);
@@ -258,15 +309,17 @@ function TaskCard({ task, user, t, onClick, onDragStart, onDragEnd, onQuickDone,
     <div draggable
       onDragStart={onDragStart} onDragEnd={onDragEnd}
       onClick={onClick}
+      onContextMenu={onContextMenu}
       style={{
         background: task.color ? task.color+'22' : t.surface2,
-        border:`1px solid ${task.color || t.border}`,
-        borderLeft:`3px solid ${PRIORITY_COLORS[task.priority]||t.border}`,
-        borderRadius:10, padding:'10px 12px', cursor:'pointer',
-        transition:'all 0.15s', userSelect:'none',
+        border:`1px solid ${task.delete_requested?'#ef4444':task.color || t.border}`,
+        borderLeft:`3px solid ${task.delete_requested?'#ef4444':PRIORITY_COLORS[task.priority]||t.border}`,
+        borderRadius:10, padding:'10px 12px', cursor:'grab',
+        transition:'all 0.15s', userSelect:'none', opacity:task.delete_requested?0.7:1,
       }}
     >
       {task.is_pinned && <div style={{ fontSize:10, color:'#f0b429', marginBottom:4 }}>📌 Закреплено</div>}
+      {task.delete_requested && <div style={{ fontSize:10, color:'#ef4444', marginBottom:4, background:'rgba(239,68,68,0.1)', padding:'2px 6px', borderRadius:6, display:'inline-block' }}>🗑️ На удаление</div>}
       <div style={{ color:t.text, fontSize:13, fontWeight:600, marginBottom:4, lineHeight:1.4 }}>{task.title}</div>
       <div style={{ color:t.text2, fontSize:10, marginBottom:6 }}>#{task.number} · {PRIORITY_LABELS[task.priority]}</div>
       <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, color:t.text2, flexWrap:'wrap' }}>

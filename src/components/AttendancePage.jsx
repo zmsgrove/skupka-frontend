@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../supabase';
 
 const FILIALS = [
@@ -34,6 +34,16 @@ export default function AttendancePage({ user, theme }) {
   const [loading, setLoading]         = useState(true);
   const [showForm, setShowForm]       = useState(false);
   const [selected, setSelected]       = useState(null);
+  const isAdmin = ['admin','dir','zamdir'].includes(user.role);
+  const draggingRef = useRef(null);
+  const [dragOver, setDragOver]       = useState(null);
+  const [contextMenu, setContextMenu] = useState(null);
+
+  useEffect(() => {
+    const close = () => setContextMenu(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, []);
 
   const fetchAll = useCallback(async () => {
     const [spo, adm] = await Promise.all([
@@ -62,6 +72,33 @@ export default function AttendancePage({ user, theme }) {
   const moveAdmin = async (id, status) => {
     await supabase.from('shifts_admin').update({ status }).eq('id', id);
     fetchAll();
+  };
+
+  const handleDelete = async (card, cardType) => {
+    const table = cardType === 'spo' ? 'shifts_spo' : 'shifts_admin';
+    if (isAdmin) {
+      await supabase.from(table).delete().eq('id', card.id);
+    } else {
+      await supabase.from(table).update({ delete_requested: true }).eq('id', card.id).catch(() => {});
+    }
+    fetchAll();
+    setContextMenu(null);
+  };
+
+  const handleContextMenu = (card, cardType, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ card, cardType, x: Math.min(e.clientX, window.innerWidth - 190), y: Math.min(e.clientY, window.innerHeight - 200) });
+  };
+
+  const handleDrop = (targetStatus) => {
+    const drag = draggingRef.current;
+    if (drag && drag.status !== targetStatus) {
+      if (drag.cardType === 'spo') moveSpo(drag.id, targetStatus);
+      else moveAdmin(drag.id, targetStatus);
+    }
+    draggingRef.current = null;
+    setDragOver(null);
   };
 
   if (loading) return (
@@ -96,7 +133,11 @@ export default function AttendancePage({ user, theme }) {
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, height:'100%', maxWidth:800 }}>
 
           {/* На смене */}
-          <div style={{ display:'flex', flexDirection:'column', background:t.surface, border:`2px solid ${t.border}`, borderRadius:14, overflow:'hidden' }}>
+          <div
+            onDragOver={e=>{ e.preventDefault(); setDragOver('active'); }}
+            onDragLeave={()=>setDragOver(null)}
+            onDrop={()=>handleDrop('active')}
+            style={{ display:'flex', flexDirection:'column', background:t.surface, border:`2px solid ${dragOver==='active'?'#10b981':t.border}`, borderRadius:14, overflow:'hidden', transition:'border-color 0.15s' }}>
             <div style={{ padding:'10px 14px', borderBottom:`1px solid ${t.border}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <span style={{ fontFamily:'Unbounded,sans-serif', fontSize:11, fontWeight:600, color:'#10b981' }}>🟢 На смене</span>
               <span style={{ background:'rgba(16,185,129,0.15)', color:'#10b981', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>
@@ -109,6 +150,8 @@ export default function AttendancePage({ user, theme }) {
                   <SpoCard key={s.id} shift={s} t={t} onOpen={() => setSelected({type:'spo',data:s})}
                     canMove={CAN_MOVE_SPO.includes(user.role) || (['rgmu','rgma'].includes(user.role) && user.cities.includes(FILIALS.find(f=>f.id===s.filial)?.city))}
                     onMove={() => moveSpo(s.id, 'done')}
+                    draggingRef={draggingRef} cardType="spo"
+                    onContextMenu={(shift,e) => handleContextMenu(shift,'spo',e)}
                   />
                 ))
               ) : (
@@ -116,6 +159,8 @@ export default function AttendancePage({ user, theme }) {
                   <AdminCard key={s.id} shift={s} t={t} onOpen={() => setSelected({type:'admin',data:s})}
                     canMove={CAN_MOVE_ADMIN.includes(user.role)}
                     onMove={() => moveAdmin(s.id, 'done')}
+                    draggingRef={draggingRef} cardType="admin"
+                    onContextMenu={(shift,e) => handleContextMenu(shift,'admin',e)}
                   />
                 ))
               )}
@@ -127,7 +172,11 @@ export default function AttendancePage({ user, theme }) {
           </div>
 
           {/* Отработано */}
-          <div style={{ display:'flex', flexDirection:'column', background:t.surface, border:`2px solid ${t.border}`, borderRadius:14, overflow:'hidden' }}>
+          <div
+            onDragOver={e=>{ e.preventDefault(); setDragOver('done'); }}
+            onDragLeave={()=>setDragOver(null)}
+            onDrop={()=>handleDrop('done')}
+            style={{ display:'flex', flexDirection:'column', background:t.surface, border:`2px solid ${dragOver==='done'?'#9090a8':t.border}`, borderRadius:14, overflow:'hidden', transition:'border-color 0.15s' }}>
             <div style={{ padding:'10px 14px', borderBottom:`1px solid ${t.border}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <span style={{ fontFamily:'Unbounded,sans-serif', fontSize:11, fontWeight:600, color:t.text2 }}>✅ Отработано</span>
               <span style={{ background:t.surface2, color:t.text2, fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>
@@ -137,11 +186,17 @@ export default function AttendancePage({ user, theme }) {
             <div style={{ flex:1, overflowY:'auto', padding:8, display:'flex', flexDirection:'column', gap:6 }}>
               {section === 'spo' ? (
                 spoShifts.filter(s => s.status==='done' && canSeeSpo(user,s)).map(s => (
-                  <SpoCard key={s.id} shift={s} t={t} onOpen={() => setSelected({type:'spo',data:s})} canMove={false} />
+                  <SpoCard key={s.id} shift={s} t={t} onOpen={() => setSelected({type:'spo',data:s})} canMove={false}
+                    draggingRef={draggingRef} cardType="spo"
+                    onContextMenu={(shift,e) => handleContextMenu(shift,'spo',e)}
+                  />
                 ))
               ) : (
                 adminShifts.filter(s => s.status==='done' && canSeeAdminShift(user)).map(s => (
-                  <AdminCard key={s.id} shift={s} t={t} onOpen={() => setSelected({type:'admin',data:s})} canMove={false} />
+                  <AdminCard key={s.id} shift={s} t={t} onOpen={() => setSelected({type:'admin',data:s})} canMove={false}
+                    draggingRef={draggingRef} cardType="admin"
+                    onContextMenu={(shift,e) => handleContextMenu(shift,'admin',e)}
+                  />
                 ))
               )}
               {((section==='spo' && spoShifts.filter(s=>s.status==='done'&&canSeeSpo(user,s)).length===0) ||
@@ -163,17 +218,43 @@ export default function AttendancePage({ user, theme }) {
       {selected && (
         <ShiftModal item={selected} t={t} onClose={() => setSelected(null)} />
       )}
+
+      {contextMenu && (
+        <div onClick={e=>e.stopPropagation()} style={{ position:'fixed', top:contextMenu.y, left:contextMenu.x, zIndex:2000, background:t.surface, border:`1px solid ${t.border}`, borderRadius:10, boxShadow:'0 8px 24px rgba(0,0,0,0.3)', minWidth:180, overflow:'hidden' }}>
+          {[
+            { label:'✅ Отработано', action:()=>{ if(contextMenu.cardType==='spo') moveSpo(contextMenu.card.id,'done'); else moveAdmin(contextMenu.card.id,'done'); setContextMenu(null); } },
+            { label:'↩️ Вернуть на смену', action:()=>{ if(contextMenu.cardType==='spo') moveSpo(contextMenu.card.id,'active'); else moveAdmin(contextMenu.card.id,'active'); setContextMenu(null); } },
+            { label:'📂 Открыть', action:()=>{ setSelected({type:contextMenu.cardType==='spo'?'spo':'admin', data:contextMenu.card}); setContextMenu(null); } },
+            { label:'🗑️ Удалить', action:()=>handleDelete(contextMenu.card, contextMenu.cardType), danger:true },
+          ].map(item => (
+            <div key={item.label} onClick={item.action} style={{ padding:'9px 14px', cursor:'pointer', fontSize:13, color:item.danger?'#ef4444':t.text, borderBottom:`1px solid ${t.border}22` }}
+              onMouseEnter={e=>e.currentTarget.style.background=item.danger?'rgba(239,68,68,0.1)':t.surface2}
+              onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+              {item.label}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── СПО карточка ─────────────────────────────────────────────
-function SpoCard({ shift, t, onOpen, canMove, onMove }) {
+function SpoCard({ shift, t, onOpen, canMove, onMove, draggingRef, cardType, onContextMenu }) {
   const filial = FILIALS.find(f => f.id === shift.filial);
   return (
-    <div onClick={onOpen} style={{ background:t.surface2, border:`1px solid ${t.border}`, borderLeft:'3px solid #10b981', borderRadius:10, padding:'10px 12px', cursor:'pointer' }}>
-      <div style={{ color:t.text, fontSize:13, fontWeight:600, marginBottom:4 }}>{shift.worker_name}</div>
-      <div style={{ display:'flex', gap:8, marginBottom:4 }}>
+    <div
+      draggable
+      onDragStart={()=>{ draggingRef.current = { id:shift.id, status:shift.status, cardType }; }}
+      onDragEnd={()=>{ draggingRef.current = null; }}
+      onClick={onOpen}
+      onContextMenu={e=>onContextMenu(shift,e)}
+      style={{ background:t.surface2, border:`1px solid ${t.border}`, borderLeft:`3px solid ${shift.delete_requested?'#ef4444':'#10b981'}`, borderRadius:10, padding:'10px 12px', cursor:'grab', opacity:shift.delete_requested?0.7:1 }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }}>
+        <span style={{ color:t.text, fontSize:13, fontWeight:600 }}>{shift.worker_name}</span>
+        {shift.delete_requested && <span style={{ background:'rgba(239,68,68,0.15)', color:'#ef4444', fontSize:10, fontWeight:700, padding:'2px 6px', borderRadius:20 }}>🗑️ На удаление</span>}
+      </div>
+      <div style={{ display:'flex', gap:8, marginBottom:4, flexWrap:'wrap' }}>
         <span style={{ background:'rgba(16,185,129,0.15)', color:'#10b981', fontSize:10, padding:'2px 7px', borderRadius:20 }}>{filial?.label}</span>
         <span style={{ background:'rgba(139,92,246,0.15)', color:'#8b5cf6', fontSize:10, padding:'2px 7px', borderRadius:20 }}>{shift.shift_type==='day'?'Дневная':'Суточная'}</span>
         {shift.is_replacement && <span style={{ background:'rgba(245,158,11,0.15)', color:'#f59e0b', fontSize:10, padding:'2px 7px', borderRadius:20 }}>Замена</span>}
@@ -189,13 +270,22 @@ function SpoCard({ shift, t, onOpen, canMove, onMove }) {
 }
 
 // ─── Админ карточка ────────────────────────────────────────────
-function AdminCard({ shift, t, onOpen, canMove, onMove }) {
+function AdminCard({ shift, t, onOpen, canMove, onMove, draggingRef, cardType, onContextMenu }) {
   return (
-    <div onClick={onOpen} style={{ background:t.surface2, border:`1px solid ${t.border}`, borderLeft:'3px solid #8b5cf6', borderRadius:10, padding:'10px 12px', cursor:'pointer' }}>
-      <div style={{ color:t.text, fontSize:13, fontWeight:600, marginBottom:4 }}>{shift.worker_name}</div>
-      <div style={{ display:'flex', gap:8, marginBottom:4 }}>
+    <div
+      draggable
+      onDragStart={()=>{ draggingRef.current = { id:shift.id, status:shift.status, cardType }; }}
+      onDragEnd={()=>{ draggingRef.current = null; }}
+      onClick={onOpen}
+      onContextMenu={e=>onContextMenu(shift,e)}
+      style={{ background:t.surface2, border:`1px solid ${t.border}`, borderLeft:`3px solid ${shift.delete_requested?'#ef4444':'#8b5cf6'}`, borderRadius:10, padding:'10px 12px', cursor:'grab', opacity:shift.delete_requested?0.7:1 }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }}>
+        <span style={{ color:t.text, fontSize:13, fontWeight:600 }}>{shift.worker_name}</span>
+        {shift.delete_requested && <span style={{ background:'rgba(239,68,68,0.15)', color:'#ef4444', fontSize:10, fontWeight:700, padding:'2px 6px', borderRadius:20 }}>🗑️ На удаление</span>}
+      </div>
+      <div style={{ display:'flex', gap:8, marginBottom:4, flexWrap:'wrap' }}>
         <span style={{ background:'rgba(139,92,246,0.15)', color:'#8b5cf6', fontSize:10, padding:'2px 7px', borderRadius:20 }}>{shift.city}</span>
-        {shift.address && <span style={{ background:'rgba(16,185,129,0.15)', color:'#10b981', fontSize:10, padding:'2px 7px', borderRadius:20 }}>📍 {shift.address.slice(0,25)}...</span>}
+        {shift.address && <span style={{ background:'rgba(16,185,129,0.15)', color:'#10b981', fontSize:10, padding:'2px 7px', borderRadius:20 }}>📍 {shift.address.slice(0,25)}</span>}
       </div>
       <div style={{ color:t.text2, fontSize:11 }}>{new Date(shift.shift_date).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
       {canMove && (
