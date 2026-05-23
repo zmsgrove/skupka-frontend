@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import axios from 'axios';
 
-const API = process.env.REACT_APP_BACKEND_URL;
+const API = process.env.REACT_APP_BACKEND_URL || '';
 const CITIES = ['Общий', 'Уральск', 'Актобе', 'Атырау'];
+if (!process.env.REACT_APP_BACKEND_URL) console.warn('[CrmAssistant] REACT_APP_BACKEND_URL не задан — запросы пойдут на localhost');
 
 const WELCOME = 'Привет! Я CRM ассистент SKUPKA 🤖\n\nМогу помочь:\n• **Найти цены** — "iPhone 13 цены"\n• **Оценить технику** — "Оцени Samsung S22 хорошее состояние"\n• **Характеристики** — "Что такое Xiaomi 12 Pro"\n• Ответить на любой вопрос';
 
@@ -110,7 +111,9 @@ export default function CrmAssistant({ user, theme }) {
 
       const cityCtx = city !== 'Общий' ? ` Город: ${city}.` : '';
 
-      const { data: resp } = await axios.post(`${API}/api/assistant`, {
+      const url = `${API}/api/assistant`;
+      console.log('[CrmAssistant] POST', url);
+      const { data: resp } = await axios.post(url, {
         messages: nextMsgs.map(m => ({ role: m.role, content: m.content })),
         extra: extra + cityCtx,
         intent,
@@ -119,8 +122,10 @@ export default function CrmAssistant({ user, theme }) {
       const botMsg = { role:'assistant', content: resp.response };
       setMsgs(prev => [...prev, botMsg]);
       await supabase.from('assistant_history').insert({ user_id:user.username, role:'assistant', message:resp.response }).catch(() => {});
-    } catch {
-      setMsgs(prev => [...prev, { role:'assistant', content:'⚠️ Не удалось получить ответ. Убедитесь, что сервер запущен.' }]);
+    } catch (err) {
+      const errText = err?.response?.data?.error || err?.message || 'Неизвестная ошибка';
+      console.error('[CrmAssistant] Ошибка:', errText, '\nURL:', `${API}/api/assistant`);
+      setMsgs(prev => [...prev, { role:'assistant', content:`⚠️ Ошибка: ${errText}\n\nПроверьте Console (F12) для деталей.` }]);
     }
 
     setLoading(false);
