@@ -8,23 +8,28 @@
 - Wazzup — WhatsApp интеграция
 - GitHub: zmsgrove/skupka-frontend и zmsgrove/skupka-backend
 
-## Текущая версия: 2.0.5 (задеплоена на Render)
+## Текущая версия: 2.0.7
 
 ## Дорожная карта
-- ✅ 2.0.5 — фиксы: калькулятор, скролл колонок канбана, скролл фона при сводке, дублированный useEffect
-- 📋 2.0.6 — логотип (favicon, хедер, логин страница)
-- 📋 v8/Tilda — интеграция заявок с сайта
+- ✅ 2.0.1–2.0.5 — фиксы: калькулятор, скролл канбана, сайдбар, сводка, Wazzup retry
+- ✅ 2.0.6 — changelog, стартовый экран, настройки сводки, касса утро/вечер, срез за день
+- ✅ 2.0.7 — карточки статистики одинаковый размер, сводка в хедере фильтр утро/вечер, настройки сводки в SettingsPage
+- 📋 2.1.0 — Фибоначчи + редизайн всего проекта (лёгкий UI, золотое сечение, 10 тем сохранить)
+- 📋 2.2.0 — CRM ассистент для оценки техники
+- 📋 2.3.0 — Google авторизация
+- 📋 2.4.0 — Чат: редизайн, уведомления, статус прочитано, онлайн статус, поиск
+- 📋 2.5.0 — Лента: блог, автопоздравления, топ в 10:00, события
 
 ## Структура фронтенда
 src/App.jsx — главный файл, вся логика
 src/auth.js — авторизация
-src/theme.js — темы
+src/theme.js — 10 тем оформления
 src/supabase.js — подключение к БД
 src/components:
   - KanbanBoard — канбан доска
   - LeadCard — карточка заявки
   - LeadModal — модальное окно заявки
-  - StatsBar — статистика
+  - StatsBar — карточки статистики вверху
   - Dashboard — дашборд
   - ExcelExport — экспорт
   - LoginPage — страница входа
@@ -33,7 +38,7 @@ src/components:
   - DragDropModal — перетаскивание
   - ChatPage — чат (в разработке)
   - SettingsPage — настройки
-  - KassaPage — касса
+  - KassaPage — касса (утренний/вечерний отчёт)
   - ZrsPage — ЗРС
   - AttendancePage — посещаемость
   - TasksPage — задачи
@@ -46,18 +51,26 @@ src/components:
 Города: Атырау, Актобе, Уральск
 
 ## Таблицы Supabase
-leads, messages, comments, bot_sessions, profiles, chats, chat_members, chat_messages, chat_reactions, chat_reads, tasks, task_observers, task_checklist, task_comments, task_history, task_templates, task_tags, task_views, task_favorites, kassa_reports, kassa_comments, zrs_requests, zrs_comments, shifts_spo, shifts_admin
+leads, messages, comments, bot_sessions, profiles, chats, chat_members,
+chat_messages, chat_reactions, chat_reads, tasks, task_observers,
+task_checklist, task_comments, task_history, task_templates, task_tags,
+task_views, task_favorites, kassa_reports, kassa_comments, zrs_requests,
+zrs_comments, shifts_spo, shifts_admin, user_settings
 
 ## Переменные окружения (Render бэкенд)
-SUPABASE_URL, SUPABASE_SERVICE_KEY, WAZZUP_API_KEY, WAZZUP_CHANNEL_ID, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_CHAT_ID_ATYRAU, TELEGRAM_CHAT_ID_AKTOBE, TELEGRAM_CHAT_ID_URALSK
+SUPABASE_URL, SUPABASE_SERVICE_KEY, WAZZUP_API_KEY, WAZZUP_CHANNEL_ID,
+TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID,
+TELEGRAM_CHAT_ID_ATYRAU (-1003824376670),
+TELEGRAM_CHAT_ID_AKTOBE (-5193503852),
+TELEGRAM_CHAT_ID_URALSK (-1003960163186)
 
 ## Правила разработки
-- Архивы ZIP отдельно для фронта и бэка после каждого патча
-- Коммиты: git add . && git commit -m "v2.0.5" && git push
-- НЕ добавлять повторные объявления useState/useEffect в конце файлов
+- НЕ добавлять повторные useState/useEffect в конце файлов
 - Скролл только внутри колонок канбана
 - Хедер и сайдбар всегда фиксированы
-- Версионирование: 2.0.4, 2.0.5, 2.0.6 и т.д.
+- 10 тем в theme.js — не ломать
+- Коммиты: git add . && git commit -m "v2.0.7" && git push
+- Версионирование: 2.0.6, 2.0.7, 2.1.0 и т.д.
 
 ## Деплой
 - Фронт: git push → автодеплой на Render

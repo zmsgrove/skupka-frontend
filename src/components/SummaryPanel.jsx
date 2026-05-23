@@ -58,6 +58,7 @@ export default function SummaryPanel({ user, theme, onClose }) {
   const [showSettings, setShowSettings] = useState(false);
   const [editConfig, setEditConfig]     = useState(DEFAULT_CONFIG);
   const [saving, setSaving]       = useState(false);
+  const [kassaFilter, setKassaFilter] = useState('all');
   const isAdmin = ['admin','dir','zamdir'].includes(user.role);
   const isRgm   = ['rgmu','rgma'].includes(user.role);
 
@@ -210,9 +211,10 @@ export default function SummaryPanel({ user, theme, onClose }) {
 
   const FILIALS=['sv47','k162','s32','a21'];
   const filialLabels={sv47:'СВ47',k162:'К162',s32:'С32',a21:'А21'};
-  const launchedFilials=[...new Set(kassa.map(k=>k.filial))];
+  const kassaFiltered=kassaFilter==='all'?kassa:kassa.filter(k=>k.type===kassaFilter);
+  const launchedFilials=[...new Set(kassaFiltered.map(k=>k.filial))];
   const unlaunchedFilials=FILIALS.filter(f=>!launchedFilials.includes(f));
-  const kassaDiffs=kassa.filter(k=>k.cash_diff||k.noncash_diff);
+  const kassaDiffs=kassaFiltered.filter(k=>k.cash_diff||k.noncash_diff);
 
   const visibleSections = SECTION_DEFS.filter(s => !s.adminOnly || isAdmin || isRgm);
 
@@ -308,6 +310,17 @@ export default function SummaryPanel({ user, theme, onClose }) {
 
           {/* Касса */}
           {config.kassa && (isAdmin||isRgm) && <Group icon="💰" title="Касса сегодня" color="#f0b429" t={t}>
+            <div style={{display:'flex',gap:4,marginBottom:8}}>
+              {[['all','Все'],['morning','🌅 Утро'],['evening','🌆 Вечер']].map(([val,lbl])=>(
+                <button key={val} onClick={()=>setKassaFilter(val)}
+                  style={{flex:1,background:kassaFilter===val?'rgba(240,180,41,0.2)':'transparent',
+                  border:`1px solid ${kassaFilter===val?'rgba(240,180,41,0.5)':t.border}`,
+                  borderRadius:6,color:kassaFilter===val?'#f0b429':t.text2,
+                  fontSize:10,padding:'4px 2px',cursor:'pointer',fontWeight:kassaFilter===val?700:400,transition:'all 0.15s'}}>
+                  {lbl}
+                </button>
+              ))}
+            </div>
             {launchedFilials.length>0&&<MetricRow label="Запустили" value={launchedFilials.map(f=>filialLabels[f]).join(', ')} color="#10b981" t={t}/>}
             {unlaunchedFilials.length>0&&(
               <div style={{padding:'8px',background:'rgba(239,68,68,0.06)',borderRadius:8,border:'1px solid rgba(239,68,68,0.15)',marginTop:4}}>

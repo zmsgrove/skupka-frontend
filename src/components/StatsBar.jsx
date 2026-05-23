@@ -138,7 +138,7 @@ export default function StatsBar({ city, user, theme, onFilter }) {
     <div style={{ padding:'0 24px 10px' }}>
       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
         {/* Cards — 80% */}
-        <div style={{ display:'flex', alignItems:'center', gap:8, flex:'0 0 80%', flexWrap:'nowrap', overflowX:'auto' }}>
+        <div style={{ display:'flex', alignItems:'stretch', gap:8, flex:'0 0 80%', flexWrap:'nowrap', overflowX:'auto' }}>
           {cards.map(card => {
             const isActive = activeFilter === card.id;
             const bgColor = card.alert ? card.alertColor+'15' : t.surface;
@@ -149,21 +149,21 @@ export default function StatsBar({ city, user, theme, onFilter }) {
                   background: isActive ? card.color+'20' : bgColor,
                   border: `1px solid ${borderColor}`,
                   borderRadius: 10, padding:'8px 14px',
-                  display:'flex', flexDirection:'column', gap:2,
-                  flex:'1 1 0', minWidth: card.big ? 140 : 90,
+                  display:'flex', flexDirection:'column', justifyContent:'space-between',
+                  flex:'1 1 0', minWidth:110, minHeight:82,
                   cursor: 'pointer', transition: 'all 0.15s',
                   transform: isActive ? 'translateY(-2px)' : 'none',
                   boxShadow: isActive ? `0 4px 12px ${card.color}33` : 'none',
                 }}>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                  <span style={{ fontSize:16 }}>{card.emoji}</span>
+                  <span style={{ fontSize:15 }}>{card.emoji}</span>
                   {card.trend && <span style={{ fontSize:10, fontWeight:700, color:card.trend.color }}>{card.trend.arrow}</span>}
                 </div>
-                <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:card.big?16:18, fontWeight:700, color:card.color, lineHeight:1.2 }}>
+                <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:15, fontWeight:700, color:card.color, lineHeight:1.2, marginTop:4 }}>
                   {card.value}
                 </div>
                 {card.sub && <div style={{ fontSize:10, color:card.color, fontWeight:600 }}>{card.sub}</div>}
-                <div style={{ color:t.text2, fontSize:10 }}>{card.label}</div>
+                <div style={{ color:t.text2, fontSize:10, marginTop:2 }}>{card.label}</div>
               </div>
             );
           })}
