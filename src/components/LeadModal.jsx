@@ -321,6 +321,17 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
               </div>
             )}
 
+            {cur.device && (
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('skupka-assistant', { detail: { query: `Оцени технику: ${cur.device}` } }));
+                  onClose();
+                }}
+                style={{ ...styles.saveBtn, background:'rgba(240,180,41,0.13)', color:'#f0b429', border:'1px solid rgba(240,180,41,0.35)', marginBottom:4 }}
+              >
+                🤖 Оценить технику
+              </button>
+            )}
             <button style={{ ...styles.saveBtn, opacity: saving ? 0.7 : 1 }}
               onClick={handleSaveChanges} disabled={saving}>
               {saving ? 'Сохраняем...' : '💾 Сохранить изменения'}

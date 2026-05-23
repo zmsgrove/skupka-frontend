@@ -12,6 +12,7 @@ import AttendancePage from './components/AttendancePage';
 import TasksPage from './components/TasksPage';
 import SummaryPanel from './components/SummaryPanel';
 import Calculator from './components/Calculator';
+import CrmAssistant from './components/CrmAssistant';
 import { TildaPage } from './components/PlaceholderPages';
 import { getSession, clearSession } from './auth';
 import { themes, getTheme, saveTheme, radius, fib, glass } from './theme';
@@ -320,6 +321,9 @@ export default function App() {
       <style>{`
         @keyframes spin { to { transform:rotate(360deg); } }
         @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+        @keyframes jarvis-pulse { 0%,100%{opacity:0.85;transform:scale(1)} 50%{opacity:1;transform:scale(1.07)} }
+        @keyframes jarvis-ring { 0%{transform:translate(-50%,-50%) scale(1);opacity:0.55} 100%{transform:translate(-50%,-50%) scale(2.6);opacity:0} }
+        @keyframes jarvis-ring-active { 0%{transform:translate(-50%,-50%) scale(1);opacity:0.8} 100%{transform:translate(-50%,-50%) scale(2.2);opacity:0} }
         * { box-sizing:border-box; }
         ::-webkit-scrollbar { width:6px; height:6px; }
         ::-webkit-scrollbar-track { background:${t.surface}; }
@@ -399,6 +403,8 @@ export default function App() {
       {showSummary && <SummaryPanel user={user} theme={t} onClose={() => setShowSummary(false)} />}
       {/* Calculator */}
       {showCalc && <Calculator theme={t} onClose={() => setShowCalc(false)} />}
+      {/* CRM Assistant — always visible */}
+      <CrmAssistant user={user} theme={t} />
     </div>
   );
 }
