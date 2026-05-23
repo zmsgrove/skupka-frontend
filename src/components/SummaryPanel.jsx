@@ -142,7 +142,7 @@ export default function SummaryPanel({ user, theme, onClose }) {
       supabase.from('tasks').select('*, task_observers(*)').eq('is_archived',false),
       supabase.from('kassa_reports').select('*').gte('created_at', today),
       supabase.from('zrs_requests').select('*').in('status',['new','review']),
-      supabase.from('shifts_spo').select('*').eq('status','active'),
+      supabase.from('shifts_spo').select('*').eq('status','active').gte('shift_date', today),
     ]);
     setData({ leads:leads.data||[], tasks:tasks.data||[], kassa:kassa.data||[], zrs:zrs.data||[], shifts:shifts.data||[], today, yd, w1start, w2start });
     setLoading(false);

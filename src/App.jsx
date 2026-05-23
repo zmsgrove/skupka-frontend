@@ -237,6 +237,13 @@ export default function App() {
       const s = getSettings();
       setActiveTab(s.homeTab || 'board');
       setActiveCity(s.homeCity || session.cities[0]);
+      supabase.from('user_settings').select('default_page').eq('user_id', session.username).single()
+        .then(({ data }) => {
+          if (data?.default_page) {
+            setActiveTab(data.default_page);
+            saveSettings({ ...getSettings(), homeTab: data.default_page });
+          }
+        }).catch(() => {});
     }
   }, []);
 
@@ -290,8 +297,15 @@ export default function App() {
   const handleLogin = (u) => {
     setUser(u);
     const s = getSettings();
-    setActiveTab(s.homeTab||'board');
-    setActiveCity(s.homeCity||u.cities[0]);
+    setActiveTab(s.homeTab || 'board');
+    setActiveCity(s.homeCity || u.cities[0]);
+    supabase.from('user_settings').select('default_page').eq('user_id', u.username).single()
+      .then(({ data }) => {
+        if (data?.default_page) {
+          setActiveTab(data.default_page);
+          saveSettings({ ...getSettings(), homeTab: data.default_page });
+        }
+      }).catch(() => {});
   };
   const handleLogout = () => { clearSession(); setUser(null); setActiveCity(null); setActiveTab('board'); };
 

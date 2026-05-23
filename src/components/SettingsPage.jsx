@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getSettings, saveSettings } from '../App';
 import { themes } from '../theme';
+import { supabase } from '../supabase';
 
 const HOME_TAB_OPTIONS = [
   { value:'board',     label:'💬 WAZZUP (Доска)' },
@@ -8,6 +9,16 @@ const HOME_TAB_OPTIONS = [
   { value:'chat',      label:'🗨️ Чат' },
   { value:'tasks',     label:'✅ Задачи' },
 ];
+
+const SUMMARY_SECTIONS = [
+  { key:'tasks',  icon:'✅', label:'Задачи',        adminOnly:false },
+  { key:'leads',  icon:'💬', label:'Заявки WAZZUP', adminOnly:false },
+  { key:'cities', icon:'🏙️', label:'По городам',    adminOnly:true  },
+  { key:'kassa',  icon:'💰', label:'Касса',          adminOnly:true  },
+  { key:'zrs',    icon:'📝', label:'ЗРС',            adminOnly:true  },
+  { key:'shifts', icon:'🕐', label:'Смены',          adminOnly:true  },
+];
+const DEFAULT_SUMMARY_CONFIG = { tasks:true, leads:true, cities:true, kassa:true, zrs:true, shifts:true };
 
 const SOUNDS = [
   { id:'ping',     label:'🔔 Пинг',         desc:'Классический',  freq:[880,440],   type:'sine' },
@@ -41,16 +52,42 @@ function playSound(sound, volume) {
 
 export default function SettingsPage({ user, theme, settings, onUpdate }) {
   const t = theme;
+  const isAdmin = ['admin','dir','zamdir','rgmu','rgma'].includes(user.role);
+  const [summaryConfig, setSummaryConfig] = useState(DEFAULT_SUMMARY_CONFIG);
+  const [summarySaving, setSummarySaving] = useState(false);
+
+  useEffect(() => {
+    supabase.from('user_settings').select('summary_config').eq('user_id', user.username).single()
+      .then(({ data }) => { if (data?.summary_config) setSummaryConfig({ ...DEFAULT_SUMMARY_CONFIG, ...data.summary_config }); })
+      .catch(() => {});
+  }, [user.username]);
 
   const handleVolume    = (e) => onUpdate({ volume: Number(e.target.value) });
   const handleSound     = () => onUpdate({ sound: !(settings.sound !== false) });
   const handleSoundType = (id) => { onUpdate({ soundType: id }); playSound(SOUNDS.find(s=>s.id===id), settings.volume??40); };
   const handleTheme     = (v) => onUpdate({ theme: v });
-  const handleHomeTab   = (v) => onUpdate({ homeTab: v });
+  const handleHomeTab   = async (v) => {
+    onUpdate({ homeTab: v });
+    supabase.from('user_settings').upsert(
+      { user_id: user.username, default_page: v, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id' }
+    ).catch(() => {});
+  };
   const handleHomeCity  = (v) => onUpdate({ homeCity: v });
   const handleCompact   = () => onUpdate({ compact: !settings.compact });
   const handleTimers    = () => onUpdate({ showTimers: settings.showTimers === false ? true : false });
   const handleAutoRefresh = (v) => onUpdate({ autoRefresh: v });
+
+  const handleSummaryToggle = async (key) => {
+    const next = { ...summaryConfig, [key]: !summaryConfig[key] };
+    setSummaryConfig(next);
+    setSummarySaving(true);
+    await supabase.from('user_settings').upsert(
+      { user_id: user.username, summary_config: next, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id' }
+    ).catch(() => {});
+    setSummarySaving(false);
+  };
 
   const volume      = settings.volume ?? 40;
   const soundOn     = settings.sound !== false;
@@ -169,6 +206,15 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
             ))}
           </div>
         </Row>
+      </Section>
+
+      {/* Сводка */}
+      <Section title={`🗒️ Блоки сводки${summarySaving?' · Сохраняю...':''}`} t={t}>
+        {SUMMARY_SECTIONS.filter(s => !s.adminOnly || isAdmin).map(s => (
+          <Row key={s.key} label={`${s.icon} ${s.label}`} t={t}>
+            <Toggle value={!!summaryConfig[s.key]} onChange={() => handleSummaryToggle(s.key)} t={t} />
+          </Row>
+        ))}
       </Section>
 
       {/* Инфо */}

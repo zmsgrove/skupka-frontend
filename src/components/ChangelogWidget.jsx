@@ -2,6 +2,17 @@ import React, { useState } from 'react';
 
 const CHANGELOG = [
   {
+    version: '2.0.6',
+    date: 'Май 2026',
+    color: '#8b5cf6',
+    changes: [
+      'Настройки сводки продублированы в SettingsPage',
+      'Стартовый экран сохраняется в Supabase (cross-device sync)',
+      'Касса: разделение списков запустивших по утреннему/вечернему отчёту',
+      'Сводка: исправлена фильтрация смен — показывает сегодняшний день',
+    ],
+  },
+  {
     version: '2.0.5',
     date: 'Май 2026',
     color: '#10b981',
@@ -10,6 +21,46 @@ const CHANGELOG = [
       'Фикс: скролл только внутри колонок канбана',
       'Фикс: фон не скроллится при открытой сводке',
       'Убран дублированный таймер автооткрытия сводки',
+    ],
+  },
+  {
+    version: '2.0.4',
+    date: 'Май 2026',
+    color: '#f59e0b',
+    changes: [
+      'Добавлен Калькулятор в сайдбаре',
+      'Переработана Сводка: новый дизайн, расширенные метрики',
+      'Обновлён StatsBar — быстрые фильтры',
+      'Фикс LeadCard, KanbanBoard',
+    ],
+  },
+  {
+    version: '2.0.3',
+    date: 'Май 2026',
+    color: '#f59e0b',
+    changes: [
+      'Фикс скролла колонок канбана',
+      'Рефакторинг App.jsx',
+    ],
+  },
+  {
+    version: '2.0.2',
+    date: 'Май 2026',
+    color: '#06b6d4',
+    changes: [
+      'Переработана KassaPage: форма отчёта, валидация документов',
+      'Обновлена AttendancePage — улучшен UX смен',
+      'ZrsPage — переработан интерфейс',
+      'LoginPage — обновлён дизайн',
+    ],
+  },
+  {
+    version: '2.0.1',
+    date: 'Май 2026',
+    color: '#06b6d4',
+    changes: [
+      'Первые фиксы после релиза 2.0',
+      'Стабилизация Сводки и автооткрытия',
     ],
   },
   {
@@ -144,7 +195,7 @@ export default function ChangelogWidget({ theme }) {
     <>
       <button onClick={() => setOpen(!open)} title="История обновлений" style={{ background:t.surface2, border:`1px solid ${t.border}`, borderRadius:8, color:'#8b5cf6', fontSize:13, padding:'5px 10px', cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontFamily:'Inter,sans-serif' }}>
         📋
-        <span style={{ background:'#f0b429', color:'#fff', fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:10, fontFamily:'Unbounded,sans-serif' }}>v5</span>
+        <span style={{ background:'#8b5cf6', color:'#fff', fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:10, fontFamily:'Unbounded,sans-serif' }}>2.0.6</span>
       </button>
       {open && (
         <>
@@ -153,7 +204,7 @@ export default function ChangelogWidget({ theme }) {
             <div style={{ padding:'16px 20px', borderBottom:`1px solid ${t.border}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
               <div>
                 <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:13, fontWeight:700, color:t.text }}>📋 История обновлений</div>
-                <div style={{ color:t.text2, fontSize:11, marginTop:2 }}>SKUPKA CRM</div>
+                <div style={{ color:t.text2, fontSize:11, marginTop:2 }}>SKUPKA CRM · v2.0.6</div>
               </div>
               <button onClick={() => setOpen(false)} style={{ background:'transparent', border:'none', color:t.text2, fontSize:16, cursor:'pointer' }}>✕</button>
             </div>
@@ -178,7 +229,7 @@ export default function ChangelogWidget({ theme }) {
               ))}
             </div>
             <div style={{ padding:'12px 20px', borderTop:`1px solid ${t.border}`, textAlign:'center', color:t.text2, fontSize:11 }}>
-              SKUPKA CRM · <span style={{ color:'#8b5cf6' }}>v5</span> · 2026
+              SKUPKA CRM · <span style={{ color:'#8b5cf6' }}>2.0.6</span> · 2026
             </div>
           </div>
         </>

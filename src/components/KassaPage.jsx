@@ -70,6 +70,12 @@ export default function KassaPage({ user, theme }) {
   const eveningReports = visibleReports.filter(r=>r.type==='evening' && r.status==='evening');
   const doneReports    = visibleReports.filter(r=>r.status==='done');
 
+  const FILIAL_IDS = FILIALS.map(f=>f.id);
+  const morningLaunched   = [...new Set(morningReports.map(r=>r.filial))];
+  const morningUnlaunched = FILIAL_IDS.filter(f=>!morningLaunched.includes(f));
+  const eveningLaunched   = [...new Set(eveningReports.map(r=>r.filial))];
+  const eveningUnlaunched = FILIAL_IDS.filter(f=>!eveningLaunched.includes(f));
+
   if (loading) return (
     <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:t.text2}}>
       <div style={{textAlign:'center'}}>
@@ -100,8 +106,8 @@ export default function KassaPage({ user, theme }) {
       {/* Kanban — fixed height, scroll inside columns */}
       <div style={{flex:1,overflow:'hidden',padding:'16px 24px'}}>
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(240px,1fr))',gap:14,height:'100%'}}>
-          <KassaCol title="🌅 Утренний отчёт" color="#f59e0b" cards={morningReports} user={user} t={t} onOpen={setSelected} onMove={moveCard} />
-          <KassaCol title="🌆 Вечерний отчёт" color="#8b5cf6" cards={eveningReports} user={user} t={t} onOpen={setSelected} onMove={moveCard} />
+          <KassaCol title="🌅 Утренний отчёт" color="#f59e0b" cards={morningReports} user={user} t={t} onOpen={setSelected} onMove={moveCard} launched={morningLaunched} unlaunched={morningUnlaunched} />
+          <KassaCol title="🌆 Вечерний отчёт" color="#8b5cf6" cards={eveningReports} user={user} t={t} onOpen={setSelected} onMove={moveCard} launched={eveningLaunched} unlaunched={eveningUnlaunched} />
           <KassaCol title="✅ Завершённые"    color="#10b981" cards={doneReports}    user={user} t={t} onOpen={setSelected} onMove={null} isDone />
         </div>
       </div>
@@ -112,13 +118,30 @@ export default function KassaPage({ user, theme }) {
   );
 }
 
-function KassaCol({ title, color, cards, user, t, onOpen, onMove, isDone }) {
+function KassaCol({ title, color, cards, user, t, onOpen, onMove, isDone, launched, unlaunched }) {
+  const filialLabel = id => FILIALS.find(f=>f.id===id)?.label || id;
   return (
     <div style={{display:'flex',flexDirection:'column',background:t.surface,border:`2px solid ${t.border}`,borderRadius:14,overflow:'hidden',height:'100%'}}>
       <div style={{padding:'10px 14px',borderBottom:`1px solid ${t.border}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
         <span style={{fontFamily:'Unbounded,sans-serif',fontSize:11,fontWeight:600,color}}>{title}</span>
         <span style={{background:color+'22',color,fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:20}}>{cards.length}</span>
       </div>
+      {!isDone && (launched || unlaunched) && (
+        <div style={{padding:'8px 10px',borderBottom:`1px solid ${t.border}`,display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
+          {launched && launched.length>0 && (
+            <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+              <span style={{color:'#10b981',fontSize:10,fontWeight:600,flexShrink:0}}>✅ Запустили:</span>
+              {launched.map(id=><span key={id} style={{background:'rgba(16,185,129,0.12)',color:'#10b981',fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:10}}>{filialLabel(id)}</span>)}
+            </div>
+          )}
+          {unlaunched && unlaunched.length>0 && (
+            <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+              <span style={{color:'#ef4444',fontSize:10,fontWeight:600,flexShrink:0}}>⚠️ Не запустили:</span>
+              {unlaunched.map(id=><span key={id} style={{background:'rgba(239,68,68,0.12)',color:'#ef4444',fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:10}}>{filialLabel(id)}</span>)}
+            </div>
+          )}
+        </div>
+      )}
       <div style={{flex:1,overflowY:'auto',padding:8,display:'flex',flexDirection:'column',gap:6}}>
         {cards.length===0 && <div style={{color:t.text2,fontSize:12,textAlign:'center',padding:'20px 0'}}>Нет отчётов</div>}
         {cards.map(card=>(
