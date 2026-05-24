@@ -6,27 +6,27 @@ const API = process.env.REACT_APP_BACKEND_URL || '';
 const CITIES = ['Общий', 'Уральск', 'Актобе', 'Атырау'];
 if (!process.env.REACT_APP_BACKEND_URL) console.warn('[CrmAssistant] REACT_APP_BACKEND_URL не задан — запросы пойдут на localhost');
 
-const WELCOME = 'Привет! Я CRM ассистент SKUPKA 🤖\n\nМогу помочь:\n• **Найти цены** — "iPhone 13 цены"\n• **Оценить технику** — "Оцени Samsung S22 хорошее состояние"\n• **Характеристики** — "Что такое Xiaomi 12 Pro"\n• Ответить на любой вопрос';
+const WELCOME = 'Привет! Я CRM ассистент SKUPKA\n\nМогу помочь:\n• **Найти цены** — "iPhone 13 цены"\n• **Оценить технику** — "Оцени Samsung S22 хорошее состояние"\n• **Характеристики** — "Что такое Xiaomi 12 Pro"\n• Ответить на любой вопрос';
 
 const ANIM = `
-@keyframes orbit-1{from{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(0deg)}to{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(360deg)}}
-@keyframes orbit-2{from{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(36deg)}to{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(396deg)}}
-@keyframes orbit-3{from{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(72deg)}to{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(432deg)}}
-@keyframes orbit-4{from{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(108deg)}to{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(468deg)}}
-@keyframes orbit-5{from{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(144deg)}to{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(504deg)}}
-@keyframes core-pulse{0%,100%{box-shadow:0 0 15px #00E5FF,0 0 30px #00E5FF,0 0 50px rgba(0,229,255,0.5)}50%{box-shadow:0 0 20px #00E5FF,0 0 40px #00E5FF,0 0 60px rgba(0,229,255,0.6)}}
-@keyframes core-active{0%,100%{box-shadow:0 0 25px #00E5FF,0 0 50px #00E5FF,0 0 80px rgba(0,229,255,0.7)}50%{box-shadow:0 0 35px #00E5FF,0 0 65px #00E5FF,0 0 100px rgba(0,229,255,0.9)}}
+@keyframes spin-1{from{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(0deg)}to{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(360deg)}}
+@keyframes spin-2{from{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(36deg)}to{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(396deg)}}
+@keyframes spin-3{from{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(72deg)}to{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(432deg)}}
+@keyframes spin-4{from{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(108deg)}to{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(468deg)}}
+@keyframes spin-5{from{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(144deg)}to{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(504deg)}}
+@keyframes core-pulse{0%,100%{box-shadow:0 0 10px #00E5FF,0 0 25px #00E5FF,0 0 40px rgba(0,229,255,0.5)}50%{box-shadow:0 0 14px #00E5FF,0 0 30px #00E5FF,0 0 50px rgba(0,229,255,0.6)}}
+@keyframes core-active{0%,100%{box-shadow:0 0 20px #00E5FF,0 0 45px #00E5FF,0 0 70px rgba(0,229,255,0.8)}50%{box-shadow:0 0 30px #00E5FF,0 0 60px #00E5FF,0 0 90px rgba(0,229,255,1)}}
 @keyframes pulse{0%,100%{transform:scale(0.7);opacity:0.5}50%{transform:scale(1.1);opacity:1}}
-.crm-orbital{position:relative;width:64px;height:64px;cursor:pointer;transform-style:preserve-3d;perspective:200px}
-.crm-core{width:24px;height:24px;border-radius:50%;background:#00E5FF;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;animation:core-pulse 2.5s ease-in-out infinite}
-.crm-ring{position:absolute;width:58px;height:22px;border:1.5px solid rgba(0,229,255,0.7);border-radius:50%;top:50%;left:50%;pointer-events:none}
-.crm-ring-1{animation:orbit-1 6s linear infinite}
-.crm-ring-2{animation:orbit-2 4.5s linear infinite}
-.crm-ring-3{animation:orbit-3 7s linear infinite}
-.crm-ring-4{animation:orbit-4 5s linear infinite}
-.crm-ring-5{animation:orbit-5 8s linear infinite}
-.crm-orbital.thinking .crm-ring{animation-duration:0.8s !important;border-color:rgba(0,229,255,0.95)}
-.crm-orbital.thinking .crm-core{animation:core-active 0.5s ease-in-out infinite}
+.crm-btn{position:relative;width:64px;height:64px;border-radius:50%;background:#0a0a0f;cursor:pointer;transform-style:preserve-3d;perspective:200px;border:none;outline:none;padding:0}
+.crm-core{width:20px;height:20px;border-radius:50%;background:#00E5FF;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;box-shadow:0 0 10px #00E5FF,0 0 25px #00E5FF,0 0 40px rgba(0,229,255,0.5);animation:core-pulse 2.5s ease-in-out infinite}
+.crm-ring{position:absolute;width:60px;height:20px;border:1.5px solid rgba(0,229,255,0.6);border-radius:50%;top:50%;left:50%;pointer-events:none}
+.crm-ring-1{animation:spin-1 6s linear infinite}
+.crm-ring-2{animation:spin-2 4s linear infinite}
+.crm-ring-3{animation:spin-3 8s linear infinite}
+.crm-ring-4{animation:spin-4 5s linear infinite}
+.crm-ring-5{animation:spin-5 3s linear infinite}
+.crm-btn.thinking .crm-ring{animation-duration:0.5s !important;border-color:rgba(0,229,255,0.95)}
+.crm-btn.thinking .crm-core{animation:core-active 0.5s ease-in-out infinite}
 `;
 
 const PRICE_ENTRY_RE = /^(внеси|добавь|добавить|запиши|внести)\s+(.+?)\s+цена\s+(\d[\d\s]*)\s*$/i;
@@ -215,8 +215,8 @@ export default function CrmAssistant({ user, theme, isTovarovyed }) {
 
       {/* Floating toggle button — orbital animation */}
       <div style={{ position:'fixed', bottom:24, right:24, zIndex:1002 }}>
-        <div
-          className={`crm-orbital${active ? ' thinking' : ''}`}
+        <button
+          className={`crm-btn${active ? ' thinking' : ''}`}
           onClick={() => setOpen(v => !v)}
           title={open ? 'Свернуть ассистент' : 'Открыть ассистент SKUPKA AI'}
         >
@@ -229,7 +229,7 @@ export default function CrmAssistant({ user, theme, isTovarovyed }) {
           {open && (
             <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', color:'rgba(255,255,255,0.92)', fontSize:18, fontWeight:400, pointerEvents:'none', userSelect:'none', zIndex:20 }}>✕</div>
           )}
-        </div>
+        </button>
       </div>
 
       {/* Chat window */}
@@ -240,8 +240,8 @@ export default function CrmAssistant({ user, theme, isTovarovyed }) {
           <div style={{ padding:'12px 16px', borderBottom:`1px solid ${t.border}`, display:'flex', alignItems:'center', justifyContent:'space-between', background:`linear-gradient(135deg,rgba(232,38,58,0.06),transparent)`, flexShrink:0 }}>
             <div style={{ display:'flex', alignItems:'center', gap:10 }}>
               <div style={{ position:'relative', width:34, height:34, perspective:'200px' }}>
-                <div style={{ position:'absolute', top:'50%', left:'50%', width:28, height:28, borderRadius:'50%', border:`1.5px solid rgba(0,229,255,${active?0.8:0.55})`, animation:`orbit-1 ${active?'0.8':'5'}s linear infinite`, pointerEvents:'none' }} />
-                <div style={{ position:'absolute', top:'50%', left:'50%', width:28, height:28, borderRadius:'50%', border:`1.5px solid rgba(0,229,255,${active?0.55:0.35})`, animation:`orbit-3 ${active?'1.0':'7'}s linear infinite`, pointerEvents:'none' }} />
+                <div style={{ position:'absolute', top:'50%', left:'50%', width:28, height:28, borderRadius:'50%', border:`1.5px solid rgba(0,229,255,${active?0.8:0.55})`, animation:`spin-1 ${active?'0.8':'5'}s linear infinite`, pointerEvents:'none' }} />
+                <div style={{ position:'absolute', top:'50%', left:'50%', width:28, height:28, borderRadius:'50%', border:`1.5px solid rgba(0,229,255,${active?0.55:0.35})`, animation:`spin-3 ${active?'1.0':'7'}s linear infinite`, pointerEvents:'none' }} />
                 <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:11, height:11, borderRadius:'50%', background:'radial-gradient(circle,#00E5FF,#007a9a)', animation:active?'core-active 0.5s ease-in-out infinite':'core-pulse 3s ease-in-out infinite' }} />
               </div>
               <div>
@@ -275,7 +275,7 @@ export default function CrmAssistant({ user, theme, isTovarovyed }) {
             {msgs.map((msg, i) => <Bubble key={i} msg={msg} t={t} />)}
             {loading && (
               <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                <span style={{ fontSize:20 }}>🤖</span>
+                <div style={{ width:20, height:20, borderRadius:'50%', background:'#00E5FF', boxShadow:'0 0 8px #00E5FF,0 0 16px rgba(0,229,255,0.5)', flexShrink:0, animation:'core-pulse 1.5s ease-in-out infinite' }} />
                 <div style={{ padding:'10px 14px', background:t.surface2, border:`1px solid ${t.border}`, borderRadius:'4px 16px 16px 16px', display:'flex', gap:5 }}>
                   {[0,1,2].map(i => <div key={i} style={{ width:7, height:7, borderRadius:'50%', background:'#E8263A', animation:`pulse 1s ${i*0.2}s ease-in-out infinite` }} />)}
                 </div>

@@ -202,6 +202,7 @@ function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, canS
 export default function App() {
   const [user, setUser]             = useState(null);
   const [userSpecial, setUserSpecial] = useState({ is_tovarovyed: false });
+  const [userPerms, setUserPerms]   = useState({});
   const [activeCity, setActiveCity] = useState(null);
   const [activeTab, setActiveTab]   = useState('board');
   const [settings, setSettings]     = useState(() => getSettings());
@@ -250,6 +251,8 @@ export default function App() {
           }
         }).catch(() => {});
       loadUserSpecial(supabase, session.username).then(setUserSpecial).catch(() => {});
+      supabase.from('user_permissions').select('*').eq('user_id', session.username)
+        .then(({ data }) => { if (data) setUserPerms(Object.fromEntries(data.map(r => [r.page, r]))); }).catch(() => {});
     }
   }, []);
 
@@ -313,10 +316,12 @@ export default function App() {
         }
       }).catch(() => {});
     loadUserSpecial(supabase, u.username).then(setUserSpecial).catch(() => {});
+    supabase.from('user_permissions').select('*').eq('user_id', u.username)
+      .then(({ data }) => { if (data) setUserPerms(Object.fromEntries(data.map(r => [r.page, r]))); }).catch(() => {});
   };
-  const handleLogout = () => { clearSession(); setUser(null); setActiveCity(null); setActiveTab('board'); };
+  const handleLogout = () => { clearSession(); setUser(null); setActiveCity(null); setActiveTab('board'); setUserPerms({}); };
 
-  const canSeeDashboard = user && CAN_SEE_DASHBOARD.includes(user.role);
+  const canSeeDashboard = user && (CAN_SEE_DASHBOARD.includes(user.role) || userPerms['dashboard']?.can_view === true);
   const canSeeDeleted   = user && CAN_SEE_DELETED.includes(user.role);
 
   if (!user) return <LoginPage onLogin={handleLogin} theme={t} />;

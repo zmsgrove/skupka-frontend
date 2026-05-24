@@ -55,7 +55,7 @@ function playSound(sound, volume) {
 export default function SettingsPage({ user, theme, settings, onUpdate }) {
   const t = theme;
   const isAdmin = ['admin','dir','zamdir','sysadmin','rev','rgmu','rgma'].includes(user.role);
-  const canManagePermissions = ['dir','zamdir'].includes(user.role);
+  const canManagePermissions = ['admin','dir'].includes(user.role);
   const [summaryConfig, setSummaryConfig] = useState(DEFAULT_SUMMARY_CONFIG);
   const [summarySaving, setSummarySaving] = useState(false);
 
@@ -261,11 +261,15 @@ function Toggle({ value, onChange, t }) {
   );
 }
 
-// ─── Панель управления правами (только dir и zamdir) ──────────
+// ─── Панель управления правами (только admin и dir) ───────────
 const ALL_CITIES = ['Атырау','Актобе','Уральск'];
-const NON_ADMIN_USERS = Object.entries(USERS).filter(([,u]) => !['admin','dir','zamdir','sysadmin'].includes(u.role));
 
 function PermissionsPanel({ t, currentUser }) {
+  const manageableUsers = Object.entries(USERS).filter(([id, u]) => {
+    if (id === currentUser.username) return false;
+    if (['admin','dir'].includes(u.role)) return false;
+    return true;
+  });
   const [selectedUser, setSelectedUser] = useState('');
   const [cities, setCities]         = useState([]);
   const [perms, setPerms]           = useState({});
@@ -341,7 +345,7 @@ function PermissionsPanel({ t, currentUser }) {
           <select value={selectedUser} onChange={e => setSelectedUser(e.target.value)}
             style={{ background:t.inputBg, border:`1px solid ${t.border}`, borderRadius:8, color:t.text, fontSize:13, padding:'9px 12px', outline:'none' }}>
             <option value="">— Выбрать —</option>
-            {NON_ADMIN_USERS.map(([id, u]) => (
+            {manageableUsers.map(([id, u]) => (
               <option key={id} value={id}>{u.name} ({u.role})</option>
             ))}
           </select>

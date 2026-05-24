@@ -12,6 +12,14 @@ const CITIES     = ['Атырау','Актобе','Уральск'];
 const CAN_SEE_ALL = ['admin','dir','zamdir','sysadmin','rev'];
 const CAN_MOVE_SPO = ['admin','dir','zamdir','sysadmin','rgmu','rgma'];
 const CAN_MOVE_ADMIN = ['admin','dir','zamdir','sysadmin'];
+const SPO_ONLY_ROLES = ['uralsk', 'atyray', 'aktobe'];
+const ADMIN_PANEL_ROLES = ['dir','zamdir','sysadmin','rgmu','rgma','rev'];
+
+function getInitialSection(user) {
+  if (SPO_ONLY_ROLES.includes(user.role)) return 'spo';
+  if (ADMIN_PANEL_ROLES.includes(user.role)) return 'admin_staff';
+  return 'spo'; // admin can switch, starts with spo
+}
 
 function canSeeSpo(user, card) {
   if (CAN_SEE_ALL.includes(user.role)) return true;
@@ -28,7 +36,8 @@ function canSeeAdminShift(user) {
 
 export default function AttendancePage({ user, theme }) {
   const t = theme;
-  const [section, setSection] = useState('spo'); // spo | admin_staff
+  const [section, setSection] = useState(() => getInitialSection(user));
+  const canSwitchSections = user.role === 'admin';
   const [spoShifts, setSpoShifts]     = useState([]);
   const [adminShifts, setAdminShifts] = useState([]);
   const [loading, setLoading]         = useState(true);
@@ -116,12 +125,13 @@ export default function AttendancePage({ user, theme }) {
       <div style={{ padding:'12px 24px', borderBottom:`1px solid ${t.border}`, background:t.surface, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
         <span style={{ fontFamily:'Unbounded,sans-serif', fontSize:16, fontWeight:700, color:t.text }}>🕐 Отметка на смене</span>
         <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-          {/* Section switcher */}
-          <div style={{ display:'flex', gap:4 }}>
-            {[['spo','👷 СПО'],['admin_staff','👔 Админ состав']].map(([v,l]) => (
-              <button key={v} onClick={() => setSection(v)} style={{ background:section===v?'rgba(16,185,129,0.15)':'transparent', border:`1px solid ${section===v?'rgba(16,185,129,0.4)':t.border}`, borderRadius:8, color:section===v?'#10b981':t.text2, fontSize:12, padding:'6px 14px', cursor:'pointer' }}>{l}</button>
-            ))}
-          </div>
+          {canSwitchSections && (
+            <div style={{ display:'flex', gap:4 }}>
+              {[['spo','👷 СПО'],['admin_staff','👔 Админ состав']].map(([v,l]) => (
+                <button key={v} onClick={() => setSection(v)} style={{ background:section===v?'rgba(16,185,129,0.15)':'transparent', border:`1px solid ${section===v?'rgba(16,185,129,0.4)':t.border}`, borderRadius:8, color:section===v?'#10b981':t.text2, fontSize:12, padding:'6px 14px', cursor:'pointer' }}>{l}</button>
+              ))}
+            </div>
+          )}
           <button onClick={() => setShowForm(true)} style={{ background:'rgba(16,185,129,0.15)', border:'1px solid rgba(16,185,129,0.4)', borderRadius:8, color:'#10b981', fontSize:12, fontWeight:700, padding:'8px 14px', cursor:'pointer' }}>
             + На смену
           </button>
