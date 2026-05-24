@@ -150,7 +150,7 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
 
       {totalUnread > 0 && (
         <div style={{ margin:'0 24px 10px',background:'rgba(232,38,58,0.1)',border:'1px solid rgba(232,38,58,0.3)',borderRadius:10,color:'#E8263A',fontSize:13,fontWeight:600,padding:'8px 16px' }}>
-          🔔 {totalUnread} непрочитанных — карточки помечены жёлтым
+          🔔 {totalUnread} непрочитанных — карточки помечены красным
         </div>
       )}
 

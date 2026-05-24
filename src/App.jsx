@@ -215,6 +215,13 @@ export default function App() {
   const [showSummary, setShowSummary] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
 
+  // Пинг бэкенда каждые 5 минут (keep-alive на Render)
+  useEffect(() => {
+    if (!API) return;
+    const iv = setInterval(() => { fetch(API + '/ping').catch(() => {}); }, 5 * 60 * 1000);
+    return () => clearInterval(iv);
+  }, []);
+
   useEffect(() => {
     if (!user) return;
     function checkAutoOpen() {
@@ -421,7 +428,7 @@ export default function App() {
       {/* Calculator */}
       {showCalc && <Calculator theme={t} onClose={() => setShowCalc(false)} />}
       {/* CRM Assistant — always visible */}
-      <CrmAssistant user={user} theme={t} isTovarovyed={userSpecial.is_tovarovyed} />
+      <CrmAssistant user={user} theme={t} isTovarovyed={userSpecial.is_tovarovyed} onNavigate={setActiveTab} />
     </div>
   );
 }
