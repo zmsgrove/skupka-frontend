@@ -2,6 +2,39 @@ import React, { useState } from 'react';
 
 const CHANGELOG = [
   {
+    version: '2.2.2',
+    date: 'Май 2026',
+    color: '#E8263A',
+    changes: [
+      'CRM ассистент: умный роутинг — быстро для общих вопросов, поиск только при оценке',
+      'Обновлён системный промпт: маржа, формула OLX, корректировки состояния',
+      'Орбитальная анимация кнопки ассистента — cyan glow, 3 кольца в разных плоскостях',
+      'Акцентный цвет #E8263A по всему интерфейсу ассистента',
+      'Фильтр городов: передаёт контекст OLX/Каспи по конкретному городу',
+    ],
+  },
+  {
+    version: '2.2.1',
+    date: 'Май 2026',
+    color: '#06b6d4',
+    changes: [
+      'Фикс: модель API claude-sonnet-4-5',
+      'Фикс: insert в Supabase assistant_history',
+      'Web search подключён и работает',
+    ],
+  },
+  {
+    version: '2.2.0',
+    date: 'Май 2026',
+    color: '#8b5cf6',
+    changes: [
+      'CRM ассистент: плавающая кнопка, чат, web_search',
+      'Голосовой ввод (ru-RU)',
+      'История переписки 24ч в Supabase',
+      'Логирование API URL, реальные ошибки в консоли',
+    ],
+  },
+  {
     version: '2.1.1',
     date: 'Май 2026',
     color: '#8b5cf6',
@@ -231,7 +264,7 @@ export default function ChangelogWidget({ theme }) {
     <>
       <button onClick={() => setOpen(!open)} title="История обновлений" style={{ background:t.surface2, border:`1px solid ${t.border}`, borderRadius:8, color:'#8b5cf6', fontSize:13, padding:'5px 10px', cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontFamily:'Inter,sans-serif' }}>
         📋
-        <span style={{ background:'#8b5cf6', color:'#fff', fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:10, fontFamily:'Unbounded,sans-serif' }}>2.1.1</span>
+        <span style={{ background:'#E8263A', color:'#fff', fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:10, fontFamily:'Unbounded,sans-serif' }}>2.2.2</span>
       </button>
       {open && (
         <>
@@ -240,7 +273,7 @@ export default function ChangelogWidget({ theme }) {
             <div style={{ padding:'16px 20px', borderBottom:`1px solid ${t.border}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
               <div>
                 <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:13, fontWeight:700, color:t.text }}>📋 История обновлений</div>
-                <div style={{ color:t.text2, fontSize:11, marginTop:2 }}>SKUPKA CRM · v2.1.1</div>
+                <div style={{ color:t.text2, fontSize:11, marginTop:2 }}>SKUPKA CRM · v2.2.2</div>
               </div>
               <button onClick={() => setOpen(false)} style={{ background:'transparent', border:'none', color:t.text2, fontSize:16, cursor:'pointer' }}>✕</button>
             </div>
@@ -265,7 +298,7 @@ export default function ChangelogWidget({ theme }) {
               ))}
             </div>
             <div style={{ padding:'12px 20px', borderTop:`1px solid ${t.border}`, textAlign:'center', color:t.text2, fontSize:11 }}>
-              SKUPKA CRM · <span style={{ color:'#8b5cf6' }}>2.1.1</span> · 2026
+              SKUPKA CRM · <span style={{ color:'#E8263A' }}>2.2.2</span> · 2026
             </div>
           </div>
         </>

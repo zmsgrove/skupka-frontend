@@ -9,9 +9,12 @@ if (!process.env.REACT_APP_BACKEND_URL) console.warn('[CrmAssistant] REACT_APP_B
 const WELCOME = 'Привет! Я CRM ассистент SKUPKA 🤖\n\nМогу помочь:\n• **Найти цены** — "iPhone 13 цены"\n• **Оценить технику** — "Оцени Samsung S22 хорошее состояние"\n• **Характеристики** — "Что такое Xiaomi 12 Pro"\n• Ответить на любой вопрос';
 
 const ANIM = `
-@keyframes jarvis-pulse { 0%,100%{opacity:0.85;transform:scale(1)} 50%{opacity:1;transform:scale(1.07)} }
-@keyframes jarvis-ring  { 0%{transform:translate(-50%,-50%) scale(1);opacity:0.55} 100%{transform:translate(-50%,-50%) scale(2.6);opacity:0} }
-@keyframes jarvis-ring-active { 0%{transform:translate(-50%,-50%) scale(1);opacity:0.8} 100%{transform:translate(-50%,-50%) scale(2.2);opacity:0} }
+@keyframes orbit-r1 { from{transform:translate(-50%,-50%) rotateX(70deg) rotateZ(0deg)} to{transform:translate(-50%,-50%) rotateX(70deg) rotateZ(360deg)} }
+@keyframes orbit-r2 { from{transform:translate(-50%,-50%) rotateX(70deg) rotateY(60deg) rotateZ(0deg)} to{transform:translate(-50%,-50%) rotateX(70deg) rotateY(60deg) rotateZ(360deg)} }
+@keyframes orbit-r3 { from{transform:translate(-50%,-50%) rotateX(70deg) rotateY(-60deg) rotateZ(0deg)} to{transform:translate(-50%,-50%) rotateX(70deg) rotateY(-60deg) rotateZ(360deg)} }
+@keyframes core-pulse { 0%,100%{box-shadow:0 0 10px 3px rgba(0,229,255,0.55),0 0 22px rgba(0,229,255,0.25)} 50%{box-shadow:0 0 16px 5px rgba(0,229,255,0.75),0 0 32px rgba(0,229,255,0.4)} }
+@keyframes core-active { 0%,100%{box-shadow:0 0 18px 6px rgba(0,229,255,0.85),0 0 36px rgba(0,229,255,0.45)} 50%{box-shadow:0 0 26px 10px rgba(0,229,255,1),0 0 55px rgba(0,229,255,0.7)} }
+@keyframes pulse { 0%,100%{transform:scale(0.7);opacity:0.5} 50%{transform:scale(1.1);opacity:1} }
 `;
 
 export default function CrmAssistant({ user, theme }) {
@@ -59,9 +62,9 @@ export default function CrmAssistant({ user, theme }) {
   }, [msgs, loading]);
 
   const detectIntent = (text) => {
-    if (/(оцен|цен[ыа]|сколько стоит|прайс|стоимость)/i.test(text)) return 'assess';
-    if (/(характеристики|информация|обзор|что такое|опиши)/i.test(text)) return 'info';
-    if (/\b(iphone|samsung|xiaomi|huawei|galaxy|redmi|poco|oppo|realme|honor|pixel|macbook|ipad|note \d|pro max|ultra|s\d+)\b/i.test(text)) return 'device';
+    if (/(оцен|выкуп|сколько дадите|сколько дашь)/i.test(text)) return 'assess';
+    if (/(цен[ыа]|стоимость|прайс|почём|за сколько|сколько стоит)/i.test(text)) return 'price';
+    if (/(характеристики|информация|обзор|что такое|опиши|\b(iphone|samsung|xiaomi|huawei|galaxy|redmi|poco|oppo|realme|honor|pixel|macbook|ipad|note \d|pro max|ultra|s\d+)\b)/i.test(text)) return 'device';
     return 'general';
   };
 
@@ -89,7 +92,7 @@ export default function CrmAssistant({ user, theme }) {
       const intent = detectIntent(txt);
       let extra = '';
 
-      if (intent === 'assess' || intent === 'device') {
+      if (intent === 'assess' || intent === 'price' || intent === 'device') {
         // Extract keyword for lookup (first 2 meaningful words)
         const kw = txt.replace(/(оцени|цены|цена|на|в|хорошем|плохом|состоянии|состояние|отличном|новый|новая|б\/у|бу|оценка)/gi, '').trim().split(/\s+/).slice(0, 2).join(' ');
 
@@ -112,13 +115,15 @@ export default function CrmAssistant({ user, theme }) {
         }
       }
 
-      const cityCtx = city !== 'Общий' ? ` Город: ${city}.` : '';
+      const cityExtra = city !== 'Общий'
+        ? `\nПользователь ищет цены в городе ${city}, Казахстан. Ищи объявления именно в этом городе на OLX.kz и Каспи.`
+        : '';
 
       const url = `${API}/api/assistant`;
       console.log('[CrmAssistant] POST', url);
       const { data: resp } = await axios.post(url, {
         messages: nextMsgs.map(m => ({ role: m.role, content: m.content })),
-        extra: extra + cityCtx,
+        extra: extra + cityExtra,
         intent,
       });
 
@@ -164,23 +169,21 @@ export default function CrmAssistant({ user, theme }) {
     <>
       <style>{ANIM}</style>
 
-      {/* Floating toggle button — always visible */}
-      <div style={{ position:'fixed', bottom:24, right:24, zIndex:1002, pointerEvents:'auto' }}>
-        {/* Idle rings */}
-        {!active && !open && [0, 1].map(i => (
-          <div key={i} style={{ position:'absolute', top:'50%', left:'50%', width:56, height:56, borderRadius:'50%', border:'2px solid rgba(240,180,41,0.35)', animation:`jarvis-ring ${2 + i * 0.8}s ${i * 0.7}s ease-out infinite`, pointerEvents:'none' }} />
-        ))}
-        {/* Active rings when processing */}
-        {active && [0, 1, 2].map(i => (
-          <div key={i} style={{ position:'absolute', top:'50%', left:'50%', width:56, height:56, borderRadius:'50%', border:'2px solid rgba(240,180,41,0.7)', animation:`jarvis-ring-active ${1 + i * 0.35}s ${i * 0.25}s ease-out infinite`, pointerEvents:'none' }} />
-        ))}
-        <button
+      {/* Floating toggle button — orbital animation */}
+      <div style={{ position:'fixed', bottom:24, right:24, zIndex:1002 }}>
+        <div
           onClick={() => setOpen(v => !v)}
-          style={{ position:'relative', zIndex:1, width:56, height:56, borderRadius:'50%', background: open ? 'linear-gradient(135deg,#e09010,#c07800)' : 'linear-gradient(135deg,#f0b429,#e09010)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:26, boxShadow:`0 4px 20px rgba(240,180,41,${open?0.3:0.5})`, animation: !open ? 'jarvis-pulse 2.5s ease-in-out infinite' : 'none', transition:'all 0.2s' }}
           title={open ? 'Свернуть ассистент' : 'Открыть ассистент SKUPKA AI'}
+          style={{ position:'relative', width:56, height:56, cursor:'pointer', perspective:'300px' }}
         >
-          {open ? '✕' : '🤖'}
-        </button>
+          <div style={{ position:'absolute', top:'50%', left:'50%', width:52, height:52, borderRadius:'50%', border:`1.5px solid rgba(0,229,255,${active?0.85:0.6})`, animation:`orbit-r1 ${active?'0.7':'5'}s linear infinite`, pointerEvents:'none' }} />
+          <div style={{ position:'absolute', top:'50%', left:'50%', width:52, height:52, borderRadius:'50%', border:`1.5px solid rgba(0,229,255,${active?0.6:0.45})`, animation:`orbit-r2 ${active?'0.9':'6.5'}s linear infinite`, pointerEvents:'none' }} />
+          <div style={{ position:'absolute', top:'50%', left:'50%', width:52, height:52, borderRadius:'50%', border:`1.5px solid rgba(0,229,255,${active?0.7:0.55})`, animation:`orbit-r3 ${active?'0.8':'4.5'}s linear infinite`, pointerEvents:'none' }} />
+          <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:20, height:20, borderRadius:'50%', background:'radial-gradient(circle,#00E5FF,#007a9a)', animation:active?'core-active 0.5s ease-in-out infinite':'core-pulse 2.5s ease-in-out infinite' }} />
+          {open && (
+            <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', color:'rgba(255,255,255,0.92)', fontSize:18, fontWeight:400, pointerEvents:'none', userSelect:'none' }}>✕</div>
+          )}
+        </div>
       </div>
 
       {/* Chat window */}
@@ -188,14 +191,15 @@ export default function CrmAssistant({ user, theme }) {
         <div style={{ position:'fixed', bottom:B, right:R, width:W, height:H, zIndex:1001, background:t.surface+'ee', border:'1px solid rgba(255,255,255,0.10)', borderRadius:BR, backdropFilter:'blur(20px)', boxShadow:'0 24px 80px rgba(0,0,0,0.55)', display:'flex', flexDirection:'column', overflow:'hidden' }}>
 
           {/* Header */}
-          <div style={{ padding:'12px 16px', borderBottom:`1px solid ${t.border}`, display:'flex', alignItems:'center', justifyContent:'space-between', background:`linear-gradient(135deg,rgba(240,180,41,0.08),transparent)`, flexShrink:0 }}>
+          <div style={{ padding:'12px 16px', borderBottom:`1px solid ${t.border}`, display:'flex', alignItems:'center', justifyContent:'space-between', background:`linear-gradient(135deg,rgba(232,38,58,0.06),transparent)`, flexShrink:0 }}>
             <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-              <div style={{ position:'relative', width:34, height:34, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                {active && <div style={{ position:'absolute', inset:-5, borderRadius:'50%', border:'2px solid #f0b429', animation:'jarvis-ring-active 1s ease-out infinite' }} />}
-                <span style={{ fontSize:22 }}>🤖</span>
+              <div style={{ position:'relative', width:34, height:34, perspective:'200px' }}>
+                <div style={{ position:'absolute', top:'50%', left:'50%', width:28, height:28, borderRadius:'50%', border:`1.5px solid rgba(0,229,255,${active?0.8:0.55})`, animation:`orbit-r1 ${active?'0.8':'5'}s linear infinite`, pointerEvents:'none' }} />
+                <div style={{ position:'absolute', top:'50%', left:'50%', width:28, height:28, borderRadius:'50%', border:`1.5px solid rgba(0,229,255,${active?0.55:0.35})`, animation:`orbit-r3 ${active?'1.0':'7'}s linear infinite`, pointerEvents:'none' }} />
+                <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:11, height:11, borderRadius:'50%', background:'radial-gradient(circle,#00E5FF,#007a9a)', animation:active?'core-active 0.5s ease-in-out infinite':'core-pulse 3s ease-in-out infinite' }} />
               </div>
               <div>
-                <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:11, fontWeight:700, color:'#f0b429' }}>SKUPKA AI</div>
+                <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:11, fontWeight:700, color:'#E8263A' }}>SKUPKA AI</div>
                 <div style={{ fontSize:10, color: loading ? '#f59e0b' : '#10b981', marginTop:1 }}>
                   {loading ? '⚡ Думаю...' : '🟢 Онлайн'}
                 </div>
@@ -214,7 +218,7 @@ export default function CrmAssistant({ user, theme }) {
           {/* City filter */}
           <div style={{ padding:'8px 12px', borderBottom:`1px solid ${t.border}`, display:'flex', gap:6, flexShrink:0 }}>
             {CITIES.map(c => (
-              <button key={c} onClick={() => setCity(c)} style={{ background:city===c?'rgba(240,180,41,0.14)':'transparent', border:`1px solid ${city===c?'rgba(240,180,41,0.4)':t.border}`, borderRadius:20, color:city===c?'#f0b429':t.text2, fontSize:10, fontWeight:600, padding:'4px 10px', cursor:'pointer', transition:'all 0.15s', fontFamily:'Inter,sans-serif' }}>
+              <button key={c} onClick={() => setCity(c)} style={{ background:city===c?'rgba(232,38,58,0.12)':'transparent', border:`1px solid ${city===c?'rgba(232,38,58,0.4)':t.border}`, borderRadius:20, color:city===c?'#E8263A':t.text2, fontSize:10, fontWeight:600, padding:'4px 10px', cursor:'pointer', transition:'all 0.15s', fontFamily:'Inter,sans-serif' }}>
                 {c}
               </button>
             ))}
@@ -227,7 +231,7 @@ export default function CrmAssistant({ user, theme }) {
               <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                 <span style={{ fontSize:20 }}>🤖</span>
                 <div style={{ padding:'10px 14px', background:t.surface2, border:`1px solid ${t.border}`, borderRadius:'4px 16px 16px 16px', display:'flex', gap:5 }}>
-                  {[0,1,2].map(i => <div key={i} style={{ width:7, height:7, borderRadius:'50%', background:'#f0b429', animation:`pulse 1s ${i*0.2}s ease-in-out infinite` }} />)}
+                  {[0,1,2].map(i => <div key={i} style={{ width:7, height:7, borderRadius:'50%', background:'#E8263A', animation:`pulse 1s ${i*0.2}s ease-in-out infinite` }} />)}
                 </div>
               </div>
             )}
@@ -254,7 +258,7 @@ export default function CrmAssistant({ user, theme }) {
             <button
               onClick={() => send()}
               disabled={!input.trim() || loading}
-              style={{ background:input.trim()&&!loading?'#f0b429':t.surface2, border:'none', borderRadius:10, color:input.trim()&&!loading?'#0f0f13':t.text2, width:40, height:40, cursor:input.trim()&&!loading?'pointer':'default', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:18, transition:'all 0.15s' }}
+              style={{ background:input.trim()&&!loading?'#E8263A':t.surface2, border:'none', borderRadius:10, color:input.trim()&&!loading?'#ffffff':t.text2, width:40, height:40, cursor:input.trim()&&!loading?'pointer':'default', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:18, transition:'all 0.15s' }}
             >
               ➤
             </button>
@@ -286,7 +290,7 @@ function Bubble({ msg, t }) {
       const parts = line.split(/(\*\*[^*]+\*\*)/g);
       const content = parts.map((p, j) =>
         p.startsWith('**') && p.endsWith('**')
-          ? <strong key={j} style={{ color:'#f0b429' }}>{p.slice(2, -2)}</strong>
+          ? <strong key={j} style={{ color:'#E8263A' }}>{p.slice(2, -2)}</strong>
           : p
       );
       return <div key={i} style={{ lineHeight:1.7, minHeight: line.trim() ? undefined : 6 }}>{content}</div>;
