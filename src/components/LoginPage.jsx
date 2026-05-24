@@ -86,6 +86,7 @@ export default function LoginPage({ onLogin, theme }) {
 
   return (
     <div style={{ height:'100vh', display:'flex', overflow:'hidden', background:'radial-gradient(ellipse at 30% 20%, #1a0a2e 0%, #0f0f13 55%), radial-gradient(ellipse at 80% 80%, #0a1a1f 0%, transparent 60%)' }}>
+      <style>{`@media (max-width:768px) { .login-changelog { display:none !important; } }`}</style>
       {/* Left */}
       <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:24, overflow:'hidden' }}>
         <div style={{ width:'100%', maxWidth:400 }}>
@@ -119,7 +120,7 @@ export default function LoginPage({ onLogin, theme }) {
       </div>
 
       {/* Right - scrollable changelog */}
-      <div style={{ width:360, borderLeft:'1px solid rgba(255,255,255,0.08)', padding:'40px 28px', overflowY:'auto', display:'flex', flexDirection:'column', background:'rgba(255,255,255,0.02)', backdropFilter:'blur(4px)' }}>
+      <div className="login-changelog" style={{ width:360, borderLeft:'1px solid rgba(255,255,255,0.08)', padding:'40px 28px', overflowY:'auto', display:'flex', flexDirection:'column', background:'rgba(255,255,255,0.02)', backdropFilter:'blur(4px)' }}>
         <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:13, fontWeight:700, color:'#f0f0f5', marginBottom:4 }}>📋 История обновлений</div>
         <div style={{ color:'#9090a8', fontSize:12, marginBottom:21 }}>Что нового в системе</div>
         {CHANGELOG.map((entry, i) => (

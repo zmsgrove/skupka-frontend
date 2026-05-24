@@ -182,8 +182,8 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
   const cur = data || lead;
 
   return (
-    <div style={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={styles.modal}>
+    <div className="skupka-modal-overlay" style={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="skupka-modal" style={styles.modal}>
         <div style={styles.header}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div>

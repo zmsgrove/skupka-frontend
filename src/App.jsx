@@ -354,10 +354,15 @@ export default function App() {
         .sidebar-desktop { display:flex !important; }
         .sidebar-mobile { display:none; }
         .hamburger-btn { display:none !important; }
-        @media (max-width:700px) {
+        @media (max-width:768px) {
           .sidebar-desktop { display:none !important; }
           .sidebar-mobile { display:flex !important; flex-direction:column; }
           .hamburger-btn { display:flex !important; }
+          .mobile-hide { display:none !important; }
+          .skupka-modal { max-width:100%!important; max-height:100%!important; border-radius:0!important; height:100%!important; }
+          .skupka-modal-overlay { align-items:flex-start!important; padding:0!important; }
+          .stats-bar-cards { flex:1 1 auto!important; }
+          .stats-bar-time { display:none!important; }
         }
       `}</style>
 
@@ -378,17 +383,17 @@ export default function App() {
         </nav>
 
         <div style={{ display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
-          <Clock t={t} />
-          <ServerStatus />
+          <span className="mobile-hide"><Clock t={t} /></span>
+          <span className="mobile-hide"><ServerStatus /></span>
           {/* Сводка */}
           <button onClick={() => setShowSummary(v=>!v)} title="Сводка" style={{ background: showSummary?'rgba(232,38,58,0.15)':'transparent', border:`1px solid ${showSummary?'rgba(232,38,58,0.4)':t.border}`, borderRadius:8, color: showSummary?'#E8263A':t.text2, fontSize:13, padding:'5px 10px', cursor:'pointer', display:'flex', alignItems:'center', gap:5 }}>
-            📊 <span style={{ fontSize:12, fontFamily:'Inter,sans-serif' }}>Сводка</span>
+            📊 <span className="mobile-hide" style={{ fontSize:12, fontFamily:'Inter,sans-serif' }}>Сводка</span>
           </button>
-          <ExcelExport user={user} theme={t} />
-          <ChangelogWidget theme={t} />
+          <span className="mobile-hide"><ExcelExport user={user} theme={t} /></span>
+          <span className="mobile-hide"><ChangelogWidget theme={t} /></span>
           <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end' }}>
             <span style={{ color:t.text, fontSize:12, fontWeight:600 }}>{user.name}</span>
-            <span style={{ color:t.text2, fontSize:10 }}>{user.position}</span>
+            <span className="mobile-hide" style={{ color:t.text2, fontSize:10 }}>{user.position}</span>
           </div>
           <button onClick={handleLogout} style={{ background:'transparent', border:`1px solid ${t.border}`, borderRadius:8, color:t.text2, fontSize:12, padding:'5px 12px', cursor:'pointer' }}>Выйти</button>
         </div>

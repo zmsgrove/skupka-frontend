@@ -103,10 +103,25 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
   const homeCity    = settings.homeCity || user.cities[0];
 
   return (
-    <div style={{ padding:'0 24px 40px', maxWidth:700, height:'100%', overflowY:'auto' }}>
+    <>
+    <style>{`@media (min-width:769px){.settings-cols{display:grid!important;grid-template-columns:1fr 1fr;gap:21px;align-items:start;}}`}</style>
+    <div style={{ padding:'0 24px 40px', height:'100%', overflowY:'auto' }}>
       <div style={{ padding:'20px 0 24px' }}>
         <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:20, fontWeight:700, color:t.text }}>⚙️ Настройки</div>
         <div style={{ color:t.text2, fontSize:13, marginTop:4 }}>Персональные настройки интерфейса</div>
+      </div>
+
+      <div className={canManagePermissions ? 'settings-cols' : ''} style={{ display:'flex', flexDirection:'column' }}>
+      {/* Левая колонка */}
+      <div>
+
+      {/* Профиль */}
+      <div style={{ marginBottom:20, background:t.surface, border:`1px solid ${t.border}`, borderRadius:14, padding:'14px 18px' }}>
+        <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:12, fontWeight:600, color:t.text, marginBottom:10 }}>👤 Профиль</div>
+        <div style={{ color:t.text2, fontSize:13 }}>
+          <b style={{ color:t.text }}>{user.name}</b> · {user.username} · роль: <b style={{ color:'#E8263A' }}>{user.role}</b>
+        </div>
+        <div style={{ color:t.text2, fontSize:11, marginTop:4 }}>Города: {user.cities.join(', ')}</div>
       </div>
 
       {/* Уведомления */}
@@ -220,17 +235,17 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
         ))}
       </Section>
 
-      {/* Управление доступами — только dir и zamdir */}
-      {canManagePermissions && <PermissionsPanel t={t} currentUser={user} />}
+      </div>{/* end left column */}
 
-      {/* Инфо */}
-      <div style={{ padding:'14px 18px', background:t.surface, border:`1px solid ${t.border}`, borderRadius:12 }}>
-        <div style={{ color:t.text2, fontSize:12 }}>
-          👤 <b style={{ color:t.text }}>{user.name}</b> · {user.username} · роль: <b style={{ color:'#E8263A' }}>{user.role}</b>
+      {/* Правая колонка — только dir/admin */}
+      {canManagePermissions && (
+        <div>
+          <PermissionsPanel t={t} currentUser={user} />
         </div>
-        <div style={{ color:t.text2, fontSize:11, marginTop:4 }}>Города: {user.cities.join(', ')}</div>
-      </div>
+      )}
+      </div>{/* end settings-cols */}
     </div>
+    </>
   );
 }
 

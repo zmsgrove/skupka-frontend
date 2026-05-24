@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../supabase';
+import DateFilter, { computeDateRange } from './DateFilter';
 
 const COLS = [
   { id:'new',      label:'🆕 Новые',           color:'#3b82f6' },
@@ -24,6 +25,7 @@ export default function ZrsPage({ user, theme }) {
   const draggingRef = useRef(null);
   const [dragOver, setDragOver]     = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
+  const [dateFilter, setDateFilter] = useState({ preset:'today', range: computeDateRange('today') });
 
   useEffect(() => {
     const close = () => setContextMenu(null);
@@ -88,14 +90,20 @@ export default function ZrsPage({ user, theme }) {
 
   return (
     <div style={{display:'flex',flexDirection:'column',height:'100%',overflow:'hidden'}}>
-      <div style={{padding:'12px 24px',borderBottom:`1px solid ${t.border}`,background:t.surface,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+      <div style={{padding:'12px 24px',borderBottom:`1px solid ${t.border}`,background:t.surface,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0,flexWrap:'wrap',gap:8}}>
         <span style={{fontFamily:'Unbounded,sans-serif',fontSize:16,fontWeight:700,color:t.text}}>📝 ЗРС</span>
-        <button onClick={()=>setShowForm(true)} style={{background:'rgba(6,182,212,0.15)',border:'1px solid rgba(6,182,212,0.4)',borderRadius:8,color:'#06b6d4',fontSize:12,fontWeight:700,padding:'8px 16px',cursor:'pointer'}}>+ Новая заявка</button>
+        <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+          <DateFilter value={dateFilter} onChange={setDateFilter} theme={t} showAll />
+          <button onClick={()=>setShowForm(true)} style={{background:'rgba(6,182,212,0.15)',border:'1px solid rgba(6,182,212,0.4)',borderRadius:8,color:'#06b6d4',fontSize:12,fontWeight:700,padding:'8px 16px',cursor:'pointer'}}>+ Новая заявка</button>
+        </div>
       </div>
-      <div style={{flex:1,overflow:'hidden',padding:'16px 24px'}}>
+      <div style={{flex:1,overflowX:'auto',overflowY:'hidden',padding:'16px 24px'}}>
         <div style={{display:'grid',gridTemplateColumns:`repeat(${COLS.length},minmax(200px,1fr))`,gap:12,height:'100%'}}>
           {COLS.map(col => {
-            const cards = requests.filter(r=>r.status===col.id);
+            const baseCards = requests.filter(r=>r.status===col.id);
+            const cards = dateFilter?.range
+              ? baseCards.filter(r => { const d = new Date(r.created_at); return d >= dateFilter.range.from && d <= dateFilter.range.to; })
+              : baseCards;
             const isOver = dragOver === col.id;
             return (
               <div key={col.id}
@@ -193,7 +201,7 @@ function ZrsForm({ user, t, onClose, onCreate }) {
   return (
     <>
       <div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:500}}/>
-      <div style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:460,background:t.surface,border:`1px solid ${t.border}`,borderRadius:20,padding:24,zIndex:501,display:'flex',flexDirection:'column',gap:14}}>
+      <div className="skupka-modal" style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:460,background:t.surface,border:`1px solid ${t.border}`,borderRadius:20,padding:24,zIndex:501,display:'flex',flexDirection:'column',gap:14}}>
         <div style={{fontFamily:'Unbounded,sans-serif',fontSize:14,fontWeight:700,color:t.text}}>📝 Новая заявка ЗРС</div>
         {[['requester','Кто запрашивает *','text','Имя'],['amount','Сумма *','number','0 ₸'],['goal','Цель *','text','На что запрашивается']].map(([k,l,tp,ph])=>(
           <div key={k} style={{display:'flex',flexDirection:'column',gap:6}}>
@@ -248,7 +256,7 @@ function ZrsModal({ request, t, onClose, canMove, onMove }) {
   return (
     <>
       <div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:500}}/>
-      <div style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:460,maxHeight:'85vh',background:t.surface,border:`1px solid ${t.border}`,borderRadius:20,zIndex:501,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+      <div className="skupka-modal" style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:460,maxHeight:'85vh',background:t.surface,border:`1px solid ${t.border}`,borderRadius:20,zIndex:501,display:'flex',flexDirection:'column',overflow:'hidden'}}>
         <div style={{padding:'16px 24px',borderBottom:`1px solid ${t.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
           <span style={{fontFamily:'Unbounded,sans-serif',fontSize:14,fontWeight:700,color:t.text}}>📝 Заявка ЗРС</span>
           <button onClick={onClose} style={{background:'transparent',border:'none',color:t.text2,fontSize:20,cursor:'pointer'}}>✕</button>

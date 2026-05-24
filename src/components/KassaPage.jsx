@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../supabase';
+import DateFilter, { computeDateRange } from './DateFilter';
 
 const FILIALS = [
   { id:'sv47', label:'СВ47', city:'Уральск' },
@@ -36,8 +37,7 @@ export default function KassaPage({ user, theme }) {
   const [loading, setLoading]     = useState(true);
   const [showForm, setShowForm]   = useState(null);
   const [selected, setSelected]   = useState(null);
-  const todayStr = new Date().toISOString().split('T')[0];
-  const [filterDate, setFilterDate] = useState(todayStr);
+  const [dateFilter, setDateFilter] = useState({ preset:'today', range: computeDateRange('today') });
   const draggingRef = useRef(null);
   const [dragOver, setDragOver]   = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
@@ -92,13 +92,13 @@ export default function KassaPage({ user, theme }) {
     setDragOver(null);
   };
 
-  const filterStart = new Date(filterDate); filterStart.setHours(0,0,0,0);
-  const filterEnd   = new Date(filterDate); filterEnd.setHours(23,59,59,999);
-
   const visibleReports = reports.filter(r => {
     if (!canSeeCard(user,r)) return false;
-    const d = new Date(r.report_date);
-    return d >= filterStart && d <= filterEnd;
+    if (dateFilter?.range) {
+      const d = new Date(r.created_at);
+      return d >= dateFilter.range.from && d <= dateFilter.range.to;
+    }
+    return true;
   });
 
   const morningReports = visibleReports.filter(r=>r.type==='morning' && r.status==='morning');
@@ -126,20 +126,14 @@ export default function KassaPage({ user, theme }) {
       <div style={{padding:'12px 24px',borderBottom:`1px solid ${t.border}`,background:t.surface,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0,flexWrap:'wrap',gap:10}}>
         <span style={{fontFamily:'Unbounded,sans-serif',fontSize:16,fontWeight:700,color:t.text}}>💰 Касса</span>
         <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-          {/* Фильтр по дате */}
-          <div style={{display:'flex',alignItems:'center',gap:8,background:t.surface2,border:`1px solid ${t.border}`,borderRadius:10,padding:'6px 12px'}}>
-            <span style={{color:t.text2,fontSize:12}}>📅</span>
-            <input type="date" value={filterDate} max={todayStr} onChange={e=>setFilterDate(e.target.value)}
-              style={{background:'transparent',border:'none',color:t.text,fontSize:12,outline:'none'}}/>
-            {filterDate!==todayStr && <button onClick={()=>setFilterDate(todayStr)} style={{background:'rgba(232,38,58,0.15)',border:'1px solid rgba(232,38,58,0.3)',borderRadius:6,color:'#E8263A',fontSize:11,padding:'2px 8px',cursor:'pointer'}}>Сегодня</button>}
-          </div>
+          <DateFilter value={dateFilter} onChange={setDateFilter} theme={t} showAll />
           <button onClick={()=>setShowForm('morning')} style={{background:'rgba(245,158,11,0.15)',border:'1px solid rgba(245,158,11,0.4)',borderRadius:8,color:'#f59e0b',fontSize:12,fontWeight:700,padding:'8px 14px',cursor:'pointer'}}>🌅 Утренний</button>
           <button onClick={()=>setShowForm('evening')} style={{background:'rgba(139,92,246,0.15)',border:'1px solid rgba(139,92,246,0.4)',borderRadius:8,color:'#8b5cf6',fontSize:12,fontWeight:700,padding:'8px 14px',cursor:'pointer'}}>🌆 Вечерний</button>
         </div>
       </div>
 
       {/* Kanban — fixed height, scroll inside columns */}
-      <div style={{flex:1,overflow:'hidden',padding:'16px 24px'}}>
+      <div style={{flex:1,overflowX:'auto',overflowY:'hidden',padding:'16px 24px'}}>
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(240px,1fr))',gap:14,height:'100%'}}>
           <KassaCol title="🌅 Утренний отчёт" color="#f59e0b" dropStatus="morning" cards={morningReports} user={user} t={t} onOpen={setSelected} onMove={moveCard} launched={morningLaunched} unlaunched={morningUnlaunched} draggingRef={draggingRef} dragOver={dragOver} setDragOver={setDragOver} onDrop={handleDrop} onContextMenu={handleContextMenu} />
           <KassaCol title="🌆 Вечерний отчёт" color="#8b5cf6" dropStatus="evening" cards={eveningReports} user={user} t={t} onOpen={setSelected} onMove={moveCard} launched={eveningLaunched} unlaunched={eveningUnlaunched} draggingRef={draggingRef} dragOver={dragOver} setDragOver={setDragOver} onDrop={handleDrop} onContextMenu={handleContextMenu} />
@@ -304,7 +298,7 @@ function KassaForm({ type, user, t, onClose, onCreate }) {
   return (
     <>
       <div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:500}}/>
-      <div style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:560,maxHeight:'90vh',background:t.surface,border:`1px solid ${t.border}`,borderRadius:20,zIndex:501,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+      <div className="skupka-modal" style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:560,maxHeight:'90vh',background:t.surface,border:`1px solid ${t.border}`,borderRadius:20,zIndex:501,display:'flex',flexDirection:'column',overflow:'hidden'}}>
         <div style={{padding:'16px 24px',borderBottom:`1px solid ${t.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
           <span style={{fontFamily:'Unbounded,sans-serif',fontSize:14,fontWeight:700,color:t.text}}>{isMorning?'🌅 Утренний отчёт':'🌆 Вечерний отчёт'}</span>
           <button onClick={onClose} style={{background:'transparent',border:'none',color:t.text2,fontSize:20,cursor:'pointer'}}>✕</button>
@@ -393,7 +387,7 @@ function KassaModal({ report, user, t, onClose, onMove, onUpdate }) {
   return (
     <>
       <div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:500}}/>
-      <div style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:540,maxHeight:'88vh',background:t.surface,border:`1px solid ${t.border}`,borderRadius:20,zIndex:501,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+      <div className="skupka-modal" style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:540,maxHeight:'88vh',background:t.surface,border:`1px solid ${t.border}`,borderRadius:20,zIndex:501,display:'flex',flexDirection:'column',overflow:'hidden'}}>
         <div style={{padding:'16px 24px',borderBottom:`1px solid ${t.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
           <div>
             <div style={{fontFamily:'Unbounded,sans-serif',fontSize:14,fontWeight:700,color:t.text}}>{TYPE_LABEL[report.type]} — {filial?.label}</div>

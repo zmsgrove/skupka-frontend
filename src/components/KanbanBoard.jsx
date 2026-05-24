@@ -7,6 +7,7 @@ import LeadModal from './LeadModal';
 import StatsBar from './StatsBar';
 import DragDropModal from './DragDropModal';
 import ContextMenu from './ContextMenu';
+import DateFilter, { computeDateRange } from './DateFilter';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -42,6 +43,7 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
   const [dragPopup, setDragPopup]   = useState(null);
   const [collapsed, setCollapsed]   = useState({});
   const [statsFilter, setStatsFilter] = useState(null);
+  const [dateFilter, setDateFilter] = useState({ preset: null, range: null });
   const draggingRef = useRef(null);
   const todayStr = new Date().toISOString().split('T')[0];
   const [filterDate, setFilterDate] = useState(todayStr);
@@ -88,6 +90,12 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
     }
     if (statsFilter === 'overdue') {
       filtered = filtered.filter(l => (Date.now()-new Date(l.updated_at||l.created_at).getTime()) > 10*3600*1000);
+    }
+    if (dateFilter?.range) {
+      filtered = filtered.filter(l => {
+        const d = new Date(l.created_at);
+        return d >= dateFilter.range.from && d <= dateFilter.range.to;
+      });
     }
     return filtered;
   };
@@ -154,6 +162,12 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
         </div>
       )}
 
+      {/* DateFilter */}
+      <div style={{ display:'flex',alignItems:'center',gap:8,margin:`0 ${fib.md}px ${fib.xs}px`,flexWrap:'wrap' }}>
+        <span style={{ color:t.text2, fontSize:12, flexShrink:0 }}>📅 Дата создания:</span>
+        <DateFilter value={dateFilter} onChange={setDateFilter} theme={t} showAll />
+      </div>
+
       {/* Toolbar */}
       <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',margin:`0 ${fib.md}px ${fib.sm}px`,gap:fib.sm,flexWrap:'wrap' }}>
         <div style={{ display:'flex',alignItems:'center',gap:8,background:t.surface,border:`1px solid ${t.border}`,borderRadius:radius.md,padding:'8px 14px',flex:1,maxWidth:340,boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
@@ -182,7 +196,7 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
 
           return (
             <div key={col.id}
-              style={{ flex:'1 0 190px',minWidth:190,minHeight:0,border:`1px solid ${isOver?col.color:t.border}`,borderRadius:radius.lg,overflow:'hidden',transition:'border-color 0.18s,background 0.18s,box-shadow 0.18s',background:isOver?col.color+'0a':t.surface,display:'flex',flexDirection:'column',boxShadow:isOver?`0 0 0 2px ${col.color}44,0 8px 24px rgba(0,0,0,0.12)`:'0 2px 12px rgba(0,0,0,0.06)' }}
+              style={{ flex:'1 0 280px',minWidth:280,minHeight:0,border:`1px solid ${isOver?col.color:t.border}`,borderRadius:radius.lg,overflow:'hidden',transition:'border-color 0.18s,background 0.18s,box-shadow 0.18s',background:isOver?col.color+'0a':t.surface,display:'flex',flexDirection:'column',boxShadow:isOver?`0 0 0 2px ${col.color}44,0 8px 24px rgba(0,0,0,0.12)`:'0 2px 12px rgba(0,0,0,0.06)' }}
               onDragOver={e => handleDragOver(e,col.id)}
               onDrop={e => handleDrop(e,col.id)}
               onDragLeave={e => { if(!e.currentTarget.contains(e.relatedTarget)) setDragOver(null); }}

@@ -139,7 +139,7 @@ export default function StatsBar({ city, user, theme, onFilter }) {
     <div style={{ padding:'21px 24px 10px' }}>
       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
         {/* Cards — 80% */}
-        <div style={{ display:'flex', alignItems:'stretch', gap:8, flex:'0 0 80%', flexWrap:'nowrap', overflowX:'auto' }}>
+        <div className="stats-bar-cards" style={{ display:'flex', alignItems:'stretch', gap:8, flex:'0 0 80%', flexWrap:'nowrap', overflowX:'auto' }}>
           {cards.map(card => {
             const isActive = activeFilter === card.id;
             const bgColor = card.alert ? card.alertColor+'15' : t.surface;
@@ -173,7 +173,7 @@ export default function StatsBar({ city, user, theme, onFilter }) {
         </div>
         {/* Time — 20% */}
         {lastUpdated && (
-          <div style={{ flex:'0 0 20%', display:'flex', flexDirection:'column', alignItems:'flex-end', justifyContent:'center', gap:4 }}>
+          <div className="stats-bar-time" style={{ flex:'0 0 20%', display:'flex', flexDirection:'column', alignItems:'flex-end', justifyContent:'center', gap:4 }}>
             <span style={{ color:t.text2, fontSize:12 }}>🕐 {lastUpdated}</span>
             <button onClick={fetchStats} style={{ background:'transparent', border:`1px solid ${t.border}`, borderRadius:6, color:t.text2, cursor:'pointer', fontSize:11, padding:'3px 8px' }}>↻ Обновить</button>
           </div>
