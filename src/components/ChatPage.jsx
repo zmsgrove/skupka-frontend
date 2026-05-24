@@ -125,7 +125,7 @@ export default function ChatPage({ user, theme, onUnreadChange }) {
         <div style={{ padding:'16px 14px 10px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:`1px solid ${t.border}` }}>
           <span style={{ fontFamily:'Unbounded,sans-serif', fontSize:13, fontWeight:700, color:t.text }}>🗨️ Чаты</span>
           {canManage && (
-            <button onClick={() => setShowCreate(true)} style={{ background:'rgba(240,180,41,0.15)', border:'1px solid rgba(240,180,41,0.4)', borderRadius:8, color:'#f0b429', fontSize:12, padding:'4px 10px', cursor:'pointer' }}>
+            <button onClick={() => setShowCreate(true)} style={{ background:'rgba(232,38,58,0.15)', border:'1px solid rgba(232,38,58,0.4)', borderRadius:8, color:'#E8263A', fontSize:12, padding:'4px 10px', cursor:'pointer' }}>
               + Создать
             </button>
           )}
@@ -136,14 +136,14 @@ export default function ChatPage({ user, theme, onUnreadChange }) {
             return (
               <div key={chat.id} onClick={() => setActiveChat(chat)} style={{
                 padding:'12px 14px', cursor:'pointer',
-                background: isActive ? 'rgba(240,180,41,0.1)' : 'transparent',
-                borderLeft: isActive ? '3px solid #f0b429' : '3px solid transparent',
+                background: isActive ? 'rgba(232,38,58,0.1)' : 'transparent',
+                borderLeft: isActive ? '3px solid #E8263A' : '3px solid transparent',
                 borderBottom: `1px solid ${t.border}`,
                 display:'flex', alignItems:'center', justifyContent:'space-between',
                 transition:'all 0.15s',
               }}>
                 <div style={{ minWidth:0 }}>
-                  <div style={{ color: isActive ? '#f0b429' : t.text, fontSize:13, fontWeight:600, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                  <div style={{ color: isActive ? '#E8263A' : t.text, fontSize:13, fontWeight:600, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                     {chat.is_general ? '📌 ' : ''}{chat.name}
                   </div>
                 </div>
@@ -192,8 +192,8 @@ export default function ChatPage({ user, theme, onUnreadChange }) {
                   {/* Bubble */}
                   <div style={{ position:'relative', maxWidth:'65%' }}>
                     <div style={{
-                      background: isMe ? 'rgba(240,180,41,0.18)' : t.surface,
-                      border: `1px solid ${isMe ? 'rgba(240,180,41,0.4)' : t.border}`,
+                      background: isMe ? 'rgba(232,38,58,0.18)' : t.surface,
+                      border: `1px solid ${isMe ? 'rgba(232,38,58,0.4)' : t.border}`,
                       borderRadius: isMe ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
                       padding:'10px 14px',
                       color: t.text, fontSize:13, lineHeight:1.5,
@@ -207,8 +207,8 @@ export default function ChatPage({ user, theme, onUnreadChange }) {
                       <div style={{ display:'flex', gap:4, marginTop:4, flexWrap:'wrap', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
                         {Object.entries(reactionMap).map(([emoji, users]) => (
                           <button key={emoji} onClick={() => toggleReaction(msg.id, emoji)} style={{
-                            background: users.includes(user.username) ? 'rgba(240,180,41,0.2)' : t.surface2,
-                            border: `1px solid ${users.includes(user.username) ? 'rgba(240,180,41,0.4)' : t.border}`,
+                            background: users.includes(user.username) ? 'rgba(232,38,58,0.2)' : t.surface2,
+                            border: `1px solid ${users.includes(user.username) ? 'rgba(232,38,58,0.4)' : t.border}`,
                             borderRadius:20, padding:'2px 7px', cursor:'pointer',
                             fontSize:12, display:'flex', alignItems:'center', gap:3,
                           }}>
@@ -244,8 +244,8 @@ export default function ChatPage({ user, theme, onUnreadChange }) {
               onInput={e => { e.target.style.height='auto'; e.target.style.height=Math.min(e.target.scrollHeight,120)+'px'; }}
             />
             <button onClick={sendMessage} disabled={!text.trim()} style={{
-              background: text.trim() ? '#f0b429' : t.surface2,
-              border:'none', borderRadius:10, color: text.trim() ? '#0f0f13' : t.text2,
+              background: text.trim() ? '#E8263A' : t.surface2,
+              border:'none', borderRadius:10, color: text.trim() ? '#fff' : t.text2,
               fontSize:18, width:44, height:44, cursor: text.trim() ? 'pointer' : 'default',
               display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
               transition:'all 0.15s',
@@ -326,8 +326,8 @@ function CreateChatModal({ user, allUsers, theme, onClose, onCreate }) {
           <label style={{ color:t.text2, fontSize:12, marginBottom:8, display:'block' }}>Участники</label>
           <div style={{ display:'flex', flexDirection:'column', gap:4, maxHeight:220, overflowY:'auto' }}>
             {allUsers.filter(u => u.id !== user.username).map(u => (
-              <label key={u.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'7px 10px', borderRadius:8, cursor:'pointer', background: selected.includes(u.id) ? 'rgba(240,180,41,0.1)' : 'transparent', border:`1px solid ${selected.includes(u.id) ? 'rgba(240,180,41,0.3)' : t.border}`, transition:'all 0.1s' }}>
-                <input type="checkbox" checked={selected.includes(u.id)} onChange={() => toggle(u.id)} style={{ accentColor:'#f0b429' }} />
+              <label key={u.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'7px 10px', borderRadius:8, cursor:'pointer', background: selected.includes(u.id) ? 'rgba(232,38,58,0.1)' : 'transparent', border:`1px solid ${selected.includes(u.id) ? 'rgba(232,38,58,0.3)' : t.border}`, transition:'all 0.1s' }}>
+                <input type="checkbox" checked={selected.includes(u.id)} onChange={() => toggle(u.id)} style={{ accentColor:'#E8263A' }} />
                 <span style={{ color:t.text, fontSize:13 }}>{u.name}</span>
                 <span style={{ color:t.text2, fontSize:11, marginLeft:'auto' }}>{u.role}</span>
               </label>
@@ -337,7 +337,7 @@ function CreateChatModal({ user, allUsers, theme, onClose, onCreate }) {
 
         <div style={{ display:'flex', gap:10 }}>
           <button onClick={onClose} style={{ flex:1, background:'transparent', border:`1px solid ${t.border}`, borderRadius:8, color:t.text2, fontSize:13, padding:'10px', cursor:'pointer' }}>Отмена</button>
-          <button onClick={() => { if(name.trim()) onCreate(name.trim(), selected); }} disabled={!name.trim()} style={{ flex:1, background: name.trim() ? '#f0b429' : t.surface2, border:'none', borderRadius:8, color: name.trim() ? '#0f0f13' : t.text2, fontSize:13, fontWeight:700, padding:'10px', cursor: name.trim() ? 'pointer' : 'default' }}>
+          <button onClick={() => { if(name.trim()) onCreate(name.trim(), selected); }} disabled={!name.trim()} style={{ flex:1, background: name.trim() ? '#E8263A' : t.surface2, border:'none', borderRadius:8, color: name.trim() ? '#fff' : t.text2, fontSize:13, fontWeight:700, padding:'10px', cursor: name.trim() ? 'pointer' : 'default' }}>
             Создать
           </button>
         </div>

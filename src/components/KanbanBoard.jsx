@@ -139,7 +139,7 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
 
   if (loading) return (
     <div style={{ display:'flex',alignItems:'center',justifyContent:'center',height:400,flexDirection:'column',gap:16,color:t.text2 }}>
-      <div style={{ width:36,height:36,border:`3px solid ${t.border}`,borderTop:'3px solid #f0b429',borderRadius:'50%',animation:'spin 0.8s linear infinite' }} />
+      <div style={{ width:36,height:36,border:`3px solid ${t.border}`,borderTop:'3px solid #E8263A',borderRadius:'50%',animation:'spin 0.8s linear infinite' }} />
       <span style={{ fontSize:14 }}>Загрузка заявок...</span>
     </div>
   );
@@ -149,7 +149,7 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
       <StatsBar city={city} user={user} theme={t} onFilter={setStatsFilter} />
 
       {totalUnread > 0 && (
-        <div style={{ margin:'0 24px 10px',background:'rgba(240,180,41,0.1)',border:'1px solid rgba(240,180,41,0.3)',borderRadius:10,color:'#f0b429',fontSize:13,fontWeight:600,padding:'8px 16px' }}>
+        <div style={{ margin:'0 24px 10px',background:'rgba(232,38,58,0.1)',border:'1px solid rgba(232,38,58,0.3)',borderRadius:10,color:'#E8263A',fontSize:13,fontWeight:600,padding:'8px 16px' }}>
           🔔 {totalUnread} непрочитанных — карточки помечены жёлтым
         </div>
       )}
@@ -167,7 +167,7 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
           <span style={{ color:t.text2,fontSize:12 }}>📅 Успешно / Провал:</span>
           <input type="date" value={filterDate} max={todayStr} onChange={e => setFilterDate(e.target.value)}
             style={{ background:t.inputBg,border:`1px solid ${t.border}`,borderRadius:radius.sm,color:t.text,fontSize:13,padding:'4px 8px',outline:'none' }} />
-          {!isToday && <button onClick={() => setFilterDate(todayStr)} style={{ background:'rgba(240,180,41,0.15)',border:'1px solid rgba(240,180,41,0.4)',borderRadius:radius.sm,color:'#f0b429',fontSize:12,padding:'4px 10px',cursor:'pointer' }}>Сегодня</button>}
+          {!isToday && <button onClick={() => setFilterDate(todayStr)} style={{ background:'rgba(232,38,58,0.15)',border:'1px solid rgba(232,38,58,0.4)',borderRadius:radius.sm,color:'#E8263A',fontSize:12,padding:'4px 10px',cursor:'pointer' }}>Сегодня</button>}
         </div>
       </div>
 
@@ -192,7 +192,7 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
                 <div style={{ display:'flex',alignItems:'center',gap:6,minWidth:0 }}>
                   <span style={{ flexShrink:0 }}>{col.emoji}</span>
                   <span style={{ fontFamily:'Unbounded,sans-serif',fontSize:11,fontWeight:600,color:col.color,whiteSpace:'nowrap' }}>{col.label}</span>
-                  {colUnread > 0 && <span style={{ background:'#f0b429',color:'#0f0f13',fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:20,flexShrink:0 }}>{colUnread}</span>}
+                  {colUnread > 0 && <span style={{ background:'#E8263A',color:'#fff',fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:20,flexShrink:0 }}>{colUnread}</span>}
                 </div>
                 <div style={{ display:'flex',alignItems:'center',gap:6,flexShrink:0,marginLeft:6 }}>
                   <span style={{ fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:20,background:col.color+'22',color:col.color }}>{colLeads.length}</span>

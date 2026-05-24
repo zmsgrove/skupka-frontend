@@ -147,8 +147,8 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
       <div key={msg.id} style={{
         ...styles.message,
         alignSelf: msg.direction === 'out' ? 'flex-end' : 'flex-start',
-        background: msg.direction === 'out' ? '#f0b42922' : '#22222e',
-        borderColor: msg.direction === 'out' ? '#f0b42944' : '#2e2e3e',
+        background: msg.direction === 'out' ? '#E8263A22' : '#22222e',
+        borderColor: msg.direction === 'out' ? '#E8263A44' : '#2e2e3e',
       }}>
         {msg.sender_name && <div style={styles.msgAuthor}>{msg.sender_name}</div>}
         {isPhoto ? (
@@ -178,7 +178,7 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
                 {editingName ? (
                   <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                     <input
-                      style={{ background:'#22222e', border:'1px solid #f0b429', borderRadius:8, color:'#f0f0f5', fontSize:16, fontWeight:700, padding:'4px 10px', outline:'none', fontFamily:'Unbounded,sans-serif' }}
+                      style={{ background:'#22222e', border:'1px solid #E8263A', borderRadius:8, color:'#f0f0f5', fontSize:16, fontWeight:700, padding:'4px 10px', outline:'none', fontFamily:'Unbounded,sans-serif' }}
                       value={editName}
                       onChange={e => setEditName(e.target.value)}
                       autoFocus
@@ -327,7 +327,7 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
                   window.dispatchEvent(new CustomEvent('skupka-assistant', { detail: { query: `Оцени технику: ${cur.device}` } }));
                   onClose();
                 }}
-                style={{ ...styles.saveBtn, background:'rgba(240,180,41,0.13)', color:'#f0b429', border:'1px solid rgba(240,180,41,0.35)', marginBottom:4 }}
+                style={{ ...styles.saveBtn, background:'rgba(232,38,58,0.13)', color:'#E8263A', border:'1px solid rgba(232,38,58,0.35)', marginBottom:4 }}
               >
                 🤖 Оценить технику
               </button>
@@ -420,7 +420,7 @@ function Row({ label, value, highlight }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #2e2e3e' }}>
       <span style={{ color: '#9090a8', fontSize: 12 }}>{label}</span>
-      <span style={{ color: highlight ? '#f0b429' : '#f0f0f5', fontSize: 13, fontWeight: highlight ? 600 : 400 }}>{value}</span>
+      <span style={{ color: highlight ? '#E8263A' : '#f0f0f5', fontSize: 13, fontWeight: highlight ? 600 : 400 }}>{value}</span>
     </div>
   );
 }
@@ -446,29 +446,29 @@ const styles = {
   input: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 8, color: '#f0f0f5', fontSize: 14, padding: '9px 12px', outline: 'none' },
   textarea: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 8, color: '#f0f0f5', fontSize: 14, padding: '9px 12px', outline: 'none', resize: 'vertical', fontFamily: 'Inter, sans-serif' },
   checkLabel: { display: 'flex', alignItems: 'center', gap: 8, color: '#c0c0d8', fontSize: 13, cursor: 'pointer' },
-  saveBtn: { background: '#f0b429', border: 'none', borderRadius: 10, color: '#0f0f13', fontFamily: 'Unbounded, sans-serif', fontSize: 12, fontWeight: 700, padding: '11px', cursor: 'pointer', marginTop: 'auto' },
+  saveBtn: { background: '#E8263A', border: 'none', borderRadius: 10, color: '#fff', fontFamily: 'Unbounded, sans-serif', fontSize: 12, fontWeight: 700, padding: '11px', cursor: 'pointer', marginTop: 'auto' },
   historyItem: { display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px solid #2e2e3e' },
   historyDevice: { color: '#c0c0d8', fontSize: 12 },
   historyStatus: { fontSize: 12, fontWeight: 600 },
   tabs: { display: 'flex', borderBottom: '1px solid #2e2e3e', flexShrink: 0 },
   tab: { flex: 1, padding: '13px', background: 'transparent', border: 'none', color: '#9090a8', fontSize: 13, cursor: 'pointer', borderBottom: '2px solid transparent', transition: 'all 0.15s' },
-  tabActive: { color: '#f0b429', borderBottomColor: '#f0b429' },
+  tabActive: { color: '#E8263A', borderBottomColor: '#E8263A' },
   messageList: { flex: 1, overflowY: 'auto', padding: '14px', display: 'flex', flexDirection: 'column', gap: 10 },
   message: { maxWidth: '78%', border: '1px solid', borderRadius: 12, padding: '8px 12px' },
-  msgAuthor: { color: '#f0b429', fontSize: 11, fontWeight: 600, marginBottom: 4 },
+  msgAuthor: { color: '#E8263A', fontSize: 11, fontWeight: 600, marginBottom: 4 },
   msgText: { color: '#f0f0f5', fontSize: 13, lineHeight: 1.5 },
   msgTime: { color: '#9090a8', fontSize: 10, marginTop: 4, textAlign: 'right' },
-  downloadBtn: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 8, color: '#f0b429', fontSize: 12, padding: '6px 12px', cursor: 'pointer', width: '100%' },
+  downloadBtn: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 8, color: '#E8263A', fontSize: 12, padding: '6px 12px', cursor: 'pointer', width: '100%' },
   emptyChat: { color: '#9090a8', fontSize: 13, textAlign: 'center', padding: '40px 0' },
   templates: { padding: '8px 14px', borderTop: '1px solid #2e2e3e', display: 'flex', flexDirection: 'column', gap: 5, background: '#15151e', maxHeight: 180, overflowY: 'auto' },
   templateBtn: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 8, color: '#c0c0d8', fontSize: 12, padding: '7px 12px', cursor: 'pointer', textAlign: 'left', fontFamily: 'Inter, sans-serif' },
-  templateToggle: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 10, color: '#f0b429', fontSize: 16, padding: '0 12px', cursor: 'pointer' },
+  templateToggle: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 10, color: '#E8263A', fontSize: 16, padding: '0 12px', cursor: 'pointer' },
   inputRow: { display: 'flex', gap: 8, padding: '10px 14px', borderTop: '1px solid #2e2e3e', flexShrink: 0 },
   msgInput: { flex: 1, background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 10, color: '#f0f0f5', fontSize: 13, padding: '9px 12px', outline: 'none', resize: 'none', fontFamily: 'Inter, sans-serif' },
-  sendBtn: { background: '#f0b429', border: 'none', borderRadius: 10, color: '#0f0f13', fontSize: 18, padding: '0 14px', cursor: 'pointer', fontWeight: 700 },
+  sendBtn: { background: '#E8263A', border: 'none', borderRadius: 10, color: '#fff', fontSize: 18, padding: '0 14px', cursor: 'pointer', fontWeight: 700 },
   comment: { background: '#22222e', border: '1px solid #2e2e3e', borderRadius: 12, padding: '10px 14px' },
   commentHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: 6 },
-  commentAuthor: { color: '#f0b429', fontSize: 12, fontWeight: 600 },
+  commentAuthor: { color: '#E8263A', fontSize: 12, fontWeight: 600 },
   commentTime: { color: '#9090a8', fontSize: 11 },
   commentText: { color: '#f0f0f5', fontSize: 13, lineHeight: 1.5 },
 };

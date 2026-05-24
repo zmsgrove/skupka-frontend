@@ -114,14 +114,14 @@ function SideItem({ icon, label, active, onClick, badge, collapsed, t }) {
       display:'flex', alignItems:'center', gap: collapsed?0:10,
       justifyContent: collapsed?'center':'flex-start',
       width:'100%', padding: collapsed?'10px 0':'8px 13px',
-      background: active?'rgba(240,180,41,0.13)':'transparent',
-      border:'none', borderLeft: active?'3px solid #f0b429':'3px solid transparent',
+      background: active?'rgba(232,38,58,0.13)':'transparent',
+      border:'none', borderLeft: active?'3px solid #E8263A':'3px solid transparent',
       borderRadius: radius.sm, cursor:'pointer',
-      color: active?'#f0b429':t.text2,
+      color: active?'#E8263A':t.text2,
       fontSize:13, fontWeight: active?700:500,
       fontFamily:'Inter,sans-serif', transition:'all 0.18s',
       position:'relative', whiteSpace:'nowrap', overflow:'hidden',
-      boxShadow: active?'0 2px 8px rgba(240,180,41,0.12)':'none',
+      boxShadow: active?'0 2px 8px rgba(232,38,58,0.12)':'none',
     }}>
       <span style={{ fontSize:17, flexShrink:0 }}>{icon}</span>
       {!collapsed && <span style={{ flex:1, textAlign:'left' }}>{label}</span>}
@@ -141,10 +141,10 @@ function Logo() {
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:1 }}>
       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-        <span style={{ fontFamily:'Unbounded,sans-serif', fontSize:15, fontWeight:700, color:'#f0b429', letterSpacing:2 }}>SKUPKA</span>
-        <span style={{ background:'#f0b429', color:'#0f0f13', fontFamily:'Unbounded,sans-serif', fontSize:8, fontWeight:700, padding:'2px 6px', borderRadius:4 }}>CRM</span>
+        <span style={{ fontFamily:'Unbounded,sans-serif', fontSize:15, fontWeight:700, color:'#E8263A', letterSpacing:2 }}>SKUPKA</span>
+        <span style={{ background:'#E8263A', color:'#fff', fontFamily:'Unbounded,sans-serif', fontSize:8, fontWeight:700, padding:'2px 6px', borderRadius:4 }}>CRM</span>
       </div>
-      <span style={{ fontFamily:'Unbounded,sans-serif', fontSize:7, color:'#f0b42966', letterSpacing:1, lineHeight:1 }}>Лучше чем Все!</span>
+      <span style={{ fontFamily:'Unbounded,sans-serif', fontSize:7, color:'#E8263A66', letterSpacing:1, lineHeight:1 }}>Лучше чем Все!</span>
     </div>
   );
 }
@@ -360,7 +360,7 @@ export default function App() {
           <Clock t={t} />
           <ServerStatus />
           {/* Сводка */}
-          <button onClick={() => setShowSummary(v=>!v)} title="Сводка" style={{ background: showSummary?'rgba(240,180,41,0.15)':'transparent', border:`1px solid ${showSummary?'rgba(240,180,41,0.4)':t.border}`, borderRadius:8, color: showSummary?'#f0b429':t.text2, fontSize:13, padding:'5px 10px', cursor:'pointer', display:'flex', alignItems:'center', gap:5 }}>
+          <button onClick={() => setShowSummary(v=>!v)} title="Сводка" style={{ background: showSummary?'rgba(232,38,58,0.15)':'transparent', border:`1px solid ${showSummary?'rgba(232,38,58,0.4)':t.border}`, borderRadius:8, color: showSummary?'#E8263A':t.text2, fontSize:13, padding:'5px 10px', cursor:'pointer', display:'flex', alignItems:'center', gap:5 }}>
             📊 <span style={{ fontSize:12, fontFamily:'Inter,sans-serif' }}>Сводка</span>
           </button>
           <ExcelExport user={user} theme={t} />

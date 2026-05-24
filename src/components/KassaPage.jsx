@@ -113,7 +113,7 @@ export default function KassaPage({ user, theme }) {
   if (loading) return (
     <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:t.text2}}>
       <div style={{textAlign:'center'}}>
-        <div style={{width:36,height:36,border:`3px solid ${t.border}`,borderTop:'3px solid #f0b429',borderRadius:'50%',animation:'spin 0.8s linear infinite',margin:'0 auto 12px'}}/>
+        <div style={{width:36,height:36,border:`3px solid ${t.border}`,borderTop:'3px solid #E8263A',borderRadius:'50%',animation:'spin 0.8s linear infinite',margin:'0 auto 12px'}}/>
         Загрузка кассы...
       </div>
     </div>
@@ -130,7 +130,7 @@ export default function KassaPage({ user, theme }) {
             <span style={{color:t.text2,fontSize:12}}>📅</span>
             <input type="date" value={filterDate} max={todayStr} onChange={e=>setFilterDate(e.target.value)}
               style={{background:'transparent',border:'none',color:t.text,fontSize:12,outline:'none'}}/>
-            {filterDate!==todayStr && <button onClick={()=>setFilterDate(todayStr)} style={{background:'rgba(240,180,41,0.15)',border:'1px solid rgba(240,180,41,0.3)',borderRadius:6,color:'#f0b429',fontSize:11,padding:'2px 8px',cursor:'pointer'}}>Сегодня</button>}
+            {filterDate!==todayStr && <button onClick={()=>setFilterDate(todayStr)} style={{background:'rgba(232,38,58,0.15)',border:'1px solid rgba(232,38,58,0.3)',borderRadius:6,color:'#E8263A',fontSize:11,padding:'2px 8px',cursor:'pointer'}}>Сегодня</button>}
           </div>
           <button onClick={()=>setShowForm('morning')} style={{background:'rgba(245,158,11,0.15)',border:'1px solid rgba(245,158,11,0.4)',borderRadius:8,color:'#f59e0b',fontSize:12,fontWeight:700,padding:'8px 14px',cursor:'pointer'}}>🌅 Утренний</button>
           <button onClick={()=>setShowForm('evening')} style={{background:'rgba(139,92,246,0.15)',border:'1px solid rgba(139,92,246,0.4)',borderRadius:8,color:'#8b5cf6',fontSize:12,fontWeight:700,padding:'8px 14px',cursor:'pointer'}}>🌆 Вечерний</button>
@@ -311,7 +311,7 @@ function KassaForm({ type, user, t, onClose, onCreate }) {
         <div style={{flex:1,overflowY:'auto',padding:'20px 24px',display:'flex',flexDirection:'column',gap:14}}>
           <FR label="Филиал *" t={t}>
             <div style={{display:'flex',gap:8}}>
-              {FILIALS.map(f=><button key={f.id} onClick={()=>set('filial',f.id)} style={{flex:1,background:form.filial===f.id?'rgba(240,180,41,0.15)':'transparent',border:`1px solid ${form.filial===f.id?'rgba(240,180,41,0.5)':t.border}`,borderRadius:8,color:form.filial===f.id?'#f0b429':t.text2,fontSize:12,fontWeight:600,padding:'8px',cursor:'pointer'}}>{f.label}</button>)}
+              {FILIALS.map(f=><button key={f.id} onClick={()=>set('filial',f.id)} style={{flex:1,background:form.filial===f.id?'rgba(232,38,58,0.15)':'transparent',border:`1px solid ${form.filial===f.id?'rgba(232,38,58,0.5)':t.border}`,borderRadius:8,color:form.filial===f.id?'#E8263A':t.text2,fontSize:12,fontWeight:600,padding:'8px',cursor:'pointer'}}>{f.label}</button>)}
             </div>
           </FR>
           <FR label="Руководитель *" t={t}>
@@ -353,7 +353,7 @@ function KassaForm({ type, user, t, onClose, onCreate }) {
         </div>
         <div style={{padding:'16px 24px',borderTop:`1px solid ${t.border}`,display:'flex',gap:10,flexShrink:0}}>
           <button onClick={onClose} style={{flex:1,background:'transparent',border:`1px solid ${t.border}`,borderRadius:8,color:t.text2,fontSize:13,padding:'12px',cursor:'pointer'}}>Отмена</button>
-          <button onClick={submit} disabled={!canSubmit} title={!allChecked?'Отметьте все документы':''} style={{flex:2,background:canSubmit?'#f0b429':t.surface2,border:'none',borderRadius:8,color:canSubmit?'#0f0f13':t.text2,fontSize:13,fontWeight:700,padding:'12px',cursor:canSubmit?'pointer':'default'}}>
+          <button onClick={submit} disabled={!canSubmit} title={!allChecked?'Отметьте все документы':''} style={{flex:2,background:canSubmit?'#E8263A':t.surface2,border:'none',borderRadius:8,color:canSubmit?'#fff':t.text2,fontSize:13,fontWeight:700,padding:'12px',cursor:canSubmit?'pointer':'default'}}>
             {canSubmit ? 'Создать отчёт' : '⚠️ Отметьте документы'}
           </button>
         </div>
@@ -432,14 +432,14 @@ function KassaModal({ report, user, t, onClose, onMove, onUpdate }) {
                   {c.user_id!==user.username&&<span style={{fontWeight:600,color:t.text3,marginRight:4}}>{c.sender_name}</span>}
                   {new Date(c.created_at).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}
                 </div>
-                <div style={{maxWidth:'75%',background:c.user_id===user.username?'rgba(240,180,41,0.15)':t.surface2,border:`1px solid ${c.user_id===user.username?'rgba(240,180,41,0.3)':t.border}`,borderRadius:10,padding:'8px 12px',color:t.text,fontSize:13,wordBreak:'break-word'}}>{c.text}</div>
+                <div style={{maxWidth:'75%',background:c.user_id===user.username?'rgba(232,38,58,0.15)':t.surface2,border:`1px solid ${c.user_id===user.username?'rgba(232,38,58,0.3)':t.border}`,borderRadius:10,padding:'8px 12px',color:t.text,fontSize:13,wordBreak:'break-word'}}>{c.text}</div>
               </div>
             ))}
           </div>
           <div style={{display:'flex',gap:8}}>
             <input value={newComment} onChange={e=>setNewComment(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addComment()} placeholder="Написать комментарий..."
               style={{flex:1,background:t.inputBg,border:`1px solid ${t.border}`,borderRadius:8,color:t.text,fontSize:13,padding:'8px 12px',outline:'none',fontFamily:'Inter,sans-serif'}}/>
-            <button onClick={addComment} disabled={!newComment.trim()} style={{background:newComment.trim()?'#f0b429':t.surface2,border:'none',borderRadius:8,color:newComment.trim()?'#0f0f13':t.text2,fontSize:16,width:40,height:40,cursor:newComment.trim()?'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>➤</button>
+            <button onClick={addComment} disabled={!newComment.trim()} style={{background:newComment.trim()?'#E8263A':t.surface2,border:'none',borderRadius:8,color:newComment.trim()?'#fff':t.text2,fontSize:16,width:40,height:40,cursor:newComment.trim()?'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>➤</button>
           </div>
         </div>
         {canMove && (
@@ -477,7 +477,7 @@ function YesNo({val,onChange,t,yesGreen}) {
 function ChkRow({label,checked,onChange,t}) {
   return (
     <label style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer',padding:'5px 0'}}>
-      <input type="checkbox" checked={checked} onChange={onChange} style={{accentColor:'#f0b429',width:16,height:16,cursor:'pointer'}}/>
+      <input type="checkbox" checked={checked} onChange={onChange} style={{accentColor:'#E8263A',width:16,height:16,cursor:'pointer'}}/>
       <span style={{color:t.text,fontSize:13}}>{label}</span>
       {checked&&<span style={{color:'#10b981',fontSize:12}}>✅</span>}
     </label>

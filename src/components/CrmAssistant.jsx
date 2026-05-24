@@ -9,12 +9,24 @@ if (!process.env.REACT_APP_BACKEND_URL) console.warn('[CrmAssistant] REACT_APP_B
 const WELCOME = 'Привет! Я CRM ассистент SKUPKA 🤖\n\nМогу помочь:\n• **Найти цены** — "iPhone 13 цены"\n• **Оценить технику** — "Оцени Samsung S22 хорошее состояние"\n• **Характеристики** — "Что такое Xiaomi 12 Pro"\n• Ответить на любой вопрос';
 
 const ANIM = `
-@keyframes orbit-r1 { from{transform:translate(-50%,-50%) rotateX(70deg) rotateZ(0deg)} to{transform:translate(-50%,-50%) rotateX(70deg) rotateZ(360deg)} }
-@keyframes orbit-r2 { from{transform:translate(-50%,-50%) rotateX(70deg) rotateY(60deg) rotateZ(0deg)} to{transform:translate(-50%,-50%) rotateX(70deg) rotateY(60deg) rotateZ(360deg)} }
-@keyframes orbit-r3 { from{transform:translate(-50%,-50%) rotateX(70deg) rotateY(-60deg) rotateZ(0deg)} to{transform:translate(-50%,-50%) rotateX(70deg) rotateY(-60deg) rotateZ(360deg)} }
-@keyframes core-pulse { 0%,100%{box-shadow:0 0 10px 3px rgba(0,229,255,0.55),0 0 22px rgba(0,229,255,0.25)} 50%{box-shadow:0 0 16px 5px rgba(0,229,255,0.75),0 0 32px rgba(0,229,255,0.4)} }
-@keyframes core-active { 0%,100%{box-shadow:0 0 18px 6px rgba(0,229,255,0.85),0 0 36px rgba(0,229,255,0.45)} 50%{box-shadow:0 0 26px 10px rgba(0,229,255,1),0 0 55px rgba(0,229,255,0.7)} }
-@keyframes pulse { 0%,100%{transform:scale(0.7);opacity:0.5} 50%{transform:scale(1.1);opacity:1} }
+@keyframes orbit-1{from{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(0deg)}to{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(360deg)}}
+@keyframes orbit-2{from{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(36deg)}to{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(396deg)}}
+@keyframes orbit-3{from{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(72deg)}to{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(432deg)}}
+@keyframes orbit-4{from{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(108deg)}to{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(468deg)}}
+@keyframes orbit-5{from{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(144deg)}to{transform:translate(-50%,-50%) rotateY(70deg) rotateZ(504deg)}}
+@keyframes core-pulse{0%,100%{box-shadow:0 0 15px #00E5FF,0 0 30px #00E5FF,0 0 50px rgba(0,229,255,0.5)}50%{box-shadow:0 0 20px #00E5FF,0 0 40px #00E5FF,0 0 60px rgba(0,229,255,0.6)}}
+@keyframes core-active{0%,100%{box-shadow:0 0 25px #00E5FF,0 0 50px #00E5FF,0 0 80px rgba(0,229,255,0.7)}50%{box-shadow:0 0 35px #00E5FF,0 0 65px #00E5FF,0 0 100px rgba(0,229,255,0.9)}}
+@keyframes pulse{0%,100%{transform:scale(0.7);opacity:0.5}50%{transform:scale(1.1);opacity:1}}
+.crm-orbital{position:relative;width:64px;height:64px;cursor:pointer;transform-style:preserve-3d;perspective:200px}
+.crm-core{width:24px;height:24px;border-radius:50%;background:#00E5FF;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;animation:core-pulse 2.5s ease-in-out infinite}
+.crm-ring{position:absolute;width:58px;height:22px;border:1.5px solid rgba(0,229,255,0.7);border-radius:50%;top:50%;left:50%;pointer-events:none}
+.crm-ring-1{animation:orbit-1 6s linear infinite}
+.crm-ring-2{animation:orbit-2 4.5s linear infinite}
+.crm-ring-3{animation:orbit-3 7s linear infinite}
+.crm-ring-4{animation:orbit-4 5s linear infinite}
+.crm-ring-5{animation:orbit-5 8s linear infinite}
+.crm-orbital.thinking .crm-ring{animation-duration:0.8s !important;border-color:rgba(0,229,255,0.95)}
+.crm-orbital.thinking .crm-core{animation:core-active 0.5s ease-in-out infinite}
 `;
 
 export default function CrmAssistant({ user, theme }) {
@@ -172,16 +184,18 @@ export default function CrmAssistant({ user, theme }) {
       {/* Floating toggle button — orbital animation */}
       <div style={{ position:'fixed', bottom:24, right:24, zIndex:1002 }}>
         <div
+          className={`crm-orbital${active ? ' thinking' : ''}`}
           onClick={() => setOpen(v => !v)}
           title={open ? 'Свернуть ассистент' : 'Открыть ассистент SKUPKA AI'}
-          style={{ position:'relative', width:56, height:56, cursor:'pointer', perspective:'300px' }}
         >
-          <div style={{ position:'absolute', top:'50%', left:'50%', width:52, height:52, borderRadius:'50%', border:`1.5px solid rgba(0,229,255,${active?0.85:0.6})`, animation:`orbit-r1 ${active?'0.7':'5'}s linear infinite`, pointerEvents:'none' }} />
-          <div style={{ position:'absolute', top:'50%', left:'50%', width:52, height:52, borderRadius:'50%', border:`1.5px solid rgba(0,229,255,${active?0.6:0.45})`, animation:`orbit-r2 ${active?'0.9':'6.5'}s linear infinite`, pointerEvents:'none' }} />
-          <div style={{ position:'absolute', top:'50%', left:'50%', width:52, height:52, borderRadius:'50%', border:`1.5px solid rgba(0,229,255,${active?0.7:0.55})`, animation:`orbit-r3 ${active?'0.8':'4.5'}s linear infinite`, pointerEvents:'none' }} />
-          <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:20, height:20, borderRadius:'50%', background:'radial-gradient(circle,#00E5FF,#007a9a)', animation:active?'core-active 0.5s ease-in-out infinite':'core-pulse 2.5s ease-in-out infinite' }} />
+          <div className="crm-core" />
+          <div className="crm-ring crm-ring-1" />
+          <div className="crm-ring crm-ring-2" />
+          <div className="crm-ring crm-ring-3" />
+          <div className="crm-ring crm-ring-4" />
+          <div className="crm-ring crm-ring-5" />
           {open && (
-            <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', color:'rgba(255,255,255,0.92)', fontSize:18, fontWeight:400, pointerEvents:'none', userSelect:'none' }}>✕</div>
+            <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', color:'rgba(255,255,255,0.92)', fontSize:18, fontWeight:400, pointerEvents:'none', userSelect:'none', zIndex:20 }}>✕</div>
           )}
         </div>
       </div>
@@ -194,8 +208,8 @@ export default function CrmAssistant({ user, theme }) {
           <div style={{ padding:'12px 16px', borderBottom:`1px solid ${t.border}`, display:'flex', alignItems:'center', justifyContent:'space-between', background:`linear-gradient(135deg,rgba(232,38,58,0.06),transparent)`, flexShrink:0 }}>
             <div style={{ display:'flex', alignItems:'center', gap:10 }}>
               <div style={{ position:'relative', width:34, height:34, perspective:'200px' }}>
-                <div style={{ position:'absolute', top:'50%', left:'50%', width:28, height:28, borderRadius:'50%', border:`1.5px solid rgba(0,229,255,${active?0.8:0.55})`, animation:`orbit-r1 ${active?'0.8':'5'}s linear infinite`, pointerEvents:'none' }} />
-                <div style={{ position:'absolute', top:'50%', left:'50%', width:28, height:28, borderRadius:'50%', border:`1.5px solid rgba(0,229,255,${active?0.55:0.35})`, animation:`orbit-r3 ${active?'1.0':'7'}s linear infinite`, pointerEvents:'none' }} />
+                <div style={{ position:'absolute', top:'50%', left:'50%', width:28, height:28, borderRadius:'50%', border:`1.5px solid rgba(0,229,255,${active?0.8:0.55})`, animation:`orbit-1 ${active?'0.8':'5'}s linear infinite`, pointerEvents:'none' }} />
+                <div style={{ position:'absolute', top:'50%', left:'50%', width:28, height:28, borderRadius:'50%', border:`1.5px solid rgba(0,229,255,${active?0.55:0.35})`, animation:`orbit-3 ${active?'1.0':'7'}s linear infinite`, pointerEvents:'none' }} />
                 <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:11, height:11, borderRadius:'50%', background:'radial-gradient(circle,#00E5FF,#007a9a)', animation:active?'core-active 0.5s ease-in-out infinite':'core-pulse 3s ease-in-out infinite' }} />
               </div>
               <div>
@@ -301,7 +315,7 @@ function Bubble({ msg, t }) {
     <div style={{ display:'flex', flexDirection:'column', alignItems: isUser ? 'flex-end' : 'flex-start' }}>
       <div style={{ display:'flex', alignItems:'flex-end', gap:7, flexDirection: isUser ? 'row-reverse' : 'row' }}>
         <span style={{ fontSize:17, flexShrink:0 }}>{isUser ? '👤' : '🤖'}</span>
-        <div style={{ maxWidth:'84%', background: isUser ? 'rgba(240,180,41,0.13)' : t.surface2, border:`1px solid ${isUser?'rgba(240,180,41,0.28)':t.border}`, borderRadius: isUser ? '14px 4px 14px 14px' : '4px 14px 14px 14px', padding:'10px 13px', color:t.text, fontSize:13, wordBreak:'break-word' }}>
+        <div style={{ maxWidth:'84%', background: isUser ? 'rgba(232,38,58,0.13)' : t.surface2, border:`1px solid ${isUser?'rgba(232,38,58,0.28)':t.border}`, borderRadius: isUser ? '14px 4px 14px 14px' : '4px 14px 14px 14px', padding:'10px 13px', color:t.text, fontSize:13, wordBreak:'break-word' }}>
           {renderContent(msg.content)}
         </div>
       </div>

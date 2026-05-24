@@ -114,7 +114,7 @@ export default function DragDropModal({ fromStatus, toStatus, lead, onConfirm, o
           <button onClick={onCancel} style={{ flex:1,background:'transparent',border:`1px solid ${t.border}`,borderRadius:10,color:t.text2,fontSize:13,padding:'11px',cursor:'pointer' }}>
             Отмена
           </button>
-          <button onClick={handleConfirm} style={{ flex:2,background:'#f0b429',border:'none',borderRadius:10,color:'#0f0f13',fontSize:13,fontWeight:700,padding:'11px',cursor:'pointer',fontFamily:'Unbounded,sans-serif' }}>
+          <button onClick={handleConfirm} style={{ flex:2,background:'#E8263A',border:'none',borderRadius:10,color:'#fff',fontSize:13,fontWeight:700,padding:'11px',cursor:'pointer',fontFamily:'Unbounded,sans-serif' }}>
             Подтвердить
           </button>
         </div>

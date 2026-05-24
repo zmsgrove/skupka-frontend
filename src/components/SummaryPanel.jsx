@@ -152,7 +152,7 @@ export default function SummaryPanel({ user, theme, onClose }) {
   if (loading) return (
     <Popup t={t} onClose={onClose} user={user} weather={weather}>
       <div style={{ display:'flex',alignItems:'center',justifyContent:'center',height:200,color:t.text2,gap:10 }}>
-        <div style={{ width:20,height:20,border:`2px solid ${t.border}`,borderTop:'2px solid #f0b429',borderRadius:'50%',animation:'spin 0.8s linear infinite' }}/>
+        <div style={{ width:20,height:20,border:`2px solid ${t.border}`,borderTop:'2px solid #E8263A',borderRadius:'50%',animation:'spin 0.8s linear infinite' }}/>
         Загрузка сводки...
       </div>
     </Popup>
@@ -236,7 +236,7 @@ export default function SummaryPanel({ user, theme, onClose }) {
                 onClick={() => setEditConfig(prev => ({ ...prev, [s.key]: !prev[s.key] }))}
                 style={{
                   width:42, height:24, borderRadius:12, cursor:'pointer', transition:'background 0.2s',
-                  background: editConfig[s.key] ? '#f0b429' : t.border,
+                  background: editConfig[s.key] ? '#E8263A' : t.border,
                   position:'relative', flexShrink:0,
                 }}
               >
@@ -251,7 +251,7 @@ export default function SummaryPanel({ user, theme, onClose }) {
           <div style={{ display:'flex', gap:8, marginTop:20 }}>
             <button
               onClick={saveConfig} disabled={saving}
-              style={{ flex:1, background:'#f0b429', border:'none', borderRadius:10, color:'#0f0f13', fontSize:13, fontWeight:700, padding:'11px', cursor:'pointer', fontFamily:'Inter,sans-serif' }}
+              style={{ flex:1, background:'#E8263A', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, padding:'11px', cursor:'pointer', fontFamily:'Inter,sans-serif' }}
             >
               {saving ? 'Сохраняю...' : 'Сохранить'}
             </button>
@@ -309,13 +309,13 @@ export default function SummaryPanel({ user, theme, onClose }) {
           </Group>}
 
           {/* Касса */}
-          {config.kassa && (isAdmin||isRgm) && <Group icon="💰" title="Касса сегодня" color="#f0b429" t={t}>
+          {config.kassa && (isAdmin||isRgm) && <Group icon="💰" title="Касса сегодня" color="#E8263A" t={t}>
             <div style={{display:'flex',gap:4,marginBottom:8}}>
               {[['all','Все'],['morning','🌅 Утро'],['evening','🌆 Вечер']].map(([val,lbl])=>(
                 <button key={val} onClick={()=>setKassaFilter(val)}
-                  style={{flex:1,background:kassaFilter===val?'rgba(240,180,41,0.2)':'transparent',
-                  border:`1px solid ${kassaFilter===val?'rgba(240,180,41,0.5)':t.border}`,
-                  borderRadius:6,color:kassaFilter===val?'#f0b429':t.text2,
+                  style={{flex:1,background:kassaFilter===val?'rgba(232,38,58,0.2)':'transparent',
+                  border:`1px solid ${kassaFilter===val?'rgba(232,38,58,0.5)':t.border}`,
+                  borderRadius:6,color:kassaFilter===val?'#E8263A':t.text2,
                   fontSize:10,padding:'4px 2px',cursor:'pointer',fontWeight:kassaFilter===val?700:400,transition:'all 0.15s'}}>
                   {lbl}
                 </button>
@@ -379,7 +379,7 @@ function Popup({ t, onClose, user, weather, onRefresh, onSettings, showSettings,
         {/* Top bar */}
         <div style={{padding:'0 20px',height:44,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:`1px solid ${t.border}`,flexShrink:0}}>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
-            <span style={{fontFamily:'Unbounded,sans-serif',fontSize:11,fontWeight:700,color:'#f0b429'}}>SKUPKA CRM</span>
+            <span style={{fontFamily:'Unbounded,sans-serif',fontSize:11,fontWeight:700,color:'#E8263A'}}>SKUPKA CRM</span>
             <span style={{color:t.text2,fontSize:11}}>· Сводка</span>
           </div>
           <div style={{display:'flex',gap:6,alignItems:'center'}}>
@@ -391,9 +391,9 @@ function Popup({ t, onClose, user, weather, onRefresh, onSettings, showSettings,
                 onClick={onSettings}
                 title="Настроить сводку"
                 style={{
-                  background: showSettings ? 'rgba(240,180,41,0.15)' : 'transparent',
-                  border: `1px solid ${showSettings ? 'rgba(240,180,41,0.4)' : t.border}`,
-                  borderRadius:6, color: showSettings ? '#f0b429' : t.text2,
+                  background: showSettings ? 'rgba(232,38,58,0.15)' : 'transparent',
+                  border: `1px solid ${showSettings ? 'rgba(232,38,58,0.4)' : t.border}`,
+                  borderRadius:6, color: showSettings ? '#E8263A' : t.text2,
                   fontSize:14, padding:'3px 8px', cursor:'pointer',
                 }}
               >⚙️</button>
@@ -403,7 +403,7 @@ function Popup({ t, onClose, user, weather, onRefresh, onSettings, showSettings,
         </div>
 
         {/* Greeting + weather */}
-        <div style={{padding:'16px 24px',background:`linear-gradient(135deg,rgba(240,180,41,0.1) 0%,transparent 60%)`,borderBottom:`1px solid ${t.border}`,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <div style={{padding:'16px 24px',background:`linear-gradient(135deg,rgba(232,38,58,0.1) 0%,transparent 60%)`,borderBottom:`1px solid ${t.border}`,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
           <div style={{display:'flex',alignItems:'center',gap:12}}>
             <span style={{fontSize:32}}>{getGreetEmoji()}</span>
             <div>

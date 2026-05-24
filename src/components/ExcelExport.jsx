@@ -245,9 +245,9 @@ export default function ExcelExport({ user, theme }) {
               <div style={{ display:'flex',gap:8,flexWrap:'wrap' }}>
                 {[['today','Сегодня'],['week','Неделя'],['month','Месяц'],['custom','Период']].map(([val,label]) => (
                   <button key={val} onClick={() => setPeriod(val)} style={{
-                    border:`1px solid ${period===val?'#f0b429':t.border}`,
-                    background: period===val?'rgba(240,180,41,0.15)':'transparent',
-                    color: period===val?'#f0b429':t.text2,
+                    border:`1px solid ${period===val?'#E8263A':t.border}`,
+                    background: period===val?'rgba(232,38,58,0.15)':'transparent',
+                    color: period===val?'#E8263A':t.text2,
                     borderRadius:8, padding:'7px 14px', fontSize:13, cursor:'pointer',
                   }}>{label}</button>
                 ))}
@@ -277,7 +277,7 @@ export default function ExcelExport({ user, theme }) {
               <button onClick={() => setShow(false)} style={{ flex:1,background:'transparent',border:`1px solid ${t.border}`,borderRadius:10,color:t.text2,fontSize:13,padding:'11px',cursor:'pointer' }}>
                 Отмена
               </button>
-              <button onClick={handleExport} disabled={loading||(period==='custom'&&(!fromDate||!toDate))} style={{ flex:2,background:'#f0b429',border:'none',borderRadius:10,color:'#0f0f13',fontSize:13,fontWeight:700,padding:'11px',cursor:'pointer',fontFamily:'Unbounded,sans-serif',opacity:loading?0.7:1 }}>
+              <button onClick={handleExport} disabled={loading||(period==='custom'&&(!fromDate||!toDate))} style={{ flex:2,background:'#E8263A',border:'none',borderRadius:10,color:'#fff',fontSize:13,fontWeight:700,padding:'11px',cursor:'pointer',fontFamily:'Unbounded,sans-serif',opacity:loading?0.7:1 }}>
                 {loading ? '⏳ Формируем...' : '📥 Скачать Excel'}
               </button>
             </div>

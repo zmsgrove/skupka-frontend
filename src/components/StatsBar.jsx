@@ -182,7 +182,7 @@ export default function StatsBar({ city, user, theme, onFilter }) {
 
       {activeFilter && (
         <div style={{ marginTop:8, fontSize:12, color:t.text2 }}>
-          Фильтр активен — показаны карточки: <span style={{ color:'#f0b429' }}>{activeFilter}</span>
+          Фильтр активен — показаны карточки: <span style={{ color:'#E8263A' }}>{activeFilter}</span>
           <button onClick={() => { setActiveFilter(null); if(onFilter) onFilter(null); }}
             style={{ background:'transparent', border:'none', color:'#ef4444', cursor:'pointer', fontSize:12, marginLeft:8 }}>
             ✕ сбросить

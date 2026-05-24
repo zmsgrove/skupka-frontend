@@ -167,7 +167,7 @@ export default function TasksPage({ user, theme }) {
         </div>
 
         <div style={{ display:'flex', gap:6, marginLeft:'auto' }}>
-          {canSeeAll && <button onClick={() => setShowAll(v=>!v)} style={{ background: showAll?'rgba(240,180,41,0.15)':'transparent', border:`1px solid ${showAll?'rgba(240,180,41,0.5)':t.border}`, borderRadius:8, color: showAll?'#f0b429':t.text2, fontSize:12, padding:'6px 12px', cursor:'pointer' }}>{showAll?'👁️ Все':'👁️ Все'}</button>}
+          {canSeeAll && <button onClick={() => setShowAll(v=>!v)} style={{ background: showAll?'rgba(232,38,58,0.15)':'transparent', border:`1px solid ${showAll?'rgba(232,38,58,0.5)':t.border}`, borderRadius:8, color: showAll?'#E8263A':t.text2, fontSize:12, padding:'6px 12px', cursor:'pointer' }}>{showAll?'👁️ Все':'👁️ Все'}</button>}
           <button onClick={() => setShowArchive(true)} style={{ background:'transparent', border:`1px solid ${t.border}`, borderRadius:8, color:t.text2, fontSize:12, padding:'6px 12px', cursor:'pointer' }}>🗄️ Архив</button>
           {canSeeAll && <button onClick={() => setShowStats(true)} style={{ background:'transparent', border:`1px solid ${t.border}`, borderRadius:8, color:t.text2, fontSize:12, padding:'6px 12px', cursor:'pointer' }}>📊</button>}
           <button onClick={() => setShowTemplates(true)} style={{ background:'transparent', border:`1px solid ${t.border}`, borderRadius:8, color:t.text2, fontSize:12, padding:'6px 12px', cursor:'pointer' }}>📋 Шаблоны</button>
@@ -318,7 +318,7 @@ function TaskCard({ task, user, t, onClick, onDragStart, onDragEnd, onQuickDone,
         transition:'all 0.15s', userSelect:'none', opacity:task.delete_requested?0.7:1,
       }}
     >
-      {task.is_pinned && <div style={{ fontSize:10, color:'#f0b429', marginBottom:4 }}>📌 Закреплено</div>}
+      {task.is_pinned && <div style={{ fontSize:10, color:'#E8263A', marginBottom:4 }}>📌 Закреплено</div>}
       {task.delete_requested && <div style={{ fontSize:10, color:'#ef4444', marginBottom:4, background:'rgba(239,68,68,0.1)', padding:'2px 6px', borderRadius:6, display:'inline-block' }}>🗑️ На удаление</div>}
       <div style={{ color:t.text, fontSize:13, fontWeight:600, marginBottom:4, lineHeight:1.4 }}>{task.title}</div>
       <div style={{ color:t.text2, fontSize:10, marginBottom:6 }}>#{task.number} · {PRIORITY_LABELS[task.priority]}</div>
@@ -473,7 +473,7 @@ function TaskModal({ task, user, t, onClose, onUpdate }) {
                 <button onClick={returnTask} style={{ background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.3)', borderRadius:8, color:'#ef4444', fontSize:12, padding:'6px 14px', cursor:'pointer', fontWeight:600 }}>↩️ На доработку</button>
               </>
             )}
-            {canEdit && <button onClick={() => save({is_pinned:!data.is_pinned})} style={{ background:data.is_pinned?'rgba(240,180,41,0.15)':'transparent', border:`1px solid ${data.is_pinned?'rgba(240,180,41,0.4)':t.border}`, borderRadius:8, color:data.is_pinned?'#f0b429':t.text2, fontSize:12, padding:'6px 12px', cursor:'pointer' }}>{data.is_pinned?'📌 Откреп.':'📌 Закрепить'}</button>}
+            {canEdit && <button onClick={() => save({is_pinned:!data.is_pinned})} style={{ background:data.is_pinned?'rgba(232,38,58,0.15)':'transparent', border:`1px solid ${data.is_pinned?'rgba(232,38,58,0.4)':t.border}`, borderRadius:8, color:data.is_pinned?'#E8263A':t.text2, fontSize:12, padding:'6px 12px', cursor:'pointer' }}>{data.is_pinned?'📌 Откреп.':'📌 Закрепить'}</button>}
           </div>
         </div>
 

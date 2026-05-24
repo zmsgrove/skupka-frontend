@@ -51,9 +51,9 @@ export default function Dashboard({ user, theme }) {
             <div style={{ display:'flex', gap:4, marginRight:4 }}>
               {[null,'Атырау','Актобе','Уральск'].map(c => (
                 <button key={c||'all'} onClick={() => setSelectedCity(c)} style={{
-                  border:`1px solid ${selectedCity===c ? (CITY_COLORS[c]||'#f0b429') : t.border}`,
-                  background: selectedCity===c ? (CITY_COLORS[c]||'#f0b429')+'22' : 'transparent',
-                  color: selectedCity===c ? (CITY_COLORS[c]||'#f0b429') : t.text2,
+                  border:`1px solid ${selectedCity===c ? (CITY_COLORS[c]||'#E8263A') : t.border}`,
+                  background: selectedCity===c ? (CITY_COLORS[c]||'#E8263A')+'22' : 'transparent',
+                  color: selectedCity===c ? (CITY_COLORS[c]||'#E8263A') : t.text2,
                   borderRadius:8, padding:'6px 12px', fontSize:11, cursor:'pointer',
                   fontFamily:'Unbounded,sans-serif', transition:'all 0.15s',
                 }}>{c || 'Все'}</button>
@@ -62,9 +62,9 @@ export default function Dashboard({ user, theme }) {
           )}
           {[['today','Сегодня'],['week','Неделя'],['month','Месяц'],['custom','Период']].map(([val,label]) => (
             <button key={val} onClick={() => setPeriod(val)} style={{
-              border:`1px solid ${period===val?'#f0b429':t.border}`,
-              background: period===val?'rgba(240,180,41,0.15)':'transparent',
-              color: period===val?'#f0b429':t.text2,
+              border:`1px solid ${period===val?'#E8263A':t.border}`,
+              background: period===val?'rgba(232,38,58,0.15)':'transparent',
+              color: period===val?'#E8263A':t.text2,
               borderRadius:8, padding:'6px 14px', fontSize:12, cursor:'pointer',
               fontFamily:'Unbounded,sans-serif', transition:'all 0.15s',
             }}>{label}</button>

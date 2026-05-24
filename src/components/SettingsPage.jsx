@@ -113,19 +113,19 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
         </Row>
         <Row label={`Громкость — ${volume}%`} t={t}>
           <input type="range" min={0} max={100} value={volume} onChange={handleVolume}
-            style={{ width:'100%', accentColor:'#f0b429', cursor:'pointer' }} />
+            style={{ width:'100%', accentColor:'#E8263A', cursor:'pointer' }} />
         </Row>
         <Row label="Тип звука" t={t} vertical>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:6, width:'100%' }}>
             {SOUNDS.map(s => (
               <button key={s.id} onClick={() => handleSoundType(s.id)} style={{
-                background: soundType===s.id ? 'rgba(240,180,41,0.15)' : t.surface2,
-                border:`1px solid ${soundType===s.id ? 'rgba(240,180,41,0.5)' : t.border}`,
+                background: soundType===s.id ? 'rgba(232,38,58,0.15)' : t.surface2,
+                border:`1px solid ${soundType===s.id ? 'rgba(232,38,58,0.5)' : t.border}`,
                 borderRadius:10, padding:'10px 6px', cursor:'pointer', textAlign:'center',
                 transition:'all 0.15s',
               }}>
                 <div style={{ fontSize:18 }}>{s.label.split(' ')[0]}</div>
-                <div style={{ color: soundType===s.id ? '#f0b429' : t.text, fontSize:11, fontWeight:600, marginTop:3 }}>{s.label.split(' ').slice(1).join(' ')}</div>
+                <div style={{ color: soundType===s.id ? '#E8263A' : t.text, fontSize:11, fontWeight:600, marginTop:3 }}>{s.label.split(' ').slice(1).join(' ')}</div>
                 <div style={{ color:t.text2, fontSize:10, marginTop:1 }}>{s.desc}</div>
               </button>
             ))}
@@ -140,11 +140,11 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
             {Object.entries(themes).map(([key, th]) => (
               <button key={key} onClick={() => handleTheme(key)} style={{
                 background: themeName===key ? th.surface2 : th.surface,
-                border:`2px solid ${themeName===key ? '#f0b429' : th.border}`,
+                border:`2px solid ${themeName===key ? '#E8263A' : th.border}`,
                 borderRadius:10, padding:'10px 6px', cursor:'pointer', textAlign:'center',
                 transition:'all 0.15s', position:'relative',
               }}>
-                {themeName===key && <div style={{ position:'absolute', top:4, right:4, width:8, height:8, borderRadius:'50%', background:'#f0b429' }} />}
+                {themeName===key && <div style={{ position:'absolute', top:4, right:4, width:8, height:8, borderRadius:'50%', background:'#E8263A' }} />}
                 <div style={{ fontSize:16 }}>{th.name.split(' ')[0]}</div>
                 <div style={{ color:th.text, fontSize:10, fontWeight:600, marginTop:3, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{th.name.split(' ').slice(1).join(' ')}</div>
                 <div style={{ display:'flex', gap:2, marginTop:4, justifyContent:'center' }}>
@@ -170,7 +170,7 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
           <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
             {HOME_TAB_OPTIONS.map(opt => (
               <label key={opt.value} style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer' }}>
-                <input type="radio" name="homeTab" value={opt.value} checked={homeTab===opt.value} onChange={() => handleHomeTab(opt.value)} style={{ accentColor:'#f0b429' }} />
+                <input type="radio" name="homeTab" value={opt.value} checked={homeTab===opt.value} onChange={() => handleHomeTab(opt.value)} style={{ accentColor:'#E8263A' }} />
                 <span style={{ color:t.text, fontSize:13 }}>{opt.label}</span>
               </label>
             ))}
@@ -181,9 +181,9 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
             <div style={{ display:'flex', gap:8 }}>
               {user.cities.map(city => (
                 <button key={city} onClick={() => handleHomeCity(city)} style={{
-                  background: homeCity===city ? 'rgba(240,180,41,0.15)' : 'transparent',
-                  border:`1px solid ${homeCity===city ? 'rgba(240,180,41,0.5)' : t.border}`,
-                  borderRadius:8, color: homeCity===city ? '#f0b429' : t.text2,
+                  background: homeCity===city ? 'rgba(232,38,58,0.15)' : 'transparent',
+                  border:`1px solid ${homeCity===city ? 'rgba(232,38,58,0.5)' : t.border}`,
+                  borderRadius:8, color: homeCity===city ? '#E8263A' : t.text2,
                   fontSize:12, padding:'6px 14px', cursor:'pointer', transition:'all 0.15s',
                 }}>{city}</button>
               ))}
@@ -198,9 +198,9 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
           <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
             {[['off','Выкл'],['5','5 мин'],['10','10 мин'],['30','30 мин']].map(([val,label]) => (
               <button key={val} onClick={() => handleAutoRefresh(val)} style={{
-                background: autoRefresh===val ? 'rgba(240,180,41,0.15)' : 'transparent',
-                border:`1px solid ${autoRefresh===val ? 'rgba(240,180,41,0.5)' : t.border}`,
-                borderRadius:8, color: autoRefresh===val ? '#f0b429' : t.text2,
+                background: autoRefresh===val ? 'rgba(232,38,58,0.15)' : 'transparent',
+                border:`1px solid ${autoRefresh===val ? 'rgba(232,38,58,0.5)' : t.border}`,
+                borderRadius:8, color: autoRefresh===val ? '#E8263A' : t.text2,
                 fontSize:12, padding:'6px 14px', cursor:'pointer', transition:'all 0.15s',
               }}>{label}</button>
             ))}
@@ -220,7 +220,7 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
       {/* Инфо */}
       <div style={{ padding:'14px 18px', background:t.surface, border:`1px solid ${t.border}`, borderRadius:12 }}>
         <div style={{ color:t.text2, fontSize:12 }}>
-          👤 <b style={{ color:t.text }}>{user.name}</b> · {user.username} · роль: <b style={{ color:'#f0b429' }}>{user.role}</b>
+          👤 <b style={{ color:t.text }}>{user.name}</b> · {user.username} · роль: <b style={{ color:'#E8263A' }}>{user.role}</b>
         </div>
         <div style={{ color:t.text2, fontSize:11, marginTop:4 }}>Города: {user.cities.join(', ')}</div>
       </div>
@@ -249,7 +249,7 @@ function Row({ label, children, t, vertical }) {
 
 function Toggle({ value, onChange, t }) {
   return (
-    <div onClick={onChange} style={{ width:44, height:24, borderRadius:12, background: value ? '#f0b429' : t.border, cursor:'pointer', position:'relative', transition:'background 0.2s', flexShrink:0 }}>
+    <div onClick={onChange} style={{ width:44, height:24, borderRadius:12, background: value ? '#E8263A' : t.border, cursor:'pointer', position:'relative', transition:'background 0.2s', flexShrink:0 }}>
       <div style={{ position:'absolute', top:3, left: value ? 23 : 3, width:18, height:18, borderRadius:'50%', background:'#fff', transition:'left 0.2s', boxShadow:'0 1px 4px rgba(0,0,0,0.3)' }} />
     </div>
   );

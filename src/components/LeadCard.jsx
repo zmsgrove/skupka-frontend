@@ -24,7 +24,7 @@ export default function LeadCard({ lead, colColor, onClick, onDragStart, onDragE
   const date = new Date(lead.created_at).toLocaleDateString('ru-RU', { day:'2-digit', month:'2-digit', year:'2-digit' });
   const cityColor = CITY_COLORS[lead.city] || '#9090a8';
   const hasUnread = lead.unread_count > 0;
-  const borderColor = isOverdue ? '#ef4444' : hasUnread ? '#f0b429' : t.border;
+  const borderColor = isOverdue ? '#ef4444' : hasUnread ? '#E8263A' : t.border;
 
   return (
     <div draggable="true" onDragStart={onDragStart} onDragEnd={onDragEnd}
@@ -40,7 +40,7 @@ export default function LeadCard({ lead, colColor, onClick, onDragStart, onDragE
         boxShadow: isOverdue
           ? '0 0 0 1px rgba(239,68,68,0.3), 0 4px 16px rgba(239,68,68,0.14)'
           : hasUnread
-          ? '0 0 0 1px rgba(240,180,41,0.3), 0 4px 16px rgba(240,180,41,0.14)'
+          ? '0 0 0 1px rgba(232,38,58,0.3), 0 4px 16px rgba(232,38,58,0.14)'
           : '0 2px 8px rgba(0,0,0,0.10)',
       }}>
 
@@ -54,10 +54,10 @@ export default function LeadCard({ lead, colColor, onClick, onDragStart, onDragE
 
       {/* Непрочитанные */}
       {!isOverdue && hasUnread && (
-        <div style={{ display:'flex',alignItems:'center',gap:6,padding:'5px 12px',background:'rgba(240,180,41,0.1)',borderBottom:'1px solid rgba(240,180,41,0.2)' }}>
-          <span style={{ color:'#f0b429',fontSize:10 }}>●</span>
-          <span style={{ color:'#f0b429',fontSize:11,fontWeight:600,flex:1 }}>{lead.unread_count} {lead.unread_count===1?'новое':lead.unread_count>=2&&lead.unread_count<=4?'новых':'новых'}</span>
-          <span style={{ background:'#f0b429',color:'#0f0f13',fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:20 }}>{lead.unread_count}</span>
+        <div style={{ display:'flex',alignItems:'center',gap:6,padding:'5px 12px',background:'rgba(232,38,58,0.1)',borderBottom:'1px solid rgba(232,38,58,0.2)' }}>
+          <span style={{ color:'#E8263A',fontSize:10 }}>●</span>
+          <span style={{ color:'#E8263A',fontSize:11,fontWeight:600,flex:1 }}>{lead.unread_count} {lead.unread_count===1?'новое':lead.unread_count>=2&&lead.unread_count<=4?'новых':'новых'}</span>
+          <span style={{ background:'#E8263A',color:'#fff',fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:20 }}>{lead.unread_count}</span>
         </div>
       )}
 

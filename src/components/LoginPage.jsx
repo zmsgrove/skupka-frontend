@@ -90,11 +90,11 @@ export default function LoginPage({ onLogin, theme }) {
       <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:24, overflow:'hidden' }}>
         <div style={{ width:'100%', maxWidth:400 }}>
           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
-            <span style={{ fontFamily:'Unbounded,sans-serif', fontSize:32, fontWeight:700, color:'#f0b429', letterSpacing:3 }}>SKUPKA</span>
-            <span style={{ background:'#f0b429', color:'#0f0f13', fontFamily:'Unbounded,sans-serif', fontSize:11, fontWeight:700, padding:'3px 8px', borderRadius:8 }}>CRM</span>
+            <span style={{ fontFamily:'Unbounded,sans-serif', fontSize:32, fontWeight:700, color:'#E8263A', letterSpacing:3 }}>SKUPKA</span>
+            <span style={{ background:'#E8263A', color:'#fff', fontFamily:'Unbounded,sans-serif', fontSize:11, fontWeight:700, padding:'3px 8px', borderRadius:8 }}>CRM</span>
           </div>
           <p style={{ color:'#9090a8', fontSize:13, marginBottom:8, fontStyle:'italic' }}>{slogan}</p>
-          <p style={{ fontFamily:'Unbounded,sans-serif', fontSize:9, color:'#f0b42988', letterSpacing:2, marginBottom:34 }}>Лучше чем Все!</p>
+          <p style={{ fontFamily:'Unbounded,sans-serif', fontSize:9, color:'#E8263A88', letterSpacing:2, marginBottom:34 }}>Лучше чем Все!</p>
           <div style={{ background:'rgba(26,26,34,0.80)', border:'1px solid rgba(255,255,255,0.10)', borderRadius:21, padding:'34px 32px', boxShadow:'0 32px 80px rgba(0,0,0,0.5)', backdropFilter:'blur(20px)' }}>
             <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:15, fontWeight:700, color:'#f0f0f5', marginBottom:21 }}>Войти в систему</div>
             <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:16 }}>
@@ -113,7 +113,7 @@ export default function LoginPage({ onLogin, theme }) {
             </form>
           </div>
           <div style={{ textAlign:'center', marginTop:21, color:'#4a4a5e', fontSize:11 }}>
-            SKUPKA CRM · <span style={{ color:'#f0b429' }}>2.1.1</span> · 2026
+            SKUPKA CRM · <span style={{ color:'#E8263A' }}>2.2.3</span> · 2026
           </div>
         </div>
       </div>
