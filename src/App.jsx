@@ -8,7 +8,8 @@ import ChatPage from './components/ChatPage';
 import SettingsPage from './components/SettingsPage';
 import KassaPage from './components/KassaPage';
 import ZrsPage from './components/ZrsPage';
-import AttendancePage from './components/AttendancePage';
+import AttendanceSpo from './components/AttendanceSpo';
+import AttendanceAdmin from './components/AttendanceAdmin';
 import TasksPage from './components/TasksPage';
 import SummaryPanel from './components/SummaryPanel';
 import Calculator from './components/Calculator';
@@ -151,7 +152,7 @@ function Logo() {
   );
 }
 
-function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, canSeeZrs, totalUnread, chatUnread, collapsed, setCollapsed, mobileOpen, setMobileOpen, setShowCalc, t }) {
+function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, canSeeZrs, canSeeAttendanceSpo, canSeeAttendanceAdmin, totalUnread, chatUnread, collapsed, setCollapsed, mobileOpen, setMobileOpen, setShowCalc, t }) {
   const items = (forMobile) => (
     <>
       <div style={{ flex:1, padding:'10px 6px', display:'flex', flexDirection:'column', gap:2, overflowY:'auto' }}>
@@ -161,7 +162,8 @@ function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, canS
         <SideItem icon="✅" label="Задачи"    active={activeTab==='tasks'}       onClick={() => { setActiveTab('tasks');      setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
         <SideItem icon="💰" label="Касса"     active={activeTab==='kassa'}       onClick={() => { setActiveTab('kassa');      setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
         {canSeeZrs && <SideItem icon="📝" label="ЗРС"       active={activeTab==='zrs'}         onClick={() => { setActiveTab('zrs');        setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />}
-        <SideItem icon="🕐" label="Смена"     active={activeTab==='attendance'}  onClick={() => { setActiveTab('attendance'); setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
+        {canSeeAttendanceSpo   && <SideItem icon="🕐" label="Отметка на смене"    active={activeTab==='attendance_spo'}   onClick={() => { setActiveTab('attendance_spo');   setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />}
+        {canSeeAttendanceAdmin && <SideItem icon="📍" label="Отметка о прибытии" active={activeTab==='attendance_admin'} onClick={() => { setActiveTab('attendance_admin'); setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />}
         <SideItem icon="🌐" label="Tilda"     active={activeTab==='tilda'}       onClick={() => { setActiveTab('tilda');      setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
         <div style={{ flex:1 }} />
         <div style={{ height:1, background:t.border, margin:'6px 0' }} />
@@ -323,6 +325,8 @@ export default function App() {
 
   const canSeeDashboard = user && (CAN_SEE_DASHBOARD.includes(user.role) || userPerms['dashboard']?.can_view === true);
   const canSeeDeleted   = user && CAN_SEE_DELETED.includes(user.role);
+  const canSeeAttendanceSpo   = user && (FULL_ACCESS_ROLES.includes(user.role) || ['uralsk','atyray','aktobe'].includes(user.role) || userPerms['attendance_spo']?.can_view === true);
+  const canSeeAttendanceAdmin = user && (FULL_ACCESS_ROLES.includes(user.role) || ['rev','rgmu','rgma'].includes(user.role) || userPerms['attendance_admin']?.can_view === true);
 
   if (!user) return <LoginPage onLogin={handleLogin} theme={t} />;
 
@@ -389,6 +393,7 @@ export default function App() {
           activeTab={activeTab} setActiveTab={setActiveTab}
           canSeeDashboard={canSeeDashboard} canSeeDeleted={canSeeDeleted}
           canSeeZrs={user && ['admin','dir','zamdir','sysadmin','rev','rgmu','rgma'].includes(user.role)}
+          canSeeAttendanceSpo={canSeeAttendanceSpo} canSeeAttendanceAdmin={canSeeAttendanceAdmin}
           totalUnread={totalUnread} chatUnread={chatUnread}
           collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed}
           mobileOpen={mobileOpen} setMobileOpen={setMobileOpen}
@@ -402,7 +407,8 @@ export default function App() {
           {activeTab==='tasks'      && <TasksPage user={user} theme={t} />}
           {activeTab==='kassa'      && <KassaPage user={user} theme={t} />}
           {activeTab==='zrs'        && <ZrsPage user={user} theme={t} />}
-          {activeTab==='attendance' && <AttendancePage user={user} theme={t} />}
+          {activeTab==='attendance_spo'   && canSeeAttendanceSpo   && <AttendanceSpo   user={user} theme={t} />}
+          {activeTab==='attendance_admin' && canSeeAttendanceAdmin && <AttendanceAdmin user={user} theme={t} />}
           {activeTab==='tilda'      && <TildaPage theme={t} />}
           {activeTab==='archive'    && <ArchiveView user={user} theme={t} />}
           {activeTab==='deleted'    && canSeeDeleted && <DeletedView user={user} theme={t} />}

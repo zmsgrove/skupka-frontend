@@ -9,23 +9,23 @@ if (!process.env.REACT_APP_BACKEND_URL) console.warn('[CrmAssistant] REACT_APP_B
 const WELCOME = 'Привет! Я CRM ассистент SKUPKA\n\nМогу помочь:\n• **Найти цены** — "iPhone 13 цены"\n• **Оценить технику** — "Оцени Samsung S22 хорошее состояние"\n• **Характеристики** — "Что такое Xiaomi 12 Pro"\n• Ответить на любой вопрос';
 
 const ANIM = `
-@keyframes spin-1{from{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(0deg)}to{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(360deg)}}
-@keyframes spin-2{from{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(36deg)}to{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(396deg)}}
-@keyframes spin-3{from{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(72deg)}to{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(432deg)}}
-@keyframes spin-4{from{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(108deg)}to{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(468deg)}}
-@keyframes spin-5{from{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(144deg)}to{transform:translate(-50%,-50%) rotateY(75deg) rotateZ(504deg)}}
+@keyframes fly-1{0%{transform:translate(-50%,-50%) rotateX(70deg) rotateZ(0deg)}100%{transform:translate(-50%,-50%) rotateX(70deg) rotateZ(360deg)}}
+@keyframes fly-2{0%{transform:translate(-50%,-50%) rotateY(80deg) rotateX(20deg) rotateZ(36deg)}100%{transform:translate(-50%,-50%) rotateY(80deg) rotateX(20deg) rotateZ(396deg)}}
+@keyframes fly-3{0%{transform:translate(-50%,-50%) rotateX(-60deg) rotateY(30deg) rotateZ(72deg)}100%{transform:translate(-50%,-50%) rotateX(-60deg) rotateY(30deg) rotateZ(432deg)}}
+@keyframes fly-4{0%{transform:translate(-50%,-50%) rotateY(-75deg) rotateX(45deg) rotateZ(108deg)}100%{transform:translate(-50%,-50%) rotateY(-75deg) rotateX(45deg) rotateZ(468deg)}}
+@keyframes fly-5{0%{transform:translate(-50%,-50%) rotateX(50deg) rotateY(-50deg) rotateZ(144deg)}100%{transform:translate(-50%,-50%) rotateX(50deg) rotateY(-50deg) rotateZ(504deg)}}
 @keyframes core-pulse{0%,100%{box-shadow:0 0 10px #00E5FF,0 0 25px #00E5FF,0 0 40px rgba(0,229,255,0.5)}50%{box-shadow:0 0 14px #00E5FF,0 0 30px #00E5FF,0 0 50px rgba(0,229,255,0.6)}}
 @keyframes core-active{0%,100%{box-shadow:0 0 20px #00E5FF,0 0 45px #00E5FF,0 0 70px rgba(0,229,255,0.8)}50%{box-shadow:0 0 30px #00E5FF,0 0 60px #00E5FF,0 0 90px rgba(0,229,255,1)}}
 @keyframes pulse{0%,100%{transform:scale(0.7);opacity:0.5}50%{transform:scale(1.1);opacity:1}}
-.crm-btn{position:relative;width:64px;height:64px;border-radius:50%;background:#0a0a0f;cursor:pointer;transform-style:preserve-3d;perspective:200px;border:none;outline:none;padding:0}
+.crm-btn{position:relative;width:64px;height:64px;border-radius:50%;background:#0a0a0f;cursor:pointer;transform-style:preserve-3d;perspective:300px;border:none;outline:none;padding:0}
 .crm-core{width:20px;height:20px;border-radius:50%;background:#00E5FF;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;box-shadow:0 0 10px #00E5FF,0 0 25px #00E5FF,0 0 40px rgba(0,229,255,0.5);animation:core-pulse 2.5s ease-in-out infinite}
-.crm-ring{position:absolute;width:60px;height:20px;border:1.5px solid rgba(0,229,255,0.6);border-radius:50%;top:50%;left:50%;pointer-events:none}
-.crm-ring-1{animation:spin-1 6s linear infinite}
-.crm-ring-2{animation:spin-2 4s linear infinite}
-.crm-ring-3{animation:spin-3 8s linear infinite}
-.crm-ring-4{animation:spin-4 5s linear infinite}
-.crm-ring-5{animation:spin-5 3s linear infinite}
-.crm-btn.thinking .crm-ring{animation-duration:0.5s !important;border-color:rgba(0,229,255,0.95)}
+.crm-ring{position:absolute;width:60px;height:18px;border:1.5px solid rgba(0,229,255,0.6);border-radius:50%;top:50%;left:50%;pointer-events:none}
+.crm-ring-1{animation:fly-1 7s linear infinite}
+.crm-ring-2{animation:fly-2 5s linear infinite}
+.crm-ring-3{animation:fly-3 9s linear infinite}
+.crm-ring-4{animation:fly-4 6s linear infinite;border-color:rgba(0,229,255,0.45)}
+.crm-ring-5{animation:fly-5 4s linear infinite;border-color:rgba(0,229,255,0.35)}
+.crm-btn.thinking .crm-ring{animation-duration:0.6s !important;border-color:rgba(0,229,255,0.95) !important}
 .crm-btn.thinking .crm-core{animation:core-active 0.5s ease-in-out infinite}
 `;
 

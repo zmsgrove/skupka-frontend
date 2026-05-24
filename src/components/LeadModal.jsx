@@ -62,10 +62,16 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
   const [showTemplates, setShowTemplates] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [editName, setEditName] = useState(lead.client_name || '');
+  const [botHandedOver, setBotHandedOver] = useState(false);
+  const [botToggling, setBotToggling] = useState(false);
   const chatEndRef = useRef(null);
 
-  // История прошлых заявок клиента
   const [prevLeads, setPrevLeads] = useState([]);
+
+  useEffect(() => {
+    supabase.from('bot_sessions').select('handed_over').eq('phone', lead.phone).maybeSingle()
+      .then(({ data }) => { if (data) setBotHandedOver(!!data.handed_over); });
+  }, [lead.phone]);
 
   useEffect(() => {
     fetchDetail();
@@ -133,6 +139,14 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
       alert('Сохранено!' + (sendEstimate ? ' Оценка отправлена клиенту.' : ''));
     } catch (e) { alert('Ошибка сохранения'); }
     setSaving(false);
+  }
+
+  async function handleToggleBot() {
+    setBotToggling(true);
+    const next = !botHandedOver;
+    await supabase.from('bot_sessions').update({ handed_over: next }).eq('phone', lead.phone);
+    setBotHandedOver(next);
+    setBotToggling(false);
   }
 
   const handleDownloadPhoto = (url) => {
@@ -320,6 +334,16 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
                 )}
               </div>
             )}
+
+            {/* Bot control */}
+            <button onClick={handleToggleBot} disabled={botToggling}
+              style={{ ...styles.saveBtn, marginBottom:4,
+                background: botHandedOver ? 'rgba(144,144,168,0.12)' : 'rgba(16,185,129,0.13)',
+                color: botHandedOver ? '#9090a8' : '#10b981',
+                border: `1px solid ${botHandedOver ? 'rgba(144,144,168,0.3)' : 'rgba(16,185,129,0.35)'}`,
+              }}>
+              {botHandedOver ? '⏸️ Бот остановлен — включить' : '🤖 Бот активен — остановить'}
+            </button>
 
             {cur.device && (
               <button
