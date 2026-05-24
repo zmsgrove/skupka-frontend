@@ -17,6 +17,7 @@ import { TildaPage } from './components/PlaceholderPages';
 import { getSession, clearSession } from './auth';
 import { themes, getTheme, saveTheme, radius, fib, glass } from './theme';
 import { supabase } from './supabase';
+import { FULL_ACCESS_ROLES, loadUserSpecial } from './permissions';
 import axios from 'axios';
 
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -25,7 +26,8 @@ const CITY_TABS = {
   'Актобе':  { label:'Актобе',  color:'#06b6d4' },
   'Уральск': { label:'Уральск', color:'#a78bfa' },
 };
-const DASHBOARD_USERS = ['maksatovs','koshab','aleksandrovd','aminovn','zmsgrove','kylyshbaenam','revizor'];
+const CAN_SEE_DASHBOARD = [...FULL_ACCESS_ROLES, 'rev', 'rgmu', 'rgma'];
+const CAN_SEE_DELETED   = [...FULL_ACCESS_ROLES];
 
 export function getSettings() {
   try { return JSON.parse(localStorage.getItem('skupka_settings')||'{}'); } catch { return {}; }
@@ -149,16 +151,16 @@ function Logo() {
   );
 }
 
-function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, totalUnread, chatUnread, collapsed, setCollapsed, mobileOpen, setMobileOpen, setShowCalc, t }) {
+function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, canSeeZrs, totalUnread, chatUnread, collapsed, setCollapsed, mobileOpen, setMobileOpen, setShowCalc, t }) {
   const items = (forMobile) => (
     <>
       <div style={{ flex:1, padding:'10px 6px', display:'flex', flexDirection:'column', gap:2, overflowY:'auto' }}>
         <SideItem icon="💬" label="WAZZUP"    active={activeTab==='board'}      onClick={() => { setActiveTab('board');      setMobileOpen(false); }} badge={totalUnread} collapsed={!forMobile&&collapsed} t={t} />
-        <SideItem icon="📊" label="Дашборд"   active={activeTab==='dashboard'}   onClick={() => { if(canSeeDashboard){setActiveTab('dashboard');setMobileOpen(false);} }} collapsed={!forMobile&&collapsed} t={t} />
+        {canSeeDashboard && <SideItem icon="📊" label="Дашборд"   active={activeTab==='dashboard'}   onClick={() => { setActiveTab('dashboard');setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />}
         <SideItem icon="🗨️" label="Чат"       active={activeTab==='chat'}        onClick={() => { setActiveTab('chat');       setMobileOpen(false); }} badge={chatUnread} collapsed={!forMobile&&collapsed} t={t} />
         <SideItem icon="✅" label="Задачи"    active={activeTab==='tasks'}       onClick={() => { setActiveTab('tasks');      setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
         <SideItem icon="💰" label="Касса"     active={activeTab==='kassa'}       onClick={() => { setActiveTab('kassa');      setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
-        <SideItem icon="📝" label="ЗРС"       active={activeTab==='zrs'}         onClick={() => { setActiveTab('zrs');        setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
+        {canSeeZrs && <SideItem icon="📝" label="ЗРС"       active={activeTab==='zrs'}         onClick={() => { setActiveTab('zrs');        setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />}
         <SideItem icon="🕐" label="Смена"     active={activeTab==='attendance'}  onClick={() => { setActiveTab('attendance'); setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
         <SideItem icon="🌐" label="Tilda"     active={activeTab==='tilda'}       onClick={() => { setActiveTab('tilda');      setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
         <div style={{ flex:1 }} />
@@ -199,6 +201,7 @@ function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, tota
 
 export default function App() {
   const [user, setUser]             = useState(null);
+  const [userSpecial, setUserSpecial] = useState({ is_tovarovyed: false });
   const [activeCity, setActiveCity] = useState(null);
   const [activeTab, setActiveTab]   = useState('board');
   const [settings, setSettings]     = useState(() => getSettings());
@@ -246,6 +249,7 @@ export default function App() {
             saveSettings({ ...getSettings(), homeTab: data.default_page });
           }
         }).catch(() => {});
+      loadUserSpecial(supabase, session.username).then(setUserSpecial).catch(() => {});
     }
   }, []);
 
@@ -308,11 +312,12 @@ export default function App() {
           saveSettings({ ...getSettings(), homeTab: data.default_page });
         }
       }).catch(() => {});
+    loadUserSpecial(supabase, u.username).then(setUserSpecial).catch(() => {});
   };
   const handleLogout = () => { clearSession(); setUser(null); setActiveCity(null); setActiveTab('board'); };
 
-  const canSeeDashboard = user && DASHBOARD_USERS.includes(user.username);
-  const canSeeDeleted   = user && ['maksatovs','koshab','zmsgrove','kylyshbaenam'].includes(user.username);
+  const canSeeDashboard = user && CAN_SEE_DASHBOARD.includes(user.role);
+  const canSeeDeleted   = user && CAN_SEE_DELETED.includes(user.role);
 
   if (!user) return <LoginPage onLogin={handleLogin} theme={t} />;
 
@@ -378,6 +383,7 @@ export default function App() {
         <Sidebar
           activeTab={activeTab} setActiveTab={setActiveTab}
           canSeeDashboard={canSeeDashboard} canSeeDeleted={canSeeDeleted}
+          canSeeZrs={user && ['admin','dir','zamdir','sysadmin','rev','rgmu','rgma'].includes(user.role)}
           totalUnread={totalUnread} chatUnread={chatUnread}
           collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed}
           mobileOpen={mobileOpen} setMobileOpen={setMobileOpen}
@@ -404,7 +410,7 @@ export default function App() {
       {/* Calculator */}
       {showCalc && <Calculator theme={t} onClose={() => setShowCalc(false)} />}
       {/* CRM Assistant — always visible */}
-      <CrmAssistant user={user} theme={t} />
+      <CrmAssistant user={user} theme={t} isTovarovyed={userSpecial.is_tovarovyed} />
     </div>
   );
 }

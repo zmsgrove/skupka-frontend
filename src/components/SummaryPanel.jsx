@@ -59,8 +59,8 @@ export default function SummaryPanel({ user, theme, onClose }) {
   const [editConfig, setEditConfig]     = useState(DEFAULT_CONFIG);
   const [saving, setSaving]       = useState(false);
   const [kassaFilter, setKassaFilter] = useState('all');
-  const isAdmin = ['admin','dir','zamdir'].includes(user.role);
-  const isRgm   = ['rgmu','rgma'].includes(user.role);
+  const isAdmin = ['admin','dir','zamdir','sysadmin'].includes(user.role);
+  const isRgm   = ['rgmu','rgma','rev'].includes(user.role);
 
   useEffect(() => { load(); loadWeather(); loadConfig(); }, []);
 

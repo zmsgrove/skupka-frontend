@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 
 const EMOJIS = ['👍','❤️','😂','😮','😢','🔥'];
 
-const CAN_MANAGE = ['admin','dir','zamdir','rgmu','rgma'];
+const CAN_MANAGE = ['admin','dir','zamdir','sysadmin','rgmu','rgma'];
 
 export default function ChatPage({ user, theme, onUnreadChange }) {
   const t = theme;
@@ -279,7 +279,7 @@ export default function ChatPage({ user, theme, onUnreadChange }) {
 
 function MessageActions({ msg, isMe, user, onReact, onDelete, t }) {
   const [show, setShow] = useState(false);
-  const canDelete = isMe || ['admin','dir'].includes(user.role);
+  const canDelete = isMe || ['admin','dir','zamdir','sysadmin'].includes(user.role);
   return (
     <div
       onMouseEnter={() => setShow(true)}

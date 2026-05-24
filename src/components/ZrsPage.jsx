@@ -8,8 +8,8 @@ const COLS = [
   { id:'done',     label:'✅ Закрытые',         color:'#10b981' },
   { id:'rejected', label:'❌ Отказ',            color:'#ef4444' },
 ];
-const CAN_SEE  = ['admin','dir','zamdir','rgmu','rgma'];
-const CAN_MOVE = ['admin','dir','zamdir'];
+const CAN_SEE  = ['admin','dir','zamdir','sysadmin','rev','rgmu','rgma'];
+const CAN_MOVE = ['admin','dir','zamdir','sysadmin'];
 const FMT = n => new Intl.NumberFormat('ru-KZ').format(Math.round(n||0));
 
 export default function ZrsPage({ user, theme }) {
@@ -20,7 +20,7 @@ export default function ZrsPage({ user, theme }) {
   const [selected, setSelected] = useState(null);
   const canSee  = CAN_SEE.includes(user.role);
   const canMove = CAN_MOVE.includes(user.role);
-  const isAdmin = ['admin','dir','zamdir'].includes(user.role);
+  const isAdmin = ['admin','dir','zamdir','sysadmin'].includes(user.role);
   const draggingRef = useRef(null);
   const [dragOver, setDragOver]     = useState(null);
   const [contextMenu, setContextMenu] = useState(null);

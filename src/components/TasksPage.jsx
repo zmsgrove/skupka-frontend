@@ -12,7 +12,7 @@ const STATUS_COLS = [
   { id:'done',   label:'✅ Закрытые',   color:'#10b981' },
 ];
 const REPEAT_LABELS = { none:'Не повторять', daily:'Ежедневно', weekly:'Еженедельно', monthly:'Ежемесячно' };
-const CAN_SEE_ALL = ['admin','dir','zamdir'];
+const CAN_SEE_ALL = ['admin','dir','zamdir','sysadmin','rev'];
 
 export default function TasksPage({ user, theme }) {
   const t = theme;
@@ -32,7 +32,7 @@ export default function TasksPage({ user, theme }) {
   const [dragOver, setDragOver]     = useState(null);
   const draggingRef                 = useRef(null);
   const canSeeAll = CAN_SEE_ALL.includes(user.role);
-  const isAdmin = ['admin','dir','zamdir'].includes(user.role);
+  const isAdmin = ['admin','dir','zamdir','sysadmin'].includes(user.role);
   const [contextMenu, setContextMenu] = useState(null);
 
   useEffect(() => {

@@ -29,7 +29,17 @@ const ANIM = `
 .crm-orbital.thinking .crm-core{animation:core-active 0.5s ease-in-out infinite}
 `;
 
-export default function CrmAssistant({ user, theme }) {
+const PRICE_ENTRY_RE = /^(внеси|добавь|добавить|запиши|внести)\s+(.+?)\s+цена\s+(\d[\d\s]*)\s*$/i;
+
+function parsePriceCommand(txt) {
+  const m = txt.match(PRICE_ENTRY_RE);
+  if (!m) return null;
+  const model = m[2].trim();
+  const price = parseInt(m[3].replace(/\s/g, ''), 10);
+  return { model, price };
+}
+
+export default function CrmAssistant({ user, theme, isTovarovyed }) {
   const t = theme;
   const [open, setOpen]         = useState(false);
   const [full, setFull]         = useState(false);
@@ -84,6 +94,28 @@ export default function CrmAssistant({ user, theme }) {
     console.log('API URL:', process.env.REACT_APP_BACKEND_URL);
     const txt = (override ?? input).trim();
     if (!txt || loading) return;
+
+    // Товаровед: обработка ввода цены
+    const priceCmd = parsePriceCommand(txt);
+    if (priceCmd) {
+      const userMsg = { role:'user', content:txt };
+      setMsgs(prev => [...prev, userMsg]);
+      setInput('');
+      if (!isTovarovyed) {
+        setMsgs(prev => [...prev, { role:'assistant', content:'🚫 У вас нет прав для внесения цен. Обратитесь к руководителю для получения роли Товароведа.' }]);
+        return;
+      }
+      setLoading(true);
+      try {
+        await supabase.from('price_list').insert({ model: priceCmd.model, our_price: priceCmd.price, condition: 'хорошее', created_by: user.username });
+        const fmt = new Intl.NumberFormat('ru-KZ').format(priceCmd.price);
+        setMsgs(prev => [...prev, { role:'assistant', content:`✅ Записал! **${priceCmd.model}** — ${fmt} ₸` }]);
+      } catch {
+        setMsgs(prev => [...prev, { role:'assistant', content:'⚠️ Ошибка записи в базу цен' }]);
+      }
+      setLoading(false);
+      return;
+    }
 
     const userMsg = { role:'user', content:txt };
     const nextMsgs = [...msgs, userMsg];

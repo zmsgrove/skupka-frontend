@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { getSettings, saveSettings } from '../App';
 import { themes } from '../theme';
 import { supabase } from '../supabase';
+import { USERS } from '../auth';
+import { PAGES, PAGE_LABELS, getDefaultPermissions } from '../permissions';
 
 const HOME_TAB_OPTIONS = [
   { value:'board',     label:'💬 WAZZUP (Доска)' },
@@ -52,7 +54,8 @@ function playSound(sound, volume) {
 
 export default function SettingsPage({ user, theme, settings, onUpdate }) {
   const t = theme;
-  const isAdmin = ['admin','dir','zamdir','rgmu','rgma'].includes(user.role);
+  const isAdmin = ['admin','dir','zamdir','sysadmin','rev','rgmu','rgma'].includes(user.role);
+  const canManagePermissions = ['dir','zamdir'].includes(user.role);
   const [summaryConfig, setSummaryConfig] = useState(DEFAULT_SUMMARY_CONFIG);
   const [summarySaving, setSummarySaving] = useState(false);
 
@@ -217,6 +220,9 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
         ))}
       </Section>
 
+      {/* Управление доступами — только dir и zamdir */}
+      {canManagePermissions && <PermissionsPanel t={t} currentUser={user} />}
+
       {/* Инфо */}
       <div style={{ padding:'14px 18px', background:t.surface, border:`1px solid ${t.border}`, borderRadius:12 }}>
         <div style={{ color:t.text2, fontSize:12 }}>
@@ -251,6 +257,174 @@ function Toggle({ value, onChange, t }) {
   return (
     <div onClick={onChange} style={{ width:44, height:24, borderRadius:12, background: value ? '#E8263A' : t.border, cursor:'pointer', position:'relative', transition:'background 0.2s', flexShrink:0 }}>
       <div style={{ position:'absolute', top:3, left: value ? 23 : 3, width:18, height:18, borderRadius:'50%', background:'#fff', transition:'left 0.2s', boxShadow:'0 1px 4px rgba(0,0,0,0.3)' }} />
+    </div>
+  );
+}
+
+// ─── Панель управления правами (только dir и zamdir) ──────────
+const ALL_CITIES = ['Атырау','Актобе','Уральск'];
+const NON_ADMIN_USERS = Object.entries(USERS).filter(([,u]) => !['admin','dir','zamdir','sysadmin'].includes(u.role));
+
+function PermissionsPanel({ t, currentUser }) {
+  const [selectedUser, setSelectedUser] = useState('');
+  const [cities, setCities]         = useState([]);
+  const [perms, setPerms]           = useState({});
+  const [special, setSpecial]       = useState({ is_tovarovyed: false });
+  const [saving, setSaving]         = useState(false);
+  const [saved, setSaved]           = useState(false);
+
+  useEffect(() => {
+    if (!selectedUser) return;
+    const u = USERS[selectedUser];
+    const defaults = getDefaultPermissions(u.role);
+    // Load from Supabase
+    supabase.from('user_permissions').select('*').eq('user_id', selectedUser)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setPerms(Object.fromEntries(data.map(r => [r.page, { can_view:r.can_view, can_create:r.can_create, can_edit:r.can_edit, can_delete:r.can_delete }])));
+        } else {
+          setPerms(defaults);
+        }
+      });
+    supabase.from('user_cities').select('city').eq('user_id', selectedUser)
+      .then(({ data }) => { setCities(data && data.length ? data.map(r=>r.city) : u.cities); });
+    supabase.from('user_special').select('*').eq('user_id', selectedUser).single()
+      .then(({ data }) => { setSpecial(data || { is_tovarovyed: false }); })
+      .catch(() => setSpecial({ is_tovarovyed: false }));
+  }, [selectedUser]);
+
+  const toggleCity = (city) => setCities(prev => prev.includes(city) ? prev.filter(c=>c!==city) : [...prev, city]);
+  const togglePerm = (page, field) => setPerms(prev => ({ ...prev, [page]: { ...prev[page], [field]: !prev[page]?.[field] } }));
+  const toggleAccess = (page) => {
+    const cur = perms[page]?.can_view;
+    setPerms(prev => ({ ...prev, [page]: cur ? { can_view:false, can_create:false, can_edit:false, can_delete:false } : { can_view:true, can_create:false, can_edit:false, can_delete:false } }));
+  };
+
+  const save = async () => {
+    if (!selectedUser) return;
+    setSaving(true);
+    // Save permissions
+    const rows = PAGES.map(page => ({
+      user_id: selectedUser, page,
+      can_view:   perms[page]?.can_view   || false,
+      can_create: perms[page]?.can_create || false,
+      can_edit:   perms[page]?.can_edit   || false,
+      can_delete: perms[page]?.can_delete || false,
+      updated_by: currentUser.username,
+      updated_at: new Date().toISOString(),
+    }));
+    await supabase.from('user_permissions').upsert(rows, { onConflict: 'user_id,page' });
+    // Save cities
+    await supabase.from('user_cities').delete().eq('user_id', selectedUser);
+    if (cities.length > 0) await supabase.from('user_cities').insert(cities.map(city => ({ user_id: selectedUser, city })));
+    // Save special
+    await supabase.from('user_special').upsert({ user_id: selectedUser, is_tovarovyed: special.is_tovarovyed }, { onConflict: 'user_id' });
+    setSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const PERM_COLS = [
+    { key: 'can_view',   label: 'Просмотр' },
+    { key: 'can_create', label: 'Создание' },
+    { key: 'can_edit',   label: 'Редакт.' },
+    { key: 'can_delete', label: 'Удаление' },
+  ];
+
+  return (
+    <div style={{ marginBottom:20, background:t.surface, border:`1px solid ${t.border}`, borderRadius:14, overflow:'hidden' }}>
+      <div style={{ padding:'12px 18px', borderBottom:`1px solid ${t.border}`, fontFamily:'Unbounded,sans-serif', fontSize:12, fontWeight:600, color:t.text }}>🔑 Управление доступами</div>
+      <div style={{ padding:'16px 18px', display:'flex', flexDirection:'column', gap:14 }}>
+        {/* Выбор пользователя */}
+        <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+          <span style={{ color:t.text2, fontSize:12 }}>Выберите сотрудника</span>
+          <select value={selectedUser} onChange={e => setSelectedUser(e.target.value)}
+            style={{ background:t.inputBg, border:`1px solid ${t.border}`, borderRadius:8, color:t.text, fontSize:13, padding:'9px 12px', outline:'none' }}>
+            <option value="">— Выбрать —</option>
+            {NON_ADMIN_USERS.map(([id, u]) => (
+              <option key={id} value={id}>{u.name} ({u.role})</option>
+            ))}
+          </select>
+        </div>
+
+        {selectedUser && (
+          <>
+            {/* Города */}
+            <div>
+              <div style={{ color:t.text2, fontSize:12, marginBottom:6 }}>🏙️ Города</div>
+              <div style={{ display:'flex', gap:8 }}>
+                {ALL_CITIES.map(city => (
+                  <button key={city} onClick={() => toggleCity(city)} style={{
+                    flex:1, background: cities.includes(city) ? 'rgba(232,38,58,0.15)' : 'transparent',
+                    border:`1px solid ${cities.includes(city) ? 'rgba(232,38,58,0.5)' : t.border}`,
+                    borderRadius:8, color: cities.includes(city) ? '#E8263A' : t.text2,
+                    fontSize:12, padding:'7px', cursor:'pointer', transition:'all 0.15s',
+                  }}>{city}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Таблица доступов */}
+            <div>
+              <div style={{ color:t.text2, fontSize:12, marginBottom:8 }}>📋 Доступы по разделам</div>
+              <div style={{ overflowX:'auto' }}>
+                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign:'left', color:t.text2, padding:'6px 8px', borderBottom:`1px solid ${t.border}` }}>Раздел</th>
+                      <th style={{ color:t.text2, padding:'6px 8px', borderBottom:`1px solid ${t.border}`, textAlign:'center' }}>Доступ</th>
+                      {PERM_COLS.map(c => (
+                        <th key={c.key} style={{ color:t.text2, padding:'6px 8px', borderBottom:`1px solid ${t.border}`, textAlign:'center', whiteSpace:'nowrap' }}>{c.label}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {PAGES.map(page => {
+                      const p = perms[page] || {};
+                      return (
+                        <tr key={page} style={{ borderBottom:`1px solid ${t.border}22` }}>
+                          <td style={{ padding:'6px 8px', color:t.text }}>{PAGE_LABELS[page]}</td>
+                          <td style={{ padding:'6px 8px', textAlign:'center' }}>
+                            <input type="checkbox" checked={!!p.can_view} onChange={() => toggleAccess(page)} style={{ accentColor:'#E8263A', cursor:'pointer' }} />
+                          </td>
+                          {PERM_COLS.map(c => (
+                            <td key={c.key} style={{ padding:'6px 8px', textAlign:'center' }}>
+                              <input type="checkbox" checked={!!p[c.key]} onChange={() => togglePerm(page, c.key)}
+                                disabled={c.key !== 'can_view' && !p.can_view}
+                                style={{ accentColor:'#E8263A', cursor: (c.key !== 'can_view' && !p.can_view) ? 'default' : 'pointer', opacity: (c.key !== 'can_view' && !p.can_view) ? 0.3 : 1 }} />
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Специальные права */}
+            <div>
+              <div style={{ color:t.text2, fontSize:12, marginBottom:8 }}>🔑 Специальные права</div>
+              <label style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer' }}>
+                <input type="checkbox" checked={special.is_tovarovyed} onChange={() => setSpecial(s => ({...s, is_tovarovyed: !s.is_tovarovyed}))}
+                  style={{ accentColor:'#E8263A', width:16, height:16, cursor:'pointer' }} />
+                <div>
+                  <span style={{ color:t.text, fontSize:13, fontWeight:600 }}>Товаровед</span>
+                  <span style={{ color:t.text2, fontSize:11, marginLeft:8 }}>— право вносить цены через ассистента</span>
+                </div>
+              </label>
+            </div>
+
+            <button onClick={save} disabled={saving} style={{
+              background: saving ? t.surface2 : '#E8263A', border:'none', borderRadius:10,
+              color: saving ? t.text2 : '#fff', fontSize:13, fontWeight:700, padding:'11px',
+              cursor: saving ? 'default' : 'pointer', fontFamily:'Unbounded,sans-serif',
+            }}>
+              {saved ? '✅ Сохранено!' : saving ? 'Сохранение...' : 'Сохранить'}
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

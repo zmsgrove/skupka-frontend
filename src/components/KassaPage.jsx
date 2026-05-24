@@ -8,7 +8,8 @@ const FILIALS = [
   { id:'a21',  label:'А21',  city:'Актобе'  },
 ];
 const MANAGERS = ['Максатов Сырым','Кожа Бегдос','Кылышбаева Макпал','Аминов Нурлан','Александров Даниил'];
-const CAN_MOVE = ['admin','dir','zamdir'];
+const FULL_ACCESS = ['admin','dir','zamdir','sysadmin'];
+const CAN_MOVE = [...FULL_ACCESS];
 const CAN_MOVE_RGM = ['rgmu','rgma'];
 const TYPE_LABEL = { morning:'🌅 Утренний', evening:'🌆 Вечерний' };
 
@@ -21,7 +22,7 @@ function canMoveCard(user, card) {
   return false;
 }
 function canSeeCard(user, card) {
-  if (['admin','dir','zamdir'].includes(user.role)) return true;
+  if ([...FULL_ACCESS,'rev'].includes(user.role)) return true;
   if (['rgmu','rgma'].includes(user.role)) {
     const f = FILIALS.find(f=>f.id===card.filial);
     return f && user.cities.includes(f.city);
@@ -40,7 +41,7 @@ export default function KassaPage({ user, theme }) {
   const draggingRef = useRef(null);
   const [dragOver, setDragOver]   = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
-  const isAdmin = ['admin','dir','zamdir'].includes(user.role);
+  const isAdmin = ['admin','dir','zamdir','sysadmin'].includes(user.role);
 
   useEffect(() => {
     const close = () => setContextMenu(null);

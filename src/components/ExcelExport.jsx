@@ -18,7 +18,7 @@ export default function ExcelExport({ user, theme }) {
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
 
-  const canExport = ['admin','dir','zamdir'].includes(user.role) ||
+  const canExport = ['admin','dir','zamdir','sysadmin','rev'].includes(user.role) ||
     ['zmsgrove','maksatovs','koshab','kylyshbaenam','revizor','aleksandrovd','aminovn'].includes(user.username);
 
   if (!canExport) return null;

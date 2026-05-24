@@ -22,7 +22,7 @@ export default function ContextMenu({ x, y, lead, user, onClose, onStatusChange,
   const menuX = Math.min(x, window.innerWidth - 220);
   const menuY = Math.min(y, window.innerHeight - 400);
 
-  const canDelete = ['admin','dir','zamdir','rgmu','rgma'].includes(user.role) ||
+  const canDelete = ['admin','dir','zamdir','sysadmin','rgmu','rgma'].includes(user.role) ||
     ['zmsgrove','maksatovs','koshab','kylyshbaenam','aleksandrovd','aminovn'].includes(user.username);
 
   const menuStyle = {

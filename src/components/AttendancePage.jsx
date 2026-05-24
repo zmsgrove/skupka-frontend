@@ -9,9 +9,9 @@ const FILIALS = [
 ];
 const MANAGERS   = ['Максатов Сырым','Кожа Бегдос','Кылышбаева Макпал','Аминов Нурлан','Александров Даниил'];
 const CITIES     = ['Атырау','Актобе','Уральск'];
-const CAN_SEE_ALL = ['admin','dir','zamdir'];
-const CAN_MOVE_SPO = ['admin','dir','zamdir','rgmu','rgma'];
-const CAN_MOVE_ADMIN = ['admin','dir','zamdir'];
+const CAN_SEE_ALL = ['admin','dir','zamdir','sysadmin','rev'];
+const CAN_MOVE_SPO = ['admin','dir','zamdir','sysadmin','rgmu','rgma'];
+const CAN_MOVE_ADMIN = ['admin','dir','zamdir','sysadmin'];
 
 function canSeeSpo(user, card) {
   if (CAN_SEE_ALL.includes(user.role)) return true;
@@ -23,7 +23,7 @@ function canSeeSpo(user, card) {
 }
 
 function canSeeAdminShift(user) {
-  return ['admin','dir','zamdir','rgmu','rgma'].includes(user.role);
+  return ['admin','dir','zamdir','sysadmin','rev','rgmu','rgma'].includes(user.role);
 }
 
 export default function AttendancePage({ user, theme }) {
@@ -34,7 +34,7 @@ export default function AttendancePage({ user, theme }) {
   const [loading, setLoading]         = useState(true);
   const [showForm, setShowForm]       = useState(false);
   const [selected, setSelected]       = useState(null);
-  const isAdmin = ['admin','dir','zamdir'].includes(user.role);
+  const isAdmin = ['admin','dir','zamdir','sysadmin'].includes(user.role);
   const draggingRef = useRef(null);
   const [dragOver, setDragOver]       = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
