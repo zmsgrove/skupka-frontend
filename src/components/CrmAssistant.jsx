@@ -402,7 +402,6 @@ export default function CrmAssistant({ user, theme, isTovarovyed, onNavigate }) 
 
       if (watchMode) setWatchLog(prev => [...prev, '⚡ Отправляю запрос к AI...']);
 
-      // Streaming fetch
       const response = await fetch(`${API}/api/assistant`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -414,7 +413,11 @@ export default function CrmAssistant({ user, theme, isTovarovyed, onNavigate }) 
         }),
       });
 
-      if (!response.ok) throw new Error(`Ошибка сервера: ${response.status}`);
+      if (!response.ok) {
+        let errMsg = `Ошибка сервера: ${response.status}`;
+        try { const errData = await response.json(); errMsg = errData.error || errMsg; } catch {}
+        throw new Error(errMsg);
+      }
 
       const contentType = response.headers.get('content-type') || '';
       let botReply = '';
