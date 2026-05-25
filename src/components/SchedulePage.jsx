@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { USERS } from '../auth';
 import { supabase } from '../supabase';
+import { playSound } from '../utils/sound';
 import { fib, radius } from '../theme';
 
 const SPO_ROLES = ['uralsk', 'atyray', 'aktobe'];
@@ -104,6 +105,7 @@ export default function SchedulePage({ user, theme }) {
     } else {
       await supabase.from('work_attendance').insert({ user_id: user.username, date: todayStr, started_at: ts.toISOString(), is_late: isLate, late_minutes: lateMinutes });
     }
+    if (isLate) playSound('late');
     await loadData();
     setStartingDay(false);
   }

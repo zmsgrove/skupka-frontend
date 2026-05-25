@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import { USERS } from '../auth';
+import { playSound } from '../utils/sound';
 
 const PINNED_ROLES = ['admin', 'dir', 'zamdir', 'sysadmin'];
 const DELETE_ROLES = ['admin', 'dir', 'zamdir', 'sysadmin'];
@@ -34,6 +35,7 @@ export default function FeedPage({ user, theme }) {
   const [pollQuestion, setPollQuestion] = useState('');
   const [pollOpts, setPollOpts] = useState(['', '']);
   const [submitting, setSubmitting] = useState(false);
+  const postsRef = useRef([]);
 
   const canPin = PINNED_ROLES.includes(user.role);
   const canDelete = DELETE_ROLES.includes(user.role);
@@ -47,9 +49,28 @@ export default function FeedPage({ user, theme }) {
     loadAll();
     initSystemPosts();
     const ch = supabase.channel('feed-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'feed_posts' }, loadAll)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'feed_likes' }, loadLikes)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'feed_comments' }, loadComments)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'feed_posts' }, (payload) => {
+        loadAll();
+        if (payload.eventType === 'INSERT' && payload.new?.author_id !== user.username) {
+          if (payload.new.is_pinned) playSound('feed_announce');
+          else if (payload.new.is_system && /день рождения/i.test(payload.new.content || '')) playSound('birthday');
+          else if (payload.new.is_system) playSound('crm_update');
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'feed_likes' }, (payload) => {
+        loadLikes();
+        if (payload.eventType === 'INSERT' && payload.new?.user_id !== user.username) {
+          const post = postsRef.current.find(p => p.id === payload.new.post_id);
+          if (post?.author_id === user.username) playSound('feed_like');
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'feed_comments' }, (payload) => {
+        loadComments();
+        if (payload.eventType === 'INSERT' && payload.new?.author_id !== user.username) {
+          const post = postsRef.current.find(p => p.id === payload.new.post_id);
+          if (post?.author_id === user.username) playSound('feed_comment');
+        }
+      })
       .subscribe();
     return () => supabase.removeChannel(ch);
   }, []);
@@ -63,6 +84,7 @@ export default function FeedPage({ user, theme }) {
       supabase.from('feed_polls').select('*'),
       supabase.from('feed_poll_votes').select('*'),
     ]);
+    postsRef.current = pr.data || [];
     setPosts(pr.data || []);
     buildLikes(lr.data || []);
     buildComments(cr.data || []);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../supabase';
+import { playSound } from '../utils/sound';
 
 const PRIORITY_COLORS = { high:'#ef4444', medium:'#f59e0b', low:'#10b981' };
 const PRIORITY_LABELS = { high:'🔴 Высокий', medium:'🟡 Средний', low:'🟢 Низкий' };
@@ -31,6 +32,7 @@ export default function TasksPage({ user, theme }) {
   const [sortBy, setSortBy]         = useState('created_at');
   const [dragOver, setDragOver]     = useState(null);
   const draggingRef                 = useRef(null);
+  const deadlineSoundedRef          = useRef(new Set());
   const canSeeAll = CAN_SEE_ALL.includes(user.role);
   const isAdmin = ['admin','dir','zamdir','sysadmin'].includes(user.role);
   const [contextMenu, setContextMenu] = useState(null);
@@ -46,12 +48,25 @@ export default function TasksPage({ user, theme }) {
     const { data } = await q;
     setTasks(data || []);
     setLoading(false);
-  }, [sortBy]);
+    // Deadline sound: once per task per session
+    const today = new Date().toDateString();
+    (data || []).filter(t =>
+      t.assigned_to === user.username && t.status !== 'done' && t.deadline &&
+      new Date(t.deadline).toDateString() === today && !deadlineSoundedRef.current.has(t.id)
+    ).forEach(t => { deadlineSoundedRef.current.add(t.id); playSound('task_deadline'); });
+  }, [sortBy, user.username]);
 
   useEffect(() => {
     fetchTasks();
     const ch = supabase.channel('tasks-realtime')
-      .on('postgres_changes', { event:'*', schema:'public', table:'tasks' }, fetchTasks)
+      .on('postgres_changes', { event:'*', schema:'public', table:'tasks' }, (payload) => {
+        fetchTasks();
+        if (payload.eventType === 'INSERT' &&
+            payload.new?.assigned_to === user.username &&
+            payload.new?.created_by !== user.username) {
+          playSound('task_assign');
+        }
+      })
       .on('postgres_changes', { event:'*', schema:'public', table:'task_comments' }, fetchTasks)
       .on('postgres_changes', { event:'*', schema:'public', table:'task_checklist' }, fetchTasks)
       .subscribe();

@@ -22,36 +22,6 @@ const SUMMARY_SECTIONS = [
 ];
 const DEFAULT_SUMMARY_CONFIG = { tasks:true, leads:true, cities:true, kassa:true, zrs:true, shifts:true };
 
-const SOUNDS = [
-  { id:'ping',     label:'🔔 Пинг',         desc:'Классический',  freq:[880,440],   type:'sine' },
-  { id:'chime',    label:'🎵 Звон',          desc:'Мелодичный',    freq:[1047,784],  type:'sine' },
-  { id:'pop',      label:'🫧 Поп',           desc:'Мягкий',        freq:[600,300],   type:'sine' },
-  { id:'beep',     label:'📟 Бип',           desc:'Чёткий',        freq:[1200,1200], type:'square' },
-  { id:'soft',     label:'🌊 Мягкий',        desc:'Тихий',         freq:[440,330],   type:'sine' },
-  { id:'alert',    label:'🚨 Алерт',         desc:'Срочный',       freq:[1500,1000], type:'sawtooth' },
-  { id:'bell',     label:'🔕 Колокол',       desc:'Долгий',        freq:[523,392],   type:'sine' },
-  { id:'blip',     label:'👾 Блип',          desc:'Игровой',       freq:[800,1600],  type:'square' },
-  { id:'knock',    label:'🚪 Стук',          desc:'Глухой',        freq:[200,150],   type:'triangle' },
-  { id:'digital',  label:'💻 Цифровой',      desc:'Электронный',   freq:[2000,1500], type:'sawtooth' },
-];
-
-function playSound(sound, volume) {
-  try {
-    const vol = (volume ?? 40) / 100;
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.connect(g); g.connect(ctx.destination);
-    o.type = sound.type;
-    o.frequency.setValueAtTime(sound.freq[0], ctx.currentTime);
-    o.frequency.exponentialRampToValueAtTime(sound.freq[1], ctx.currentTime + 0.15);
-    g.gain.setValueAtTime(vol, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-    o.start(ctx.currentTime);
-    o.stop(ctx.currentTime + 0.5);
-  } catch(e) {}
-}
-
 const SOUND_FILES = ['OK.mp3','2toon.mp3','classic.mp3','crash.mp3','disck.mp3','error.mp3','hw.mp3','old.mp3','old2.mp3','rim.mp3','steam.mp3','toon.mp3'];
 
 const SOUND_EVENTS = [
@@ -88,24 +58,22 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
   const [soundSaving, setSoundSaving] = useState(false);
 
   useEffect(() => {
-    supabase.from('user_settings').select('summary_config, sound_settings').eq('user_id', user.username).single()
-      .then(({ data }) => {
-        if (data?.summary_config) setSummaryConfig({ ...DEFAULT_SUMMARY_CONFIG, ...data.summary_config });
-        if (data?.sound_settings) setSoundSettings(data.sound_settings);
-      })
-      .catch(() => {});
+    (async () => {
+      const { data } = await supabase.from('user_settings').select('summary_config, sound_settings').eq('user_id', user.username).single();
+      if (data?.summary_config) setSummaryConfig({ ...DEFAULT_SUMMARY_CONFIG, ...data.summary_config });
+      if (data?.sound_settings) setSoundSettings(data.sound_settings);
+    })();
   }, [user.username]);
 
-  const handleVolume    = (e) => onUpdate({ volume: Number(e.target.value) });
-  const handleSound     = () => onUpdate({ sound: !(settings.sound !== false) });
-  const handleSoundType = (id) => { onUpdate({ soundType: id }); playSound(SOUNDS.find(s=>s.id===id), settings.volume??40); };
-  const handleTheme     = (v) => onUpdate({ theme: v });
+  const handleVolume = (e) => onUpdate({ volume: Number(e.target.value) });
+  const handleSound  = () => onUpdate({ sound: !(settings.sound !== false) });
+  const handleTheme  = (v) => onUpdate({ theme: v });
   const handleHomeTab   = async (v) => {
     onUpdate({ homeTab: v });
-    supabase.from('user_settings').upsert(
+    await supabase.from('user_settings').upsert(
       { user_id: user.username, default_page: v, updated_at: new Date().toISOString() },
       { onConflict: 'user_id' }
-    ).catch(() => {});
+    );
   };
   const handleHomeCity  = (v) => onUpdate({ homeCity: v });
   const handleCompact   = () => onUpdate({ compact: !settings.compact });
@@ -119,25 +87,25 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
     await supabase.from('user_settings').upsert(
       { user_id: user.username, summary_config: next, updated_at: new Date().toISOString() },
       { onConflict: 'user_id' }
-    ).catch(() => {});
+    );
     setSummarySaving(false);
   };
 
   const handleSoundEvent = async (eventKey, file) => {
     const next = { ...soundSettings, [eventKey]: file };
     setSoundSettings(next);
+    onUpdate({ sound_settings: next });
     setSoundSaving(true);
     await supabase.from('user_settings').upsert(
       { user_id: user.username, sound_settings: next, updated_at: new Date().toISOString() },
       { onConflict: 'user_id' }
-    ).catch(() => {});
+    );
     setSoundSaving(false);
   };
 
-  const volume      = settings.volume ?? 40;
-  const soundOn     = settings.sound !== false;
-  const soundType   = settings.soundType || 'ping';
-  const themeName   = settings.theme || 'dark';
+  const volume    = settings.volume ?? 40;
+  const soundOn   = settings.sound !== false;
+  const themeName = settings.theme || 'dark';
   const showTimers  = settings.showTimers !== false;
   const compact     = !!settings.compact;
   const autoRefresh = settings.autoRefresh || 'off';
@@ -174,22 +142,6 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
         <Row label={`Громкость — ${volume}%`} t={t}>
           <input type="range" min={0} max={100} value={volume} onChange={handleVolume}
             style={{ width:'100%', accentColor:'#E8263A', cursor:'pointer' }} />
-        </Row>
-        <Row label="Тип звука" t={t} vertical>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:6, width:'100%' }}>
-            {SOUNDS.map(s => (
-              <button key={s.id} onClick={() => handleSoundType(s.id)} style={{
-                background: soundType===s.id ? 'rgba(232,38,58,0.15)' : t.surface2,
-                border:`1px solid ${soundType===s.id ? 'rgba(232,38,58,0.5)' : t.border}`,
-                borderRadius:10, padding:'10px 6px', cursor:'pointer', textAlign:'center',
-                transition:'all 0.15s',
-              }}>
-                <div style={{ fontSize:18 }}>{s.label.split(' ')[0]}</div>
-                <div style={{ color: soundType===s.id ? '#E8263A' : t.text, fontSize:11, fontWeight:600, marginTop:3 }}>{s.label.split(' ').slice(1).join(' ')}</div>
-                <div style={{ color:t.text2, fontSize:10, marginTop:1 }}>{s.desc}</div>
-              </button>
-            ))}
-          </div>
         </Row>
       </Section>
 
@@ -358,11 +310,12 @@ function PermissionsPanel({ t, currentUser }) {
     return true;
   });
   const [selectedUser, setSelectedUser] = useState('');
-  const [cities, setCities]         = useState([]);
-  const [perms, setPerms]           = useState({});
-  const [special, setSpecial]       = useState({ is_tovarovyed: false, check_access: false, birthday: '', departments: [] });
-  const [saving, setSaving]         = useState(false);
-  const [saved, setSaved]           = useState(false);
+  const [cities, setCities]             = useState([]);
+  const [perms, setPerms]               = useState({});
+  const [special, setSpecial]           = useState({ is_tovarovyed: false, is_dev: false, birthday: '', departments: [] });
+  const [profileCheckAccess, setProfileCheckAccess] = useState(false);
+  const [saving, setSaving]             = useState(false);
+  const [saved, setSaved]               = useState(false);
 
   const selectedRole = selectedUser ? USERS[selectedUser]?.role : null;
   const isDirSelected = selectedRole === 'dir';
@@ -371,19 +324,22 @@ function PermissionsPanel({ t, currentUser }) {
     if (!selectedUser) return;
     const u = USERS[selectedUser];
     const defaults = getDefaultPermissions(u.role);
-    supabase.from('user_permissions').select('*').eq('user_id', selectedUser)
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          setPerms(Object.fromEntries(data.map(r => [r.page, { can_view:r.can_view, can_create:r.can_create, can_edit:r.can_edit, can_delete:r.can_delete }])));
-        } else {
-          setPerms(defaults);
-        }
-      });
-    supabase.from('user_cities').select('city').eq('user_id', selectedUser)
-      .then(({ data }) => { setCities(data && data.length ? data.map(r=>r.city) : u.cities); });
-    supabase.from('user_special').select('*').eq('user_id', selectedUser).single()
-      .then(({ data }) => { setSpecial(data ? { is_tovarovyed: !!data.is_tovarovyed, check_access: !!data.check_access, birthday: data.birthday || '', departments: data.departments || [] } : { is_tovarovyed: false, check_access: false, birthday: '', departments: [] }); })
-      .catch(() => setSpecial({ is_tovarovyed: false, check_access: false, birthday: '', departments: [] }));
+    (async () => {
+      const { data: permData } = await supabase.from('user_permissions').select('*').eq('user_id', selectedUser);
+      if (permData && permData.length > 0) {
+        setPerms(Object.fromEntries(permData.map(r => [r.page, { can_view:r.can_view, can_create:r.can_create, can_edit:r.can_edit, can_delete:r.can_delete }])));
+      } else {
+        setPerms(defaults);
+      }
+      const { data: cityData } = await supabase.from('user_cities').select('city').eq('user_id', selectedUser);
+      setCities(cityData && cityData.length ? cityData.map(r => r.city) : u.cities);
+      const { data: specialData } = await supabase.from('user_special').select('*').eq('user_id', selectedUser).single();
+      setSpecial(specialData
+        ? { is_tovarovyed: !!specialData.is_tovarovyed, is_dev: !!specialData.is_dev, birthday: specialData.birthday || '', departments: specialData.departments || [] }
+        : { is_tovarovyed: false, is_dev: false, birthday: '', departments: [] });
+      const { data: profileData } = await supabase.from('profiles').select('check_access').eq('user_id', selectedUser).single();
+      setProfileCheckAccess(!!profileData?.check_access);
+    })();
   }, [selectedUser]);
 
   const toggleCity = (city) => setCities(prev => prev.includes(city) ? prev.filter(c=>c!==city) : [...prev, city]);
@@ -412,14 +368,21 @@ function PermissionsPanel({ t, currentUser }) {
       await supabase.from('user_cities').delete().eq('user_id', selectedUser);
       if (cities.length > 0) await supabase.from('user_cities').insert(cities.map(city => ({ user_id: selectedUser, city })));
     }
-    // Save special (includes birthday, departments for dir/admin/dev editing)
+    // Save special (birthday, departments, is_dev for dir/admin/dev editing)
     await supabase.from('user_special').upsert({
       user_id: selectedUser,
       is_tovarovyed: special.is_tovarovyed,
-      check_access: special.check_access,
+      is_dev: special.is_dev,
       birthday: special.birthday || null,
       departments: special.departments,
     }, { onConflict: 'user_id' });
+    // check_access lives in profiles — only admin can change it
+    if (currentUser.role === 'admin') {
+      await supabase.from('profiles').upsert(
+        { user_id: selectedUser, check_access: profileCheckAccess },
+        { onConflict: 'user_id' }
+      );
+    }
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -527,9 +490,23 @@ function PermissionsPanel({ t, currentUser }) {
                     <span style={{ color:t.text2, fontSize:11, marginLeft:8 }}>— право вносить цены через ассистента</span>
                   </div>
                 </label>
+                {(() => {
+                  const canAssignDev = currentUser.role === 'admin' || currentUser.role === 'dir';
+                  return (
+                    <label style={{ display:'flex', alignItems:'center', gap:10, cursor: canAssignDev ? 'pointer' : 'default', opacity: canAssignDev ? 1 : 0.45 }}>
+                      <input type="checkbox" checked={!!special.is_dev} onChange={() => canAssignDev && setSpecial(s => ({...s, is_dev: !s.is_dev}))}
+                        disabled={!canAssignDev}
+                        style={{ accentColor:'#E8263A', width:16, height:16, cursor: canAssignDev ? 'pointer' : 'default' }} />
+                      <div>
+                        <span style={{ color:t.text, fontSize:13, fontWeight:600 }}>Dev</span>
+                        <span style={{ color:t.text2, fontSize:11, marginLeft:8 }}>— доступ к управлению пользователями и настройкам</span>
+                      </div>
+                    </label>
+                  );
+                })()}
                 {currentUser.role === 'admin' && (
                   <label style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer' }}>
-                    <input type="checkbox" checked={!!special.check_access} onChange={() => setSpecial(s => ({...s, check_access: !s.check_access}))}
+                    <input type="checkbox" checked={profileCheckAccess} onChange={() => setProfileCheckAccess(v => !v)}
                       style={{ accentColor:'#E8263A', width:16, height:16, cursor:'pointer' }} />
                     <div>
                       <span style={{ color:t.text, fontSize:13, fontWeight:600 }}>🟢 Кто в сети</span>

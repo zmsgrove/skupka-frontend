@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { supabase } from '../supabase';
+import { playSound } from '../utils/sound';
 import { radius, fib } from '../theme';
 import LeadCard from './LeadCard';
 import LeadModal from './LeadModal';
@@ -67,7 +68,7 @@ export default function KanbanBoard({ city, user, theme, settings = {} }) {
   useEffect(() => {
     fetchLeads();
     const channel = supabase.channel(`leads-${city}`)
-      .on('postgres_changes',{event:'*',schema:'public',table:'leads'},() => fetchLeads())
+      .on('postgres_changes',{event:'*',schema:'public',table:'leads'}, (payload) => { fetchLeads(); if (payload.eventType === 'INSERT') playSound('new_lead'); })
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, [city, fetchLeads]);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../supabase';
+import { playSound } from '../utils/sound';
 
 const EMOJIS = ['👍','❤️','😂','😮','😢','🔥'];
 
@@ -54,7 +55,12 @@ export default function ChatPage({ user, theme, onUnreadChange }) {
     }
     fetchMessages();
     const ch = supabase.channel(`chat-${activeChat.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages', filter: `chat_id=eq.${activeChat.id}` }, fetchMessages)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages', filter: `chat_id=eq.${activeChat.id}` }, (payload) => {
+        fetchMessages();
+        if (payload.eventType === 'INSERT' && payload.new?.user_id !== user.username) {
+          playSound('chat_msg');
+        }
+      })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_reactions' }, fetchMessages)
       .subscribe();
     return () => { cancelled = true; supabase.removeChannel(ch); };
