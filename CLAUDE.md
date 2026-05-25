@@ -8,7 +8,7 @@
 - Wazzup — WhatsApp интеграция
 - GitHub: zmsgrove/skupka-frontend и zmsgrove/skupka-backend
 
-## Текущая версия: 2.3.0
+## Текущая версия: 2.4.0
 
 ## Дорожная карта
 
@@ -24,17 +24,9 @@
 - 2.2.5 — орбиты + цвет + смена + доступы объединённый
 - 2.2.6 — умный бот Wazzup, ТГ формат, разделение смены, анимация, фикс Supabase
 - 2.3.0 — настройки 2 колонки, мобильная адаптация, фильтры дат
+- 2.4.0 — Лента, Сотрудники, Каналы, ОВН заглушка, новые роли okk/ovn/smm/dev
 
 ### Впереди 📋
-
-#### 2.4.0 — Лента, Сотрудники, Каналы
-- Лента: посты/фото, лайки, комментарии, опросы, закреплённые объявления
-- Автопосты: обновления CRM, топ недели/месяца, сдача отчётов, ДР
-- Сотрудники: справочник, карточки, отделы
-- Каналы: Instagram Уральск/Атырау/Актобе + WhatsApp
-- ОВН: кнопка в сайдбаре, заглушка «В будущих обновлениях»
-- Новые роли: okk, ovn, smm, dev
-- Настройки: dir в списке (только товаровед/okk), admin виден только себе
 
 #### 2.5.0 — График работы
 - Создают: admin/dir/dev для админ состава, rgmu/rgma для СПО
@@ -83,6 +75,7 @@ src/App.jsx — главный файл, вся логика
 src/auth.js — авторизация, все роли
 src/theme.js — 10 тем оформления
 src/supabase.js — подключение к БД
+src/permissions.js — логика прав доступа, FULL_ACCESS_ROLES, DEPT_ROLES, PAGES
 src/components:
   - KanbanBoard — канбан доска Wazzup
   - LeadCard — карточка заявки
@@ -103,9 +96,11 @@ src/components:
   - TasksPage — задачи
   - SummaryPanel — сводка
   - Calculator — калькулятор
-  - PlaceholderPages — заглушки
+  - PlaceholderPages — заглушки (TildaPage, OvnPage)
   - CrmAssistant — ИИ ассистент (временно скрыт, ждёт баланс API)
-  - permissions.js — логика прав доступа
+  - FeedPage — лента (посты, лайки, комментарии, опросы, автопосты)
+  - EmployeesPage — справочник сотрудников (карточки, отделы, редактирование)
+  - ChannelsPage — каналы Instagram и WhatsApp (ссылки)
 
 ## Пользователи системы
 | Логин | Имя | Должность | Роль | Доступ |
@@ -136,10 +131,10 @@ src/components:
 - **dev** — назначает dir/admin, доступ к управлению пользователями и настройками (новая, 2.4.0)
 
 ## Кто управляет доступами
-- admin — настраивает всех, не отображается в списке
-- dir — в списке, может менять только товаровед и okk другим
-- dev — доступ к настройкам пользователей как у dir
-- В списке никогда не показывать admin
+- admin — настраивает всех, в списке виден только себе
+- dir — в списке, можно менять только товаровед и отделы (полная таблица прав скрыта)
+- dev — доступ к настройкам пользователей наравне с dir/admin
+- Лента и Сотрудники — галочки всегда включены, нельзя снять (ALWAYS_VIEW в permissions.js)
 
 ## Города и филиалы
 - Уральск: Курмангазы 162 (k162), Северо-Восток 47 (sv47)
@@ -152,7 +147,12 @@ chat_messages, chat_reactions, chat_reads, tasks, task_observers,
 task_checklist, task_comments, task_history, task_templates, task_tags,
 task_views, task_favorites, kassa_reports, kassa_comments, zrs_requests,
 zrs_comments, shifts_spo, shifts_admin, user_settings, assistant_history,
-price_list, user_permissions, user_cities, user_special
+price_list, user_permissions, user_cities, user_special,
+feed_posts, feed_likes, feed_comments, feed_polls, feed_poll_votes
+
+### user_special — расширенные поля (v2.4.0)
+is_tovarovyed BOOL, phone TEXT, address TEXT, birthday DATE,
+start_date DATE, departments JSONB
 
 ## CRM Ассистент (на паузе)
 - Временно скрыт из сайдбара — нет баланса Anthropic API
