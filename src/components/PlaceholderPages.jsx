@@ -16,6 +16,10 @@ export function TildaPage({ theme }) {
   return <PlaceholderPage emoji="🌐" title="Tilda" version="Скоро" versionColor="#f97316" slogan="Заявки прямо с сайта!" description="Интеграция с Tilda — заявки с сайта автоматически попадают в CRM." features={['🔗 Webhook интеграция с Tilda','📥 Заявки с сайта в канбан автоматически','🏙️ Автоматическое определение города','📊 Статистика заявок с сайта','🔔 Уведомления в Telegram при новой заявке']} t={theme} comingSoon />;
 }
 
+export function OvnPage({ theme }) {
+  return <PlaceholderPage emoji="📹" title="ОВН" version="2.7.0" versionColor="#8b5cf6" slogan="Отдел видеонаблюдения" description="Модуль фиксации нарушений с канбан-доской, категориями и уведомлениями в ленту." features={['📋 Канбан: Зафиксировано → На отработке → Закрыто','🔖 Категории нарушений: предупреждение, штраф','👤 Нарушитель, отрабатывающий, комментарий','🔔 Уведомление нарушителю и отрабатывающему в ленту']} t={theme} comingSoon />;
+}
+
 function PlaceholderPage({ emoji, title, version, versionColor, slogan, description, features, t, comingSoon }) {
   return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'70vh', padding:24 }}>

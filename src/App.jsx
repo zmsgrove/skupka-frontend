@@ -14,7 +14,10 @@ import TasksPage from './components/TasksPage';
 import SummaryPanel from './components/SummaryPanel';
 import Calculator from './components/Calculator';
 import CrmAssistant from './components/CrmAssistant';
-import { TildaPage } from './components/PlaceholderPages';
+import { TildaPage, OvnPage } from './components/PlaceholderPages';
+import FeedPage from './components/FeedPage';
+import EmployeesPage from './components/EmployeesPage';
+import ChannelsPage from './components/ChannelsPage';
 import { getSession, clearSession } from './auth';
 import { themes, getTheme, saveTheme, radius, fib, glass } from './theme';
 import { supabase } from './supabase';
@@ -153,25 +156,34 @@ function Logo() {
 }
 
 function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, canSeeZrs, canSeeAttendanceSpo, canSeeAttendanceAdmin, totalUnread, chatUnread, collapsed, setCollapsed, mobileOpen, setMobileOpen, setShowCalc, t }) {
+  const go = (tab) => { setActiveTab(tab); setMobileOpen(false); };
   const items = (forMobile) => (
     <>
       <div style={{ flex:1, padding:'10px 6px', display:'flex', flexDirection:'column', gap:2, overflowY:'auto' }}>
-        <SideItem icon="💬" label="WAZZUP"    active={activeTab==='board'}      onClick={() => { setActiveTab('board');      setMobileOpen(false); }} badge={totalUnread} collapsed={!forMobile&&collapsed} t={t} />
-        {canSeeDashboard && <SideItem icon="📊" label="Дашборд"   active={activeTab==='dashboard'}   onClick={() => { setActiveTab('dashboard');setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />}
-        <SideItem icon="🗨️" label="Чат"       active={activeTab==='chat'}        onClick={() => { setActiveTab('chat');       setMobileOpen(false); }} badge={chatUnread} collapsed={!forMobile&&collapsed} t={t} />
-        <SideItem icon="✅" label="Задачи"    active={activeTab==='tasks'}       onClick={() => { setActiveTab('tasks');      setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
-        <SideItem icon="💰" label="Касса"     active={activeTab==='kassa'}       onClick={() => { setActiveTab('kassa');      setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
-        {canSeeZrs && <SideItem icon="📝" label="ЗРС"       active={activeTab==='zrs'}         onClick={() => { setActiveTab('zrs');        setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />}
-        {canSeeAttendanceSpo   && <SideItem icon="🕐" label="Отметка на смене"    active={activeTab==='attendance_spo'}   onClick={() => { setActiveTab('attendance_spo');   setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />}
-        {canSeeAttendanceAdmin && <SideItem icon="📍" label="Отметка о прибытии" active={activeTab==='attendance_admin'} onClick={() => { setActiveTab('attendance_admin'); setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />}
-        <SideItem icon="🌐" label="Tilda"     active={activeTab==='tilda'}       onClick={() => { setActiveTab('tilda');      setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
+        {/* Основные */}
+        <SideItem icon="📰" label="Лента"       active={activeTab==='feed'}            onClick={() => go('feed')}             collapsed={!forMobile&&collapsed} t={t} />
+        <SideItem icon="💬" label="WAZZUP"       active={activeTab==='board'}           onClick={() => go('board')}            badge={totalUnread} collapsed={!forMobile&&collapsed} t={t} />
+        {canSeeDashboard && <SideItem icon="📊" label="Дашборд"    active={activeTab==='dashboard'}      onClick={() => go('dashboard')}        collapsed={!forMobile&&collapsed} t={t} />}
+        <SideItem icon="🗨️" label="Чат"          active={activeTab==='chat'}            onClick={() => go('chat')}             badge={chatUnread} collapsed={!forMobile&&collapsed} t={t} />
+        <SideItem icon="✅" label="Задачи"       active={activeTab==='tasks'}           onClick={() => go('tasks')}            collapsed={!forMobile&&collapsed} t={t} />
+        <SideItem icon="💰" label="Касса"        active={activeTab==='kassa'}           onClick={() => go('kassa')}            collapsed={!forMobile&&collapsed} t={t} />
+        {canSeeZrs && <SideItem icon="📋" label="ЗРС"         active={activeTab==='zrs'}             onClick={() => go('zrs')}              collapsed={!forMobile&&collapsed} t={t} />}
+        {canSeeAttendanceSpo   && <SideItem icon="🕐" label="Отметка на смене"    active={activeTab==='attendance_spo'}   onClick={() => go('attendance_spo')}   collapsed={!forMobile&&collapsed} t={t} />}
+        {canSeeAttendanceAdmin && <SideItem icon="📍" label="Отметка о прибытии" active={activeTab==='attendance_admin'} onClick={() => go('attendance_admin')} collapsed={!forMobile&&collapsed} t={t} />}
+        <SideItem icon="🌐" label="Tilda"        active={activeTab==='tilda'}           onClick={() => go('tilda')}            collapsed={!forMobile&&collapsed} t={t} />
+        {/* Группа — команда и каналы */}
+        <div style={{ height:1, background:t.border, margin:'4px 0' }} />
+        <SideItem icon="👥" label="Сотрудники"   active={activeTab==='employees'}       onClick={() => go('employees')}        collapsed={!forMobile&&collapsed} t={t} />
+        <SideItem icon="📡" label="Каналы"       active={activeTab==='channels'}        onClick={() => go('channels')}         collapsed={!forMobile&&collapsed} t={t} />
+        <SideItem icon="📹" label="ОВН"          active={activeTab==='ovn'}             onClick={() => go('ovn')}              collapsed={!forMobile&&collapsed} t={t} />
+        {/* Нижняя группа */}
         <div style={{ flex:1 }} />
         <div style={{ height:1, background:t.border, margin:'6px 0' }} />
-        <SideItem icon="🧮" label="Калькулятор" active={false} onClick={() => { setShowCalc(true); setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
-        <SideItem icon="🗄️" label="Архив"     active={activeTab==='archive'}     onClick={() => { setActiveTab('archive');    setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
-        {canSeeDeleted && <SideItem icon="🗑️" label="Удалённые" active={activeTab==='deleted'} onClick={() => { setActiveTab('deleted'); setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />}
+        <SideItem icon="🧮" label="Калькулятор"  active={false}                         onClick={() => { setShowCalc(true); setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
+        <SideItem icon="📦" label="Архив"        active={activeTab==='archive'}         onClick={() => go('archive')}          collapsed={!forMobile&&collapsed} t={t} />
+        {canSeeDeleted && <SideItem icon="🗑️" label="Удалённые"  active={activeTab==='deleted'}         onClick={() => go('deleted')}          collapsed={!forMobile&&collapsed} t={t} />}
         <div style={{ height:1, background:t.border, margin:'6px 0' }} />
-        <SideItem icon="⚙️" label="Настройки" active={activeTab==='settings'}    onClick={() => { setActiveTab('settings');   setMobileOpen(false); }} collapsed={!forMobile&&collapsed} t={t} />
+        <SideItem icon="⚙️" label="Настройки"   active={activeTab==='settings'}        onClick={() => go('settings')}         collapsed={!forMobile&&collapsed} t={t} />
       </div>
       {!forMobile && (
         <div style={{ padding:'8px 6px', borderTop:`1px solid ${t.border}` }}>
@@ -404,7 +416,7 @@ export default function App() {
         <Sidebar
           activeTab={activeTab} setActiveTab={setActiveTab}
           canSeeDashboard={canSeeDashboard} canSeeDeleted={canSeeDeleted}
-          canSeeZrs={user && ['admin','dir','zamdir','sysadmin','rev','rgmu','rgma'].includes(user.role)}
+          canSeeZrs={user && ([...FULL_ACCESS_ROLES, 'rev', 'rgmu', 'rgma'].includes(user.role) || userPerms['zrs']?.can_view === true)}
           canSeeAttendanceSpo={canSeeAttendanceSpo} canSeeAttendanceAdmin={canSeeAttendanceAdmin}
           totalUnread={totalUnread} chatUnread={chatUnread}
           collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed}
@@ -413,6 +425,7 @@ export default function App() {
           t={t}
         />
         <main style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
+          {activeTab==='feed'        && <FeedPage user={user} theme={t} />}
           {activeTab==='board'      && activeCity && <KanbanBoard key={activeCity} city={activeCity} user={user} theme={t} settings={settings} />}
           {activeTab==='dashboard'  && canSeeDashboard && <Dashboard user={user} theme={t} />}
           {activeTab==='chat'       && <ChatPage user={user} theme={t} onUnreadChange={setChatUnread} />}
@@ -422,6 +435,9 @@ export default function App() {
           {activeTab==='attendance_spo'   && canSeeAttendanceSpo   && <AttendanceSpo   user={user} theme={t} />}
           {activeTab==='attendance_admin' && canSeeAttendanceAdmin && <AttendanceAdmin user={user} theme={t} />}
           {activeTab==='tilda'      && <TildaPage theme={t} />}
+          {activeTab==='employees'  && <EmployeesPage user={user} theme={t} />}
+          {activeTab==='channels'   && <ChannelsPage theme={t} />}
+          {activeTab==='ovn'        && <OvnPage theme={t} />}
           {activeTab==='archive'    && <ArchiveView user={user} theme={t} />}
           {activeTab==='deleted'    && canSeeDeleted && <DeletedView user={user} theme={t} />}
           {activeTab==='settings'   && <SettingsPage user={user} theme={t} settings={settings} onUpdate={updateSettings} />}

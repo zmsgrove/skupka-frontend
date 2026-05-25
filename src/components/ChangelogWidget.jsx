@@ -2,6 +2,23 @@ import React, { useState } from 'react';
 
 const CHANGELOG = [
   {
+    version: '2.4.0',
+    date: 'Май 2026',
+    color: '#E8263A',
+    changes: [
+      'Лента: посты с фото, лайки, комментарии, опросы с голосованием',
+      'Лента: закреплённые объявления (dir/admin/zamdir/sysadmin)',
+      'Лента: автопосты — обновление CRM v2.4.0, дни рождения сотрудников',
+      'Сотрудники: справочник с карточками, отделами, датами, контактами',
+      'Каналы: Instagram Уральск/Атырау/Актобе + WhatsApp канал',
+      'ОВН: заглушка «В будущих обновлениях» (2.7.0)',
+      'Новые роли: okk, ovn, smm, dev (права как у dir)',
+      'Сайдбар: новый порядок вкладок, группа Сотрудники/Каналы/ОВН',
+      'Настройки: dev управляет пользователями наравне с dir',
+      'Настройки: admin виден в списке только себе',
+    ],
+  },
+  {
     version: '2.3.0',
     date: 'Май 2026',
     color: '#E8263A',
@@ -337,7 +354,7 @@ export default function ChangelogWidget({ theme }) {
     <>
       <button onClick={() => setOpen(!open)} title="История обновлений" style={{ background:t.surface2, border:`1px solid ${t.border}`, borderRadius:8, color:'#8b5cf6', fontSize:13, padding:'5px 10px', cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontFamily:'Inter,sans-serif' }}>
         📋
-        <span style={{ background:'#E8263A', color:'#fff', fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:10, fontFamily:'Unbounded,sans-serif' }}>2.3.0</span>
+        <span style={{ background:'#E8263A', color:'#fff', fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:10, fontFamily:'Unbounded,sans-serif' }}>2.4.0</span>
       </button>
       {open && (
         <>
@@ -346,7 +363,7 @@ export default function ChangelogWidget({ theme }) {
             <div style={{ padding:'16px 20px', borderBottom:`1px solid ${t.border}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
               <div>
                 <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:13, fontWeight:700, color:t.text }}>📋 История обновлений</div>
-                <div style={{ color:t.text2, fontSize:11, marginTop:2 }}>SKUPKA CRM · v2.3.0</div>
+                <div style={{ color:t.text2, fontSize:11, marginTop:2 }}>SKUPKA CRM · v2.4.0</div>
               </div>
               <button onClick={() => setOpen(false)} style={{ background:'transparent', border:'none', color:t.text2, fontSize:16, cursor:'pointer' }}>✕</button>
             </div>
@@ -371,7 +388,7 @@ export default function ChangelogWidget({ theme }) {
               ))}
             </div>
             <div style={{ padding:'12px 20px', borderTop:`1px solid ${t.border}`, textAlign:'center', color:t.text2, fontSize:11 }}>
-              SKUPKA CRM · <span style={{ color:'#E8263A' }}>2.3.0</span> · 2026
+              SKUPKA CRM · <span style={{ color:'#E8263A' }}>2.4.0</span> · 2026
             </div>
           </div>
         </>

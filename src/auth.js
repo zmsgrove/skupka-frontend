@@ -1,6 +1,7 @@
 // SKUPKA CRM — Пользователи системы
 // Пароли хранятся в файле — не публикуй этот файл!
 // Роли: admin, dir, zamdir, sysadmin, rev, rgmu, rgma, uralsk, atyray, aktobe
+// Роли v2.4.0: okk, ovn, smm, dev (назначаются dir/admin, прописываются вручную)
 
 export const USERS = {
   maksatovs: {

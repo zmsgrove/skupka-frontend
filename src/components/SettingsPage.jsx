@@ -54,8 +54,8 @@ function playSound(sound, volume) {
 
 export default function SettingsPage({ user, theme, settings, onUpdate }) {
   const t = theme;
-  const isAdmin = ['admin','dir','zamdir','sysadmin','rev','rgmu','rgma'].includes(user.role);
-  const canManagePermissions = ['admin','dir'].includes(user.role);
+  const isAdmin = ['admin','dir','zamdir','sysadmin','rev','rgmu','rgma','dev','okk','ovn','smm'].includes(user.role);
+  const canManagePermissions = ['admin','dir','dev'].includes(user.role);
   const [summaryConfig, setSummaryConfig] = useState(DEFAULT_SUMMARY_CONFIG);
   const [summarySaving, setSummarySaving] = useState(false);
 
@@ -276,27 +276,33 @@ function Toggle({ value, onChange, t }) {
   );
 }
 
-// ─── Панель управления правами (только admin и dir) ───────────
+// ─── Панель управления правами (admin, dir, dev) ───────────
 const ALL_CITIES = ['Атырау','Актобе','Уральск'];
+const DEPARTMENTS = ['Руководство', 'Разработка', 'Продажи', 'Товароведение', 'ОКК', 'Маркетинг', 'ОВН'];
+const ALWAYS_VIEW = ['feed', 'employees', 'channels'];
 
 function PermissionsPanel({ t, currentUser }) {
   const manageableUsers = Object.entries(USERS).filter(([id, u]) => {
+    // admin виден только себе
+    if (u.role === 'admin') return currentUser.role === 'admin';
+    // не показывать себя (кроме admin смотрит себя)
     if (id === currentUser.username) return false;
-    if (['admin','dir'].includes(u.role)) return false;
     return true;
   });
   const [selectedUser, setSelectedUser] = useState('');
   const [cities, setCities]         = useState([]);
   const [perms, setPerms]           = useState({});
-  const [special, setSpecial]       = useState({ is_tovarovyed: false });
+  const [special, setSpecial]       = useState({ is_tovarovyed: false, birthday: '', departments: [] });
   const [saving, setSaving]         = useState(false);
   const [saved, setSaved]           = useState(false);
+
+  const selectedRole = selectedUser ? USERS[selectedUser]?.role : null;
+  const isDirSelected = selectedRole === 'dir';
 
   useEffect(() => {
     if (!selectedUser) return;
     const u = USERS[selectedUser];
     const defaults = getDefaultPermissions(u.role);
-    // Load from Supabase
     supabase.from('user_permissions').select('*').eq('user_id', selectedUser)
       .then(({ data }) => {
         if (data && data.length > 0) {
@@ -308,8 +314,8 @@ function PermissionsPanel({ t, currentUser }) {
     supabase.from('user_cities').select('city').eq('user_id', selectedUser)
       .then(({ data }) => { setCities(data && data.length ? data.map(r=>r.city) : u.cities); });
     supabase.from('user_special').select('*').eq('user_id', selectedUser).single()
-      .then(({ data }) => { setSpecial(data || { is_tovarovyed: false }); })
-      .catch(() => setSpecial({ is_tovarovyed: false }));
+      .then(({ data }) => { setSpecial(data ? { is_tovarovyed: !!data.is_tovarovyed, birthday: data.birthday || '', departments: data.departments || [] } : { is_tovarovyed: false, birthday: '', departments: [] }); })
+      .catch(() => setSpecial({ is_tovarovyed: false, birthday: '', departments: [] }));
   }, [selectedUser]);
 
   const toggleCity = (city) => setCities(prev => prev.includes(city) ? prev.filter(c=>c!==city) : [...prev, city]);
@@ -322,22 +328,29 @@ function PermissionsPanel({ t, currentUser }) {
   const save = async () => {
     if (!selectedUser) return;
     setSaving(true);
-    // Save permissions
-    const rows = PAGES.map(page => ({
-      user_id: selectedUser, page,
-      can_view:   perms[page]?.can_view   || false,
-      can_create: perms[page]?.can_create || false,
-      can_edit:   perms[page]?.can_edit   || false,
-      can_delete: perms[page]?.can_delete || false,
-      updated_by: currentUser.username,
-      updated_at: new Date().toISOString(),
-    }));
-    await supabase.from('user_permissions').upsert(rows, { onConflict: 'user_id,page' });
-    // Save cities
-    await supabase.from('user_cities').delete().eq('user_id', selectedUser);
-    if (cities.length > 0) await supabase.from('user_cities').insert(cities.map(city => ({ user_id: selectedUser, city })));
-    // Save special
-    await supabase.from('user_special').upsert({ user_id: selectedUser, is_tovarovyed: special.is_tovarovyed }, { onConflict: 'user_id' });
+    if (!isDirSelected) {
+      // Save permissions (only for non-dir users)
+      const rows = PAGES.map(page => ({
+        user_id: selectedUser, page,
+        can_view:   ALWAYS_VIEW.includes(page) ? true : (perms[page]?.can_view   || false),
+        can_create: perms[page]?.can_create || false,
+        can_edit:   perms[page]?.can_edit   || false,
+        can_delete: perms[page]?.can_delete || false,
+        updated_by: currentUser.username,
+        updated_at: new Date().toISOString(),
+      }));
+      await supabase.from('user_permissions').upsert(rows, { onConflict: 'user_id,page' });
+      // Save cities
+      await supabase.from('user_cities').delete().eq('user_id', selectedUser);
+      if (cities.length > 0) await supabase.from('user_cities').insert(cities.map(city => ({ user_id: selectedUser, city })));
+    }
+    // Save special (includes birthday, departments for dir/admin/dev editing)
+    await supabase.from('user_special').upsert({
+      user_id: selectedUser,
+      is_tovarovyed: special.is_tovarovyed,
+      birthday: special.birthday || null,
+      departments: special.departments,
+    }, { onConflict: 'user_id' });
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -368,70 +381,106 @@ function PermissionsPanel({ t, currentUser }) {
 
         {selectedUser && (
           <>
-            {/* Города */}
-            <div>
-              <div style={{ color:t.text2, fontSize:12, marginBottom:6 }}>🏙️ Города</div>
-              <div style={{ display:'flex', gap:8 }}>
-                {ALL_CITIES.map(city => (
-                  <button key={city} onClick={() => toggleCity(city)} style={{
-                    flex:1, background: cities.includes(city) ? 'rgba(232,38,58,0.15)' : 'transparent',
-                    border:`1px solid ${cities.includes(city) ? 'rgba(232,38,58,0.5)' : t.border}`,
-                    borderRadius:8, color: cities.includes(city) ? '#E8263A' : t.text2,
-                    fontSize:12, padding:'7px', cursor:'pointer', transition:'all 0.15s',
-                  }}>{city}</button>
-                ))}
+            {/* Для dir — только специальные права */}
+            {isDirSelected && (
+              <div style={{ background:`${t.surface2}66`, borderRadius:10, padding:'10px 12px', marginBottom:4 }}>
+                <div style={{ color:t.text2, fontSize:11, marginBottom:6 }}>ℹ️ Для директора доступны только специальные права</div>
               </div>
-            </div>
+            )}
 
-            {/* Таблица доступов */}
-            <div>
-              <div style={{ color:t.text2, fontSize:12, marginBottom:8 }}>📋 Доступы по разделам</div>
-              <div style={{ overflowX:'auto' }}>
-                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign:'left', color:t.text2, padding:'6px 8px', borderBottom:`1px solid ${t.border}` }}>Раздел</th>
-                      <th style={{ color:t.text2, padding:'6px 8px', borderBottom:`1px solid ${t.border}`, textAlign:'center' }}>Доступ</th>
-                      {PERM_COLS.map(c => (
-                        <th key={c.key} style={{ color:t.text2, padding:'6px 8px', borderBottom:`1px solid ${t.border}`, textAlign:'center', whiteSpace:'nowrap' }}>{c.label}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {PAGES.map(page => {
-                      const p = perms[page] || {};
-                      return (
-                        <tr key={page} style={{ borderBottom:`1px solid ${t.border}22` }}>
-                          <td style={{ padding:'6px 8px', color:t.text }}>{PAGE_LABELS[page]}</td>
-                          <td style={{ padding:'6px 8px', textAlign:'center' }}>
-                            <input type="checkbox" checked={!!p.can_view} onChange={() => toggleAccess(page)} style={{ accentColor:'#E8263A', cursor:'pointer' }} />
-                          </td>
-                          {PERM_COLS.map(c => (
-                            <td key={c.key} style={{ padding:'6px 8px', textAlign:'center' }}>
-                              <input type="checkbox" checked={!!p[c.key]} onChange={() => togglePerm(page, c.key)}
-                                disabled={c.key !== 'can_view' && !p.can_view}
-                                style={{ accentColor:'#E8263A', cursor: (c.key !== 'can_view' && !p.can_view) ? 'default' : 'pointer', opacity: (c.key !== 'can_view' && !p.can_view) ? 0.3 : 1 }} />
-                            </td>
-                          ))}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+            {/* Города — только не для dir */}
+            {!isDirSelected && (
+              <div>
+                <div style={{ color:t.text2, fontSize:12, marginBottom:6 }}>🏙️ Города</div>
+                <div style={{ display:'flex', gap:8 }}>
+                  {ALL_CITIES.map(city => (
+                    <button key={city} onClick={() => toggleCity(city)} style={{
+                      flex:1, background: cities.includes(city) ? 'rgba(232,38,58,0.15)' : 'transparent',
+                      border:`1px solid ${cities.includes(city) ? 'rgba(232,38,58,0.5)' : t.border}`,
+                      borderRadius:8, color: cities.includes(city) ? '#E8263A' : t.text2,
+                      fontSize:12, padding:'7px', cursor:'pointer', transition:'all 0.15s',
+                    }}>{city}</button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Таблица доступов — только не для dir */}
+            {!isDirSelected && (
+              <div>
+                <div style={{ color:t.text2, fontSize:12, marginBottom:8 }}>📋 Доступы по разделам</div>
+                <div style={{ overflowX:'auto' }}>
+                  <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign:'left', color:t.text2, padding:'6px 8px', borderBottom:`1px solid ${t.border}` }}>Раздел</th>
+                        <th style={{ color:t.text2, padding:'6px 8px', borderBottom:`1px solid ${t.border}`, textAlign:'center' }}>Доступ</th>
+                        {PERM_COLS.map(c => (
+                          <th key={c.key} style={{ color:t.text2, padding:'6px 8px', borderBottom:`1px solid ${t.border}`, textAlign:'center', whiteSpace:'nowrap' }}>{c.label}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {PAGES.map(page => {
+                        const p = perms[page] || {};
+                        const locked = ALWAYS_VIEW.includes(page);
+                        return (
+                          <tr key={page} style={{ borderBottom:`1px solid ${t.border}22`, opacity: locked ? 0.6 : 1 }}>
+                            <td style={{ padding:'6px 8px', color:t.text }}>{PAGE_LABELS[page]}</td>
+                            <td style={{ padding:'6px 8px', textAlign:'center' }}>
+                              <input type="checkbox" checked={locked ? true : !!p.can_view} onChange={() => !locked && toggleAccess(page)} disabled={locked} style={{ accentColor:'#E8263A', cursor: locked ? 'default' : 'pointer' }} />
+                            </td>
+                            {PERM_COLS.map(c => (
+                              <td key={c.key} style={{ padding:'6px 8px', textAlign:'center' }}>
+                                <input type="checkbox" checked={locked && c.key === 'can_view' ? true : !!p[c.key]} onChange={() => !locked && togglePerm(page, c.key)}
+                                  disabled={locked || (c.key !== 'can_view' && !p.can_view)}
+                                  style={{ accentColor:'#E8263A', cursor: (locked || (c.key !== 'can_view' && !p.can_view)) ? 'default' : 'pointer', opacity: (c.key !== 'can_view' && !p.can_view) ? 0.3 : 1 }} />
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
             {/* Специальные права */}
             <div>
               <div style={{ color:t.text2, fontSize:12, marginBottom:8 }}>🔑 Специальные права</div>
-              <label style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer' }}>
-                <input type="checkbox" checked={special.is_tovarovyed} onChange={() => setSpecial(s => ({...s, is_tovarovyed: !s.is_tovarovyed}))}
-                  style={{ accentColor:'#E8263A', width:16, height:16, cursor:'pointer' }} />
+              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                <label style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer' }}>
+                  <input type="checkbox" checked={special.is_tovarovyed} onChange={() => setSpecial(s => ({...s, is_tovarovyed: !s.is_tovarovyed}))}
+                    style={{ accentColor:'#E8263A', width:16, height:16, cursor:'pointer' }} />
+                  <div>
+                    <span style={{ color:t.text, fontSize:13, fontWeight:600 }}>Товаровед</span>
+                    <span style={{ color:t.text2, fontSize:11, marginLeft:8 }}>— право вносить цены через ассистента</span>
+                  </div>
+                </label>
                 <div>
-                  <span style={{ color:t.text, fontSize:13, fontWeight:600 }}>Товаровед</span>
-                  <span style={{ color:t.text2, fontSize:11, marginLeft:8 }}>— право вносить цены через ассистента</span>
+                  <div style={{ color:t.text2, fontSize:11, marginBottom:4 }}>🎂 Дата рождения</div>
+                  <input type="date" value={special.birthday || ''} onChange={e => setSpecial(s => ({...s, birthday: e.target.value}))}
+                    style={{ background:t.inputBg, border:`1px solid ${t.border}`, borderRadius:8, color:t.text, fontSize:12, padding:'7px 10px', outline:'none', fontFamily:'Inter,sans-serif' }} />
+                  {selectedUser === 'zmsgrove' && <div style={{ color:t.text2, fontSize:10, marginTop:3 }}>ДР admin скрыто — автопост не создаётся</div>}
                 </div>
-              </label>
+                <div>
+                  <div style={{ color:t.text2, fontSize:11, marginBottom:6 }}>🏢 Отделы</div>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
+                    {DEPARTMENTS.map(d => {
+                      const sel = (special.departments || []).includes(d);
+                      return (
+                        <button key={d} onClick={() => setSpecial(s => ({ ...s, departments: sel ? (s.departments||[]).filter(x=>x!==d) : [...(s.departments||[]), d] }))} style={{
+                          background: sel ? 'rgba(232,38,58,0.12)' : 'transparent',
+                          border:`1px solid ${sel ? 'rgba(232,38,58,0.4)' : t.border}`,
+                          borderRadius:20, color: sel ? '#E8263A' : t.text2,
+                          fontSize:11, padding:'3px 10px', cursor:'pointer', transition:'all 0.15s',
+                        }}>{d}</button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <button onClick={save} disabled={saving} style={{
