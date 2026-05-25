@@ -52,16 +52,47 @@ function playSound(sound, volume) {
   } catch(e) {}
 }
 
+const SOUND_FILES = ['OK.mp3','2toon.mp3','classic.mp3','crash.mp3','disck.mp3','error.mp3','hw.mp3','old.mp3','old2.mp3','rim.mp3','steam.mp3','toon.mp3'];
+
+const SOUND_EVENTS = [
+  { key:'wazzup_msg',     label:'📱 Новое сообщение Wazzup' },
+  { key:'new_lead',       label:'🆕 Новая заявка' },
+  { key:'chat_msg',       label:'💬 Новое сообщение в чате' },
+  { key:'task_assign',    label:'✅ Новая задача назначена' },
+  { key:'task_deadline',  label:'⏰ Дедлайн задачи приближается' },
+  { key:'feed_like',      label:'👍 Лайк на пост' },
+  { key:'feed_comment',   label:'💬 Комментарий на пост' },
+  { key:'feed_announce',  label:'📢 Новое закреплённое объявление' },
+  { key:'birthday',       label:'🎂 День рождения сотрудника' },
+  { key:'late',           label:'⚠️ Опоздание зафиксировано' },
+  { key:'crm_update',     label:'🔄 Обновление CRM' },
+  { key:'save_success',   label:'✅ Успешное сохранение' },
+  { key:'save_error',     label:'❌ Ошибка' },
+];
+
+function playMp3(file, volume) {
+  try {
+    const audio = new Audio(`/sound/${file}`);
+    audio.volume = (volume ?? 40) / 100;
+    audio.play().catch(() => {});
+  } catch(e) {}
+}
+
 export default function SettingsPage({ user, theme, settings, onUpdate }) {
   const t = theme;
   const isAdmin = ['admin','dir','zamdir','sysadmin','rev','rgmu','rgma','dev','okk','ovn','smm'].includes(user.role);
   const canManagePermissions = ['admin','dir','dev'].includes(user.role);
   const [summaryConfig, setSummaryConfig] = useState(DEFAULT_SUMMARY_CONFIG);
   const [summarySaving, setSummarySaving] = useState(false);
+  const [soundSettings, setSoundSettings] = useState({});
+  const [soundSaving, setSoundSaving] = useState(false);
 
   useEffect(() => {
-    supabase.from('user_settings').select('summary_config').eq('user_id', user.username).single()
-      .then(({ data }) => { if (data?.summary_config) setSummaryConfig({ ...DEFAULT_SUMMARY_CONFIG, ...data.summary_config }); })
+    supabase.from('user_settings').select('summary_config, sound_settings').eq('user_id', user.username).single()
+      .then(({ data }) => {
+        if (data?.summary_config) setSummaryConfig({ ...DEFAULT_SUMMARY_CONFIG, ...data.summary_config });
+        if (data?.sound_settings) setSoundSettings(data.sound_settings);
+      })
       .catch(() => {});
   }, [user.username]);
 
@@ -90,6 +121,17 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
       { onConflict: 'user_id' }
     ).catch(() => {});
     setSummarySaving(false);
+  };
+
+  const handleSoundEvent = async (eventKey, file) => {
+    const next = { ...soundSettings, [eventKey]: file };
+    setSoundSettings(next);
+    setSoundSaving(true);
+    await supabase.from('user_settings').upsert(
+      { user_id: user.username, sound_settings: next, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id' }
+    ).catch(() => {});
+    setSoundSaving(false);
   };
 
   const volume      = settings.volume ?? 40;
@@ -235,6 +277,32 @@ export default function SettingsPage({ user, theme, settings, onUpdate }) {
         ))}
       </Section>
 
+      {/* Звуки событий */}
+      <Section title={`🔊 Звуки событий${soundSaving?' · Сохраняю...':''}`} t={t}>
+        <div style={{ padding:'10px 18px 6px', borderBottom:`1px solid ${t.border}22` }}>
+          <span style={{ color:t.text2, fontSize:12 }}>По умолчанию для всех событий установлен <b style={{ color:t.text }}>OK.mp3</b></span>
+        </div>
+        {SOUND_EVENTS.map(ev => {
+          const selected = soundSettings[ev.key] || 'OK.mp3';
+          return (
+            <div key={ev.key} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 18px', borderBottom:`1px solid ${t.border}22`, gap:12 }}>
+              <span style={{ color:t.text2, fontSize:13, flex:1 }}>{ev.label}</span>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <select value={selected} onChange={e => handleSoundEvent(ev.key, e.target.value)}
+                  style={{ background:t.inputBg||t.surface2, border:`1px solid ${t.border}`, borderRadius:6, color:t.text, fontSize:12, padding:'5px 8px', outline:'none', cursor:'pointer' }}>
+                  {SOUND_FILES.map(f => <option key={f} value={f}>{f}</option>)}
+                </select>
+                <button onClick={() => playMp3(selected, settings.volume ?? 40)}
+                  title="Прослушать"
+                  style={{ background:`${t.surface2||t.surface}`, border:`1px solid ${t.border}`, borderRadius:6, color:'#E8263A', fontSize:14, padding:'5px 10px', cursor:'pointer' }}>
+                  🔊
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </Section>
+
       </div>{/* end left column */}
 
       {/* Правая колонка — только dir/admin */}
@@ -292,7 +360,7 @@ function PermissionsPanel({ t, currentUser }) {
   const [selectedUser, setSelectedUser] = useState('');
   const [cities, setCities]         = useState([]);
   const [perms, setPerms]           = useState({});
-  const [special, setSpecial]       = useState({ is_tovarovyed: false, birthday: '', departments: [] });
+  const [special, setSpecial]       = useState({ is_tovarovyed: false, check_access: false, birthday: '', departments: [] });
   const [saving, setSaving]         = useState(false);
   const [saved, setSaved]           = useState(false);
 
@@ -314,8 +382,8 @@ function PermissionsPanel({ t, currentUser }) {
     supabase.from('user_cities').select('city').eq('user_id', selectedUser)
       .then(({ data }) => { setCities(data && data.length ? data.map(r=>r.city) : u.cities); });
     supabase.from('user_special').select('*').eq('user_id', selectedUser).single()
-      .then(({ data }) => { setSpecial(data ? { is_tovarovyed: !!data.is_tovarovyed, birthday: data.birthday || '', departments: data.departments || [] } : { is_tovarovyed: false, birthday: '', departments: [] }); })
-      .catch(() => setSpecial({ is_tovarovyed: false, birthday: '', departments: [] }));
+      .then(({ data }) => { setSpecial(data ? { is_tovarovyed: !!data.is_tovarovyed, check_access: !!data.check_access, birthday: data.birthday || '', departments: data.departments || [] } : { is_tovarovyed: false, check_access: false, birthday: '', departments: [] }); })
+      .catch(() => setSpecial({ is_tovarovyed: false, check_access: false, birthday: '', departments: [] }));
   }, [selectedUser]);
 
   const toggleCity = (city) => setCities(prev => prev.includes(city) ? prev.filter(c=>c!==city) : [...prev, city]);
@@ -348,6 +416,7 @@ function PermissionsPanel({ t, currentUser }) {
     await supabase.from('user_special').upsert({
       user_id: selectedUser,
       is_tovarovyed: special.is_tovarovyed,
+      check_access: special.check_access,
       birthday: special.birthday || null,
       departments: special.departments,
     }, { onConflict: 'user_id' });
@@ -458,6 +527,16 @@ function PermissionsPanel({ t, currentUser }) {
                     <span style={{ color:t.text2, fontSize:11, marginLeft:8 }}>— право вносить цены через ассистента</span>
                   </div>
                 </label>
+                {currentUser.role === 'admin' && (
+                  <label style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer' }}>
+                    <input type="checkbox" checked={!!special.check_access} onChange={() => setSpecial(s => ({...s, check_access: !s.check_access}))}
+                      style={{ accentColor:'#E8263A', width:16, height:16, cursor:'pointer' }} />
+                    <div>
+                      <span style={{ color:t.text, fontSize:13, fontWeight:600 }}>🟢 Кто в сети</span>
+                      <span style={{ color:t.text2, fontSize:11, marginLeft:8 }}>— видит страницу мониторинга онлайна</span>
+                    </div>
+                  </label>
+                )}
                 <div>
                   <div style={{ color:t.text2, fontSize:11, marginBottom:4 }}>🎂 Дата рождения</div>
                   <input type="date" value={special.birthday || ''} onChange={e => setSpecial(s => ({...s, birthday: e.target.value}))}

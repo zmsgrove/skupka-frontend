@@ -12,6 +12,7 @@ export const ALL_ROLES = [...FULL_ACCESS_ROLES, ...READ_ONLY_ROLES, ...RGM_ROLES
 export const PAGES = [
   'feed', 'board', 'dashboard', 'chat', 'tasks', 'kassa', 'zrs',
   'attendance_spo', 'attendance_admin', 'tilda', 'employees', 'channels', 'ovn',
+  'schedule', 'tovarovedenie',
   'archive', 'deleted',
 ];
 
@@ -29,6 +30,8 @@ export const PAGE_LABELS = {
   employees:        'Сотрудники',
   channels:         'Каналы',
   ovn:              'ОВН',
+  schedule:         'График работы',
+  tovarovedenie:    'Товароведение',
   archive:          'Архив',
   deleted:          'Удалённые',
 };
@@ -69,6 +72,8 @@ export function getDefaultPermissions(role) {
       employees:        { ...VIEW },
       channels:         { ...VIEW },
       ovn:              { ...VIEW },
+      schedule:         { ...OWN },
+      tovarovedenie:    { ...VIEW },
       archive:          { ...VIEW },
       deleted:          { ...NONE },
     };
@@ -88,6 +93,8 @@ export function getDefaultPermissions(role) {
       employees:        { ...VIEW },
       channels:         { ...VIEW },
       ovn:              role === 'ovn' ? { ...OWN } : { ...VIEW },
+      schedule:         { ...VIEW },
+      tovarovedenie:    { ...VIEW },
       archive:          { ...VIEW },
       deleted:          { ...NONE },
     };
@@ -107,6 +114,8 @@ export function getDefaultPermissions(role) {
     employees:        { ...VIEW },
     channels:         { ...VIEW },
     ovn:              { ...VIEW },
+    schedule:         { can_view: true, can_create: true, can_edit: false, can_delete: false },
+    tovarovedenie:    { ...VIEW },
     archive:          { ...VIEW },
     deleted:          { ...NONE },
   };
@@ -143,5 +152,5 @@ export async function loadUserCities(supabase, userId, defaultCities) {
 
 export async function loadUserSpecial(supabase, userId) {
   const { data } = await supabase.from('user_special').select('*').eq('user_id', userId).single();
-  return data || { is_tovarovyed: false };
+  return data || { is_tovarovyed: false, check_access: false };
 }

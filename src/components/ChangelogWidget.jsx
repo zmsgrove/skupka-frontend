@@ -2,6 +2,28 @@ import React, { useState } from 'react';
 
 const CHANGELOG = [
   {
+    version: '2.5.0',
+    date: 'Май 2026',
+    color: '#E8263A',
+    changes: [
+      'График работы: календарь на месяц, назначение расписания admin/dir/dev и РГМ',
+      'График: кнопки «Начать рабочий день» и «Завершить рабочий день»',
+      'График: автофиксация опозданий — сравнение с назначенным временем',
+      'График: замены для СПО — заменяющий указывает кого заменяет, РГМ подтверждает',
+      'Табель: сводка по сотрудникам — явки, часы (СПО), опоздания, замены',
+      'Звуки: настройка звука для каждого события (13 событий)',
+      'Звуки: выбор файла из public/sound/, кнопка прослушать, дефолт OK.mp3',
+      'Товароведение: заглушка «В будущих обновлениях»',
+      'Кто в сети: мониторинг онлайн (последняя активность < 2 мин)',
+      'Кто в сети: виден только сотрудникам с галочкой check_access',
+      'Онлайн-статус: last_seen пинг каждые 60 секунд в profiles',
+      'Wazzup: кнопка 📎 — отправка фото прямо в переписке',
+      'Wazzup: кнопка 🎤 — запись и отправка голосового (зажать/отпустить)',
+      'Wazzup: входящие голосовые — аудиоплеер в переписке',
+      'Сайдбар: кнопка 📅 График в группе отметок',
+    ],
+  },
+  {
     version: '2.4.0',
     date: 'Май 2026',
     color: '#E8263A',
@@ -354,7 +376,7 @@ export default function ChangelogWidget({ theme }) {
     <>
       <button onClick={() => setOpen(!open)} title="История обновлений" style={{ background:t.surface2, border:`1px solid ${t.border}`, borderRadius:8, color:'#8b5cf6', fontSize:13, padding:'5px 10px', cursor:'pointer', display:'flex', alignItems:'center', gap:6, fontFamily:'Inter,sans-serif' }}>
         📋
-        <span style={{ background:'#E8263A', color:'#fff', fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:10, fontFamily:'Unbounded,sans-serif' }}>2.4.0</span>
+        <span style={{ background:'#E8263A', color:'#fff', fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:10, fontFamily:'Unbounded,sans-serif' }}>2.5.0</span>
       </button>
       {open && (
         <>
@@ -363,7 +385,7 @@ export default function ChangelogWidget({ theme }) {
             <div style={{ padding:'16px 20px', borderBottom:`1px solid ${t.border}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
               <div>
                 <div style={{ fontFamily:'Unbounded,sans-serif', fontSize:13, fontWeight:700, color:t.text }}>📋 История обновлений</div>
-                <div style={{ color:t.text2, fontSize:11, marginTop:2 }}>SKUPKA CRM · v2.4.0</div>
+                <div style={{ color:t.text2, fontSize:11, marginTop:2 }}>SKUPKA CRM · v2.5.0</div>
               </div>
               <button onClick={() => setOpen(false)} style={{ background:'transparent', border:'none', color:t.text2, fontSize:16, cursor:'pointer' }}>✕</button>
             </div>
@@ -388,7 +410,7 @@ export default function ChangelogWidget({ theme }) {
               ))}
             </div>
             <div style={{ padding:'12px 20px', borderTop:`1px solid ${t.border}`, textAlign:'center', color:t.text2, fontSize:11 }}>
-              SKUPKA CRM · <span style={{ color:'#E8263A' }}>2.4.0</span> · 2026
+              SKUPKA CRM · <span style={{ color:'#E8263A' }}>2.5.0</span> · 2026
             </div>
           </div>
         </>

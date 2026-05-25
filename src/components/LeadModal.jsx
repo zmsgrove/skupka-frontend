@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { supabase } from '../supabase';
 
@@ -67,6 +67,11 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
   const chatEndRef = useRef(null);
 
   const [prevLeads, setPrevLeads] = useState([]);
+  const [recording, setRecording] = useState(false);
+  const [sendingMedia, setSendingMedia] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef   = useRef([]);
+  const fileInputRef     = useRef(null);
 
   useEffect(() => {
     supabase.from('bot_sessions').select('handed_over').eq('phone', lead.phone).maybeSingle()
@@ -141,6 +146,50 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
     setSaving(false);
   }
 
+  async function handleSendPhoto(file) {
+    if (!file) return;
+    setSendingMedia(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('author', user.name);
+      await axios.post(`${API}/api/leads/${lead.id}/send-media`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+    } catch(e) { alert('Ошибка отправки фото'); }
+    setSendingMedia(false);
+  }
+
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      const mr = new MediaRecorder(stream);
+      mr.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mr.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/ogg; codecs=opus' });
+        setSendingMedia(true);
+        try {
+          const formData = new FormData();
+          formData.append('file', blob, 'voice.ogg');
+          formData.append('author', user.name);
+          formData.append('type', 'voice');
+          await axios.post(`${API}/api/leads/${lead.id}/send-media`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        } catch(e) { alert('Ошибка отправки голосового'); }
+        setSendingMedia(false);
+      };
+      mr.start();
+      mediaRecorderRef.current = mr;
+      setRecording(true);
+    } catch(e) { alert('Нет доступа к микрофону'); }
+  }, [lead.id, user.name]);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    setRecording(false);
+  }, []);
+
   async function handleToggleBot() {
     setBotToggling(true);
     const next = !botHandedOver;
@@ -156,7 +205,9 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
 
   const renderMessage = (msg) => {
     const isPhoto = msg.text?.startsWith('📷 [Фото]');
+    const isVoice = msg.text?.startsWith('🎤 [Голосовое]');
     const photoUrl = isPhoto ? msg.text.replace('📷 [Фото] ', '') : null;
+    const voiceUrl = isVoice ? msg.text.replace('🎤 [Голосовое] ', '') : null;
     return (
       <div key={msg.id} style={{
         ...styles.message,
@@ -170,6 +221,11 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
             <div style={{ color: '#9090a8', fontSize: 12, marginBottom: 8 }}>📷 Фото от клиента</div>
             <img src={photoUrl} alt="фото" style={{ maxWidth: '100%', borderRadius: 8, display: 'block', marginBottom: 8 }} onError={e => e.target.style.display = 'none'} />
             <button style={styles.downloadBtn} onClick={() => handleDownloadPhoto(photoUrl)}>⬇️ Скачать фото</button>
+          </div>
+        ) : isVoice && voiceUrl ? (
+          <div>
+            <div style={{ color: '#9090a8', fontSize: 12, marginBottom: 6 }}>🎤 Голосовое сообщение</div>
+            <audio controls src={voiceUrl} style={{ width: '100%', height: 32 }} />
           </div>
         ) : <div style={styles.msgText}>{renderMarkdown(msg.text)}</div>}
         <div style={styles.msgTime}>
@@ -399,11 +455,21 @@ export default function LeadModal({ lead, user, onClose, onUpdate }) {
                     title="Шаблоны сообщений">
                     ⚡
                   </button>
+                  <input type="file" accept="image/*" ref={fileInputRef} style={{ display:'none' }} onChange={e => { if (e.target.files[0]) handleSendPhoto(e.target.files[0]); e.target.value=''; }} />
+                  <button style={{ ...styles.templateToggle, opacity: sendingMedia ? 0.5 : 1 }} onClick={() => fileInputRef.current?.click()} title="Отправить фото" disabled={sendingMedia}>
+                    📎
+                  </button>
+                  <button
+                    style={{ ...styles.templateToggle, background: recording ? '#E8263A22' : '#22222e', borderColor: recording ? '#E8263A' : '#2e2e3e', color: recording ? '#E8263A' : '#9090a8', animation: recording ? 'pulse 1s infinite' : 'none' }}
+                    onMouseDown={startRecording} onMouseUp={stopRecording} onTouchStart={startRecording} onTouchEnd={stopRecording}
+                    title={recording ? 'Отпустите — отправить' : 'Удержите — записать голосовое'} disabled={sendingMedia}>
+                    🎤
+                  </button>
                   <textarea style={styles.msgInput} placeholder="Написать клиенту..."
                     value={msgText} onChange={e => setMsgText(e.target.value)} rows={2}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }} />
-                  <button style={{ ...styles.sendBtn, opacity: sending ? 0.7 : 1 }}
-                    onClick={handleSendMessage} disabled={sending}>{sending ? '...' : '➤'}</button>
+                  <button style={{ ...styles.sendBtn, opacity: (sending || sendingMedia) ? 0.7 : 1 }}
+                    onClick={handleSendMessage} disabled={sending || sendingMedia}>{sending ? '...' : '➤'}</button>
                 </div>
               </>
             )}

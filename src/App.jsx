@@ -14,10 +14,12 @@ import TasksPage from './components/TasksPage';
 import SummaryPanel from './components/SummaryPanel';
 import Calculator from './components/Calculator';
 import CrmAssistant from './components/CrmAssistant';
-import { TildaPage, OvnPage } from './components/PlaceholderPages';
+import { TildaPage, OvnPage, TovarovedeniePage } from './components/PlaceholderPages';
 import FeedPage from './components/FeedPage';
 import EmployeesPage from './components/EmployeesPage';
 import ChannelsPage from './components/ChannelsPage';
+import SchedulePage from './components/SchedulePage';
+import OnlinePage from './components/OnlinePage';
 import { getSession, clearSession } from './auth';
 import { themes, getTheme, saveTheme, radius, fib, glass } from './theme';
 import { supabase } from './supabase';
@@ -155,7 +157,7 @@ function Logo() {
   );
 }
 
-function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, canSeeZrs, canSeeAttendanceSpo, canSeeAttendanceAdmin, totalUnread, chatUnread, collapsed, setCollapsed, mobileOpen, setMobileOpen, setShowCalc, t }) {
+function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, canSeeZrs, canSeeAttendanceSpo, canSeeAttendanceAdmin, canSeeOnline, totalUnread, chatUnread, collapsed, setCollapsed, mobileOpen, setMobileOpen, setShowCalc, t }) {
   const go = (tab) => { setActiveTab(tab); setMobileOpen(false); };
   const items = (forMobile) => (
     <>
@@ -168,14 +170,20 @@ function Sidebar({ activeTab, setActiveTab, canSeeDashboard, canSeeDeleted, canS
         <SideItem icon="✅" label="Задачи"       active={activeTab==='tasks'}           onClick={() => go('tasks')}            collapsed={!forMobile&&collapsed} t={t} />
         <SideItem icon="💰" label="Касса"        active={activeTab==='kassa'}           onClick={() => go('kassa')}            collapsed={!forMobile&&collapsed} t={t} />
         {canSeeZrs && <SideItem icon="📋" label="ЗРС"         active={activeTab==='zrs'}             onClick={() => go('zrs')}              collapsed={!forMobile&&collapsed} t={t} />}
+        {/* Лёгкий разделитель перед отметками */}
+        <div style={{ height:1, background:t.border+'66', margin:'4px 0' }} />
         {canSeeAttendanceSpo   && <SideItem icon="🕐" label="Отметка на смене"    active={activeTab==='attendance_spo'}   onClick={() => go('attendance_spo')}   collapsed={!forMobile&&collapsed} t={t} />}
         {canSeeAttendanceAdmin && <SideItem icon="📍" label="Отметка о прибытии" active={activeTab==='attendance_admin'} onClick={() => go('attendance_admin')} collapsed={!forMobile&&collapsed} t={t} />}
+        <SideItem icon="📅" label="График"       active={activeTab==='schedule'}        onClick={() => go('schedule')}         collapsed={!forMobile&&collapsed} t={t} />
+        <div style={{ height:1, background:t.border+'66', margin:'4px 0' }} />
         <SideItem icon="🌐" label="Tilda"        active={activeTab==='tilda'}           onClick={() => go('tilda')}            collapsed={!forMobile&&collapsed} t={t} />
         {/* Группа — команда и каналы */}
         <div style={{ height:1, background:t.border, margin:'4px 0' }} />
         <SideItem icon="👥" label="Сотрудники"   active={activeTab==='employees'}       onClick={() => go('employees')}        collapsed={!forMobile&&collapsed} t={t} />
         <SideItem icon="📡" label="Каналы"       active={activeTab==='channels'}        onClick={() => go('channels')}         collapsed={!forMobile&&collapsed} t={t} />
         <SideItem icon="📹" label="ОВН"          active={activeTab==='ovn'}             onClick={() => go('ovn')}              collapsed={!forMobile&&collapsed} t={t} />
+        <SideItem icon="📦" label="Товароведение" active={activeTab==='tovarovedenie'}  onClick={() => go('tovarovedenie')}    collapsed={!forMobile&&collapsed} t={t} />
+        {canSeeOnline && <SideItem icon="🟢" label="Кто в сети" active={activeTab==='online'} onClick={() => go('online')} collapsed={!forMobile&&collapsed} t={t} />}
         {/* Нижняя группа */}
         <div style={{ flex:1 }} />
         <div style={{ height:1, background:t.border, margin:'6px 0' }} />
@@ -233,6 +241,17 @@ export default function App() {
     const iv = setInterval(() => { fetch(API + '/ping').catch(() => {}); }, 5 * 60 * 1000);
     return () => clearInterval(iv);
   }, []);
+
+  // Пинг last_seen каждые 60 секунд (онлайн-статус)
+  useEffect(() => {
+    if (!user) return;
+    async function ping() {
+      await supabase.from('profiles').upsert({ user_id: user.username, last_seen: new Date().toISOString() }, { onConflict: 'user_id' });
+    }
+    ping();
+    const iv = setInterval(ping, 60000);
+    return () => clearInterval(iv);
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -346,6 +365,7 @@ export default function App() {
   const canSeeDeleted   = user && CAN_SEE_DELETED.includes(user.role);
   const canSeeAttendanceSpo   = user && (FULL_ACCESS_ROLES.includes(user.role) || ['uralsk','atyray','aktobe'].includes(user.role) || userPerms['attendance_spo']?.can_view === true);
   const canSeeAttendanceAdmin = user && (FULL_ACCESS_ROLES.includes(user.role) || ['rev','rgmu','rgma'].includes(user.role) || userPerms['attendance_admin']?.can_view === true);
+  const canSeeOnline    = user && userSpecial?.check_access === true;
 
   if (!user) return <LoginPage onLogin={handleLogin} theme={t} />;
 
@@ -418,6 +438,7 @@ export default function App() {
           canSeeDashboard={canSeeDashboard} canSeeDeleted={canSeeDeleted}
           canSeeZrs={user && ([...FULL_ACCESS_ROLES, 'rev', 'rgmu', 'rgma'].includes(user.role) || userPerms['zrs']?.can_view === true)}
           canSeeAttendanceSpo={canSeeAttendanceSpo} canSeeAttendanceAdmin={canSeeAttendanceAdmin}
+          canSeeOnline={canSeeOnline}
           totalUnread={totalUnread} chatUnread={chatUnread}
           collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed}
           mobileOpen={mobileOpen} setMobileOpen={setMobileOpen}
@@ -435,9 +456,12 @@ export default function App() {
           {activeTab==='attendance_spo'   && canSeeAttendanceSpo   && <AttendanceSpo   user={user} theme={t} />}
           {activeTab==='attendance_admin' && canSeeAttendanceAdmin && <AttendanceAdmin user={user} theme={t} />}
           {activeTab==='tilda'      && <TildaPage theme={t} />}
-          {activeTab==='employees'  && <EmployeesPage user={user} theme={t} />}
-          {activeTab==='channels'   && <ChannelsPage theme={t} />}
-          {activeTab==='ovn'        && <OvnPage theme={t} />}
+          {activeTab==='employees'       && <EmployeesPage user={user} theme={t} />}
+          {activeTab==='channels'        && <ChannelsPage theme={t} />}
+          {activeTab==='ovn'             && <OvnPage theme={t} />}
+          {activeTab==='schedule'        && <SchedulePage user={user} theme={t} />}
+          {activeTab==='tovarovedenie'   && <TovarovedeniePage theme={t} />}
+          {activeTab==='online'          && canSeeOnline && <OnlinePage user={user} theme={t} />}
           {activeTab==='archive'    && <ArchiveView user={user} theme={t} />}
           {activeTab==='deleted'    && canSeeDeleted && <DeletedView user={user} theme={t} />}
           {activeTab==='settings'   && <SettingsPage user={user} theme={t} settings={settings} onUpdate={updateSettings} />}

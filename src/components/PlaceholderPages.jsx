@@ -20,6 +20,10 @@ export function OvnPage({ theme }) {
   return <PlaceholderPage emoji="📹" title="ОВН" version="2.7.0" versionColor="#8b5cf6" slogan="Отдел видеонаблюдения" description="Модуль фиксации нарушений с канбан-доской, категориями и уведомлениями в ленту." features={['📋 Канбан: Зафиксировано → На отработке → Закрыто','🔖 Категории нарушений: предупреждение, штраф','👤 Нарушитель, отрабатывающий, комментарий','🔔 Уведомление нарушителю и отрабатывающему в ленту']} t={theme} comingSoon />;
 }
 
+export function TovarovedeniePage({ theme }) {
+  return <PlaceholderPage emoji="📦" title="Товароведение" version="Скоро" versionColor="#f59e0b" slogan="Управление товарами" description="Модуль товароведения для учёта, оценки и управления принятыми устройствами." features={['📦 Учёт принятых устройств','🏷️ Категории и оценка состояния','📊 Аналитика по товарам','🔗 Интеграция с заявками WAZZUP']} t={theme} comingSoon />;
+}
+
 function PlaceholderPage({ emoji, title, version, versionColor, slogan, description, features, t, comingSoon }) {
   return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'70vh', padding:24 }}>
